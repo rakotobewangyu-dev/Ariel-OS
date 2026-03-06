@@ -3,130 +3,577 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Ariel OS - Cloud Command Center</title>
+    <title>Ariel OS - Command Center</title>
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700;800&family=Orbitron:wght@400;700;900&family=Rajdhani:wght@500;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
     <style>
-        /* TOUT TON STYLE ORIGINAL CONSERVÉ À 100% */
         :root {
-            --cp-yellow: #fcee0a; --cp-cyan: #00e5ff; --cp-red: #ff0055;
-            --cp-dark: #0a0a0c; --cp-gray: #1a1a1c; --cp-light-gray: #333;
-            --cp-text: #e0e0e0; --cp-green: #00ff66; --cp-purple: #b000ff;
-            --cp-orange: #ff8c00; --glass-bg: rgba(20, 20, 25, 0.65);
+            --cp-yellow: #fcee0a;
+            --cp-cyan: #00e5ff;
+            --cp-red: #ff0055;
+            --cp-dark: #0a0a0c;
+            --cp-gray: #1a1a1c;
+            --cp-light-gray: #333;
+            --cp-text: #e0e0e0;
+            --cp-green: #00ff66;
+            --cp-purple: #b000ff;
+            --cp-orange: #ff8c00;
+            
+            --glass-bg: rgba(20, 20, 25, 0.65);
             --glass-border: rgba(0, 229, 255, 0.15);
-            --font-title: 'Orbitron', sans-serif; --font-ui: 'Rajdhani', sans-serif; --font-mono: 'Share Tech Mono', monospace;
+            
+            --font-title: 'Orbitron', sans-serif;
+            --font-ui: 'Rajdhani', sans-serif;
+            --font-mono: 'Share Tech Mono', monospace;
         }
+
         * { box-sizing: border-box; margin: 0; padding: 0; }
+
         ::-webkit-scrollbar { width: 8px; height: 8px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: var(--cp-red); border-radius: 4px; }
         ::-webkit-scrollbar-thumb:hover { background: var(--cp-cyan); }
-        body { background: linear-gradient(180deg, #4a0008 0%, #050505 60%, #000000 100%); background-attachment: fixed; color: var(--cp-text); font-family: var(--font-ui); height: 100vh; height: 100dvh; overflow: hidden; display: flex; flex-direction: column; margin: 0; position: relative; }
-        .scanlines { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06)); background-size: 100% 4px, 3px 100%; pointer-events: none; z-index: 999; opacity: 0.3; }
-        #data-rain-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: -1; opacity: 0; transition: opacity 0.5s; }
-        body::before { content: ""; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-image: linear-gradient(rgba(0, 229, 255, 0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(0, 229, 255, 0.04) 1px, transparent 1px); background-size: 35px 35px; pointer-events: none; z-index: -2; }
+        ::-webkit-calendar-picker-indicator { filter: invert(1); cursor: pointer; transition: 0.2s; }
+        ::-webkit-calendar-picker-indicator:hover { filter: invert(1) drop-shadow(0 0 5px var(--cp-cyan)); }
+
+        body {
+            background: linear-gradient(180deg, #4a0008 0%, #050505 60%, #000000 100%);
+            background-attachment: fixed;
+            color: var(--cp-text);
+            font-family: var(--font-ui);
+            height: 100vh; 
+            height: 100dvh; /* Adaptation iOS */
+            overflow: hidden; 
+            display: flex;
+            flex-direction: column;
+            margin: 0;
+            position: relative;
+        }
+
+        /* Scanlines Effect */
+        .scanlines {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), 
+                        linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+            background-size: 100% 4px, 3px 100%; pointer-events: none; z-index: 999; opacity: 0.3;
+        }
+
+        /* Data Rain Canvas */
+        #data-rain-canvas {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+            pointer-events: none; z-index: -1; opacity: 0; transition: opacity 0.5s;
+        }
+
+        /* Grille futuriste */
+        body::before {
+            content: ""; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background-image: 
+                linear-gradient(rgba(0, 229, 255, 0.04) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 229, 255, 0.04) 1px, transparent 1px);
+            background-size: 35px 35px; pointer-events: none; z-index: -2;
+        }
+
+        /* Utils & Animations */
         .chamfer { clip-path: polygon(15px 0, 100% 0, 100% calc(100% - 15px), calc(100% - 15px) 100%, 0 100%, 0 15px); }
         .chamfer-reverse { clip-path: polygon(0 0, calc(100% - 15px) 0, 100% 15px, 100% 100%, 15px 100%, 0 calc(100% - 15px)); }
+        
+        .text-cyan { color: var(--cp-cyan); }
+        .text-red { color: var(--cp-red); }
+        .text-green { color: var(--cp-green); }
+
+        @keyframes blinker { 50% { opacity: 0; } }
+        @keyframes pulse { 0% { opacity: 0.5; } 50% { opacity: 1; text-shadow: 0 0 10px var(--cp-cyan); box-shadow: 0 0 20px var(--cp-cyan); } 100% { opacity: 0.5; } }
         @keyframes glitch-anim-fade { 0% { opacity: 0; transform: translateY(15px); } 100% { opacity: 1; transform: translateY(0); } }
-        .cyber-number { font-family: 'JetBrains Mono', var(--font-mono) !important; font-variant-numeric: slashed-zero; }
-        header { display: flex; justify-content: space-between; align-items: center; padding: 20px 30px; background: rgba(10, 10, 12, 0.7); backdrop-filter: blur(15px); border-bottom: 2px solid var(--cp-cyan); position: relative; z-index: 10; flex-shrink: 0; }
-        .sys-status { color: var(--cp-cyan); font-size: 1.1rem; }
-        .blink { animation: 1s blinker linear infinite; } @keyframes blinker { 50% { opacity: 0; } }
-        nav { display: flex; gap: 10px; padding: 20px 30px; border-bottom: 1px solid var(--cp-light-gray); background-color: rgba(10, 10, 12, 0.6); z-index: 10; overflow-x: auto; }
-        .nav-btn { background-color: rgba(0, 229, 255, 0.05); color: var(--cp-cyan); border: 1px solid var(--cp-cyan); padding: 10px 20px; font-family: var(--font-title); cursor: pointer; text-transform: uppercase; transition: 0.3s; }
-        .nav-btn.active, .nav-btn:hover { background-color: var(--cp-cyan); color: var(--cp-dark); box-shadow: 0 0 15px var(--cp-cyan); }
-        main { padding: 20px 30px; flex: 1; overflow-y: auto; position: relative; z-index: 5; }
-        .panel { display: none; flex-direction: column; gap: 20px; animation: glitch-anim-fade 0.4s ease-out; }
+
+        /* Nombres Cyber avec Zéro Barré */
+        .cyber-number, .dash-card-value, .stat-value, .sys-status, .task-date, .trans-amount, .trans-date, input[type="number"] {
+            font-family: 'JetBrains Mono', var(--font-mono) !important;
+            font-variant-numeric: slashed-zero;
+            font-feature-settings: "zero" 1;
+            letter-spacing: 1px;
+        }
+
+        /* CSS pour les Tags (Filtres & Badges) */
+        .filter-bar { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+        .filter-btn { padding: 6px 15px; background: rgba(0, 229, 255, 0.05); border: 1px solid var(--cp-cyan); color: var(--cp-cyan); font-family: var(--font-mono); cursor: pointer; transition: 0.3s; text-transform: uppercase; font-size: 0.85rem; font-weight: bold; }
+        .filter-btn.active, .filter-btn:hover { background: var(--cp-cyan); color: black; box-shadow: 0 0 10px var(--cp-cyan); }
+        .tag-badge { display: inline-block; padding: 3px 8px; background: rgba(255, 0, 85, 0.15); border: 1px solid var(--cp-red); color: var(--cp-red); font-size: 0.75rem; font-family: var(--font-mono); margin-right: 5px; margin-top: 5px; border-radius: 2px; }
+        .tag-badge.cyan { background: rgba(0, 229, 255, 0.15); border-color: var(--cp-cyan); color: var(--cp-cyan); }
+
+        /* Header / HUD */
+        header {
+            display: flex; justify-content: space-between; align-items: center; padding: 20px 30px;
+            background: rgba(10, 10, 12, 0.7); backdrop-filter: blur(15px);
+            border-bottom: 2px solid var(--cp-cyan); position: relative; z-index: 10; flex-shrink: 0;
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5);
+        }
+
+        .sys-status { color: var(--cp-cyan); font-size: 1.1rem; display: flex; align-items: center; gap: 10px; text-shadow: 0 0 8px rgba(0, 229, 255, 0.5); }
+        .blink { animation: blinker 1s linear infinite; }
+
+        .player-info { text-align: right; }
+        .player-name { font-family: var(--font-title); font-size: 2.2rem; color: var(--cp-yellow); text-shadow: 0 0 10px rgba(252, 238, 10, 0.5); letter-spacing: 2px; }
+
+        /* Navigation */
+        nav { 
+            display: flex; gap: 10px; padding: 20px 30px; border-bottom: 1px solid var(--cp-light-gray); 
+            background-color: rgba(10, 10, 12, 0.6); backdrop-filter: blur(10px); z-index: 10; flex-wrap: nowrap; flex-shrink: 0;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+            overflow-x: auto; -webkit-overflow-scrolling: touch;
+        }
+        nav::-webkit-scrollbar { height: 4px; }
+        nav::-webkit-scrollbar-thumb { background: var(--cp-cyan); border-radius: 4px; }
+
+        .nav-btn {
+            background-color: rgba(0, 229, 255, 0.05); color: var(--cp-cyan); border: 1px solid var(--cp-cyan);
+            padding: 10px 20px; font-family: var(--font-title); font-size: 1.1rem; cursor: pointer; text-transform: uppercase; transition: all 0.3s; position: relative;
+            overflow: hidden; flex: 0 0 auto; white-space: nowrap;
+        }
+        .nav-btn::after {
+            content: ''; position: absolute; top: 0; left: -100%; width: 50%; height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+            transform: skewX(-20deg); transition: 0s;
+        }
+        .nav-btn.active, .nav-btn:hover { background-color: var(--cp-cyan); color: var(--cp-dark); box-shadow: 0 0 15px var(--cp-cyan); transform: translateY(-2px); }
+        .nav-btn:hover::after { left: 200%; transition: 0.6s ease-in-out; }
+
+        /* ZONE PRINCIPALE SCROLLABLE */
+        main { 
+            padding: 20px 30px; flex: 1 1 0; min-height: 0; overflow-y: auto; overflow-x: hidden; position: relative; z-index: 5;
+        }
+        
+        .panel { display: none; flex-direction: column; gap: 20px; width: 100%; animation: glitch-anim-fade 0.4s ease-out; padding-bottom: 80px; }
         .panel.active { display: flex; }
-        .section-title { font-family: var(--font-title); color: var(--cp-yellow); font-size: 1.6rem; border-left: 5px solid var(--cp-red); padding-left: 15px; margin-bottom: 10px; text-transform: uppercase; }
-        .glass-panel { background-color: var(--glass-bg); backdrop-filter: blur(12px); border: 1px solid var(--glass-border); padding: 20px; }
+
+        .section-title { font-family: var(--font-title); color: var(--cp-yellow); font-size: 1.6rem; border-left: 5px solid var(--cp-red); padding-left: 15px; margin-bottom: 10px; text-transform: uppercase; text-shadow: 0 0 10px rgba(252, 238, 10, 0.3); }
+
+        /* Buttons Général */
+        .cp-btn {
+            background-color: var(--cp-yellow); color: black; border: none; padding: 12px 24px;
+            font-family: var(--font-title); font-weight: bold; font-size: 1rem; text-transform: uppercase; cursor: pointer; transition: all 0.3s; position: relative; overflow: hidden;
+        }
+        .cp-btn::after {
+            content: ''; position: absolute; top: 0; left: -100%; width: 50%; height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.5), transparent);
+            transform: skewX(-20deg); transition: 0s;
+        }
+        .cp-btn:hover { background-color: white; color: black; box-shadow: 0 0 20px var(--cp-yellow); transform: scale(1.02); }
+        .cp-btn:hover::after { left: 200%; transition: 0.6s ease-in-out; }
+        
+        .cp-btn.cyan { background-color: var(--cp-cyan); color: black; }
+        .cp-btn.cyan:hover { background-color: white; box-shadow: 0 0 20px var(--cp-cyan); }
+        .cp-btn.danger { background-color: var(--cp-red); color: white; }
+        .cp-btn.danger:hover { background-color: white; color: var(--cp-red); box-shadow: 0 0 20px var(--cp-red); }
+        .cp-btn.orange { background-color: var(--cp-orange); color: black; }
+        .cp-btn.orange:hover { background-color: white; color: black; box-shadow: 0 0 20px var(--cp-orange); }
+
+        .cp-btn-outline {
+            background-color: rgba(0, 229, 255, 0.05); color: var(--cp-cyan); border: 1px solid var(--cp-cyan);
+            padding: 8px 15px; font-family: var(--font-mono); font-size: 0.9rem; cursor: pointer; transition: all 0.3s; font-weight: bold; text-transform: uppercase; position: relative; overflow: hidden;
+        }
+        .cp-btn-outline::after { content: ''; position: absolute; top: 0; left: -100%; width: 50%; height: 100%; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent); transform: skewX(-20deg); transition: 0s; }
+        .cp-btn-outline:hover { background-color: var(--cp-cyan); color: black; box-shadow: 0 0 15px var(--cp-cyan); transform: translateY(-2px); }
+        .cp-btn-outline:hover::after { left: 200%; transition: 0.6s ease-in-out; }
+        
+        .cp-btn-outline.orange { color: var(--cp-orange); border-color: var(--cp-orange); background-color: rgba(255, 140, 0, 0.05); }
+        .cp-btn-outline.orange:hover { background-color: var(--cp-orange); color: black; box-shadow: 0 0 15px var(--cp-orange); }
+        .cp-btn-outline.danger { color: var(--cp-red); border-color: var(--cp-red); background-color: rgba(255, 0, 85, 0.05); }
+        .cp-btn-outline.danger:hover { background-color: var(--cp-red); color: white; box-shadow: 0 0 15px var(--cp-red); }
+        .cp-btn-outline.warning { color: var(--cp-yellow); border-color: var(--cp-yellow); }
+        .cp-btn-outline.warning:hover { background-color: var(--cp-yellow); color: black; box-shadow: 0 0 15px var(--cp-yellow); }
+
+        /* Inputs */
+        .cp-input, .cp-select, .cp-textarea {
+            background-color: rgba(10, 10, 12, 0.7); border: 1px solid var(--glass-border); color: white;
+            padding: 15px; font-family: var(--font-mono); font-size: 1.1rem; width: 100%; outline: none; transition: all 0.3s; backdrop-filter: blur(5px);
+            border-left: 3px solid var(--cp-cyan);
+        }
+        .cp-input:focus, .cp-select:focus, .cp-textarea:focus { border-color: var(--cp-cyan); background-color: rgba(20, 20, 25, 0.9); box-shadow: 0 0 15px rgba(0, 229, 255, 0.2); }
+        .cp-textarea { resize: vertical; min-height: 100px; font-family: var(--font-mono); font-size: 0.95rem; line-height: 1.5; }
+
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .step-group { display: flex; flex-direction: column; gap: 8px; margin-bottom: 10px; }
+        .step-label { color: white; font-family: var(--font-ui); font-size: 1.2rem; font-weight: bold; text-shadow: 0 2px 4px rgba(0,0,0,0.8); }
+        .step-subtext { font-family: var(--font-mono); font-size: 0.95rem; color: var(--cp-cyan); opacity: 0.9; }
+
+        /* Glassmorphism */
+        .glass-panel { background-color: var(--glass-bg); backdrop-filter: blur(12px); border: 1px solid var(--glass-border); box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+
+        /* VIEW: NEXUS */
+        .overview-grid { display: grid; grid-template-columns: 1fr; gap: 20px; }
+        .overview-box { padding: 30px; }
         .dash-stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; }
-        .dash-card { background: rgba(10, 10, 12, 0.5); border: 1px solid var(--glass-border); padding: 20px; border-left: 4px solid; }
+        .dash-card { background: rgba(10, 10, 12, 0.5); border: 1px solid var(--glass-border); padding: 20px; border-left: 4px solid; transition: all 0.3s; }
+        .dash-card:hover { background: rgba(20, 20, 25, 0.8); box-shadow: 0 0 15px inset rgba(0, 229, 255, 0.1); transform: translateY(-3px); }
+        .dash-card-title { font-family: var(--font-mono); font-size: 0.9rem; color: var(--cp-text); }
         .dash-card-value { font-size: 2.5rem; color: white; margin-top: 10px; }
-        .cp-btn { background-color: var(--cp-yellow); color: black; border: none; padding: 12px 24px; font-family: var(--font-title); font-weight: bold; cursor: pointer; text-transform: uppercase; }
-        .cp-input, .cp-textarea, .cp-select { background-color: rgba(10, 10, 12, 0.7); border: 1px solid var(--glass-border); color: white; padding: 15px; font-family: var(--font-mono); width: 100%; border-left: 3px solid var(--cp-cyan); }
-        .protocol-grid, .note-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; }
-        .protocol-card, .note-card { border-left: 4px solid var(--cp-yellow); padding: 25px; cursor: pointer; transition: 0.3s; background: rgba(20,20,25,0.6); }
-        .protocol-card:hover, .note-card:hover { transform: translateY(-5px); box-shadow: 0 0 20px var(--cp-cyan); }
+
+        /* VIEW: PROTOCOLES */
+        .protocol-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 25px; }
+        .protocol-card { border-left: 4px solid var(--cp-yellow); padding: 25px; display: flex; flex-direction: column; gap: 10px; cursor: pointer; transition: all 0.3s; position: relative; }
+        .protocol-card::before { content: ''; position: absolute; top: 0; right: 0; border-style: solid; border-width: 0 20px 20px 0; border-color: transparent rgba(0,0,0,0.8) transparent transparent; }
+        .protocol-card:hover { border-left-color: var(--cp-cyan); box-shadow: 0 10px 30px rgba(0, 229, 255, 0.2); transform: translateY(-5px); background-color: rgba(30, 30, 35, 0.8); }
+        .protocol-title { font-family: var(--font-title); font-size: 1.5rem; color: white; text-shadow: 0 2px 4px rgba(0,0,0,0.8); }
+
+        /* VIEW: PROTOCOLE DETAIL */
+        .detail-header-panel { border-bottom: 2px solid var(--cp-cyan); padding: 20px 30px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; flex-wrap: wrap; gap:15px;}
+        .phase-section { margin-bottom: 20px; transition: all 0.3s;}
+        .phase-header { padding: 18px 25px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; font-family: var(--font-title); font-size: 1.3rem; background: rgba(0,0,0,0.4); transition: background 0.2s;}
+        .phase-header:hover { background-color: rgba(0, 229, 255, 0.1); }
+        .phase-body { display: none; padding: 25px; border-top: 1px solid var(--glass-border); flex-direction: column; gap: 20px; background: rgba(0,0,0,0.3); }
+        .phase-section.active .phase-body { display: flex; animation: glitch-anim-fade 0.3s ease-out; }
+        .phase-section.active { border-color: var(--cp-cyan); box-shadow: 0 0 20px rgba(0,229,255,0.15); }
+        
+        .phase-a .phase-header { color: var(--cp-red); border-left: 4px solid var(--cp-red); }
+        .phase-b .phase-header { color: var(--cp-cyan); border-left: 4px solid var(--cp-cyan); }
+        .phase-c .phase-header { color: var(--cp-yellow); border-left: 4px solid var(--cp-yellow); }
+        .phase-d .phase-header { color: var(--cp-purple); border-left: 4px solid var(--cp-purple); }
+        .phase-e .phase-header { color: var(--cp-green); border-left: 4px solid var(--cp-green); }
+        .phase-f .phase-header { color: var(--cp-orange); border-left: 4px solid var(--cp-orange); }
+
+        .cyber-toggle { width: 34px; height: 34px; border: 1px solid currentColor; display: flex; justify-content: center; align-items: center; transition: 0.4s; background: rgba(0,0,0,0.5); }
+        .cyber-toggle svg { width: 16px; height: 16px; fill: currentColor; transition: 0.4s; }
+        .phase-section.active .cyber-toggle { background: currentColor; box-shadow: 0 0 15px currentColor; }
+        .phase-section.active .cyber-toggle svg { fill: black; transform: rotate(90deg); }
+
+        /* VIEW: BASE DE DONNÉES */
+        .note-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; }
+        .note-card { border-left: 4px solid var(--cp-red); padding: 25px; display: flex; flex-direction: column; position: relative; transition: all 0.3s; min-height: 200px; }
+        .note-card::before { content: ''; position: absolute; top: 0; right: 0; border-style: solid; border-width: 0 20px 20px 0; border-color: transparent rgba(0,0,0,0.8) transparent transparent; }
+        .note-card:hover { background-color: rgba(30, 20, 20, 0.8); border-left-color: var(--cp-yellow); box-shadow: 0 10px 25px rgba(255,0,85,0.2); transform: translateY(-4px); }
+        .note-title { color: var(--cp-red); font-family: var(--font-title); font-size: 1.3rem; margin-bottom: 15px; }
+        .note-preview { font-family: var(--font-mono); font-size: 1rem; color: #ccc; display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; flex-grow: 1; margin-bottom: 10px; line-height: 1.5; }
+
+        /* VIEW: MINDMAP */
+        #view-mindmap { padding: 0; position: relative; overflow: hidden; border: 1px solid var(--glass-border); height: 75vh; min-height: 500px; border-radius: 4px; }
+        #mindmap-canvas { display: block; width: 100%; height: 100%; cursor: grab; }
+        #mindmap-canvas:active { cursor: grabbing; }
+        
+        #mindmap-detail-panel { 
+            position: absolute; right: 0; top: 0; height: 100%; width: 400px; 
+            background: rgba(10, 10, 12, 0.95); backdrop-filter: blur(15px); 
+            border-left: 2px solid var(--cp-cyan); padding: 30px; 
+            transform: translateX(100%); transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
+            z-index: 10; display: flex; flex-direction: column; box-shadow: -10px 0 30px rgba(0,0,0,0.8); 
+        }
+        
+        .zoom-controls { position: absolute; bottom: 25px; right: 25px; display: flex; flex-direction: column; gap: 10px; z-index: 5; }
+        .zoom-btn { width: 45px; height: 45px; background: rgba(10, 10, 12, 0.8); border: 1px solid var(--cp-cyan); color: var(--cp-cyan); font-family: var(--font-mono); font-size: 1.5rem; font-weight: bold; cursor: pointer; transition: 0.3s; display: flex; justify-content: center; align-items: center; }
+        .zoom-btn:hover { background: var(--cp-cyan); color: black; box-shadow: 0 0 15px var(--cp-cyan); transform: scale(1.1); }
+
+        /* VIEW: AGENDA */
+        .agenda-grid { display: grid; grid-template-columns: 1fr 380px; gap: 25px; }
+        .task-list { display: flex; flex-direction: column; gap: 15px; }
+        .task-card { border-left: 4px solid var(--cp-yellow); padding: 20px 25px; display: flex; justify-content: space-between; align-items: center; position: relative; transition: all 0.3s; }
+        .task-card::before { content: ''; position: absolute; top: 0; right: 0; border-style: solid; border-width: 0 15px 15px 0; border-color: transparent rgba(0,0,0,0.8) transparent transparent; }
+        .task-card:hover { transform: translateX(8px); border-color: var(--cp-cyan); box-shadow: -5px 5px 20px rgba(0,229,255,0.15); background-color: rgba(30, 30, 35, 0.8); }
+        .task-date { color: var(--cp-yellow); font-size: 0.95rem; margin-bottom: 8px; }
+        .task-title { font-size: 1.3rem; font-weight: bold; color: white; }
+
+        /* VIEW: FINANCE */
+        .finance-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 25px; margin-bottom: 25px; }
+        .stat-card { padding: 25px; transition: transform 0.3s; }
+        .stat-card:hover { transform: translateY(-5px); border-color: var(--cp-cyan); box-shadow: 0 10px 20px rgba(0,229,255,0.1); }
+        .stat-title { font-family: var(--font-mono); color: var(--cp-text); font-size: 1rem; text-transform: uppercase; }
+        .stat-value { font-size: 2.2rem; margin-top: 10px; }
+        .finance-grid { display: grid; grid-template-columns: 380px 1fr; gap: 25px; }
+        .trans-card { padding: 18px 25px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; border-left: 4px solid; transition: all 0.3s; }
+        .trans-card:hover { transform: scale(1.02); background-color: rgba(30,30,35,0.8); }
+        .trans-card.in { border-color: var(--cp-green); }
+        .trans-card.out { border-color: var(--cp-red); }
+
+        /* Modals & Toasts */
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(5, 5, 5, 0.85); z-index: 1000; justify-content: center; align-items: center; backdrop-filter: blur(8px); }
-        .modal.active { display: flex; }
-        .modal-content { background-color: rgba(15, 15, 20, 0.95); border: 1px solid var(--cp-cyan); padding: 40px; width: 90%; max-width: 550px; }
+        .modal.active { display: flex; animation: fadeIn 0.2s; }
+        .modal-content { background-color: rgba(15, 15, 20, 0.95); border: 1px solid var(--cp-cyan); padding: 40px; width: 90%; max-width: 550px; box-shadow: 0 0 40px rgba(0,229,255,0.2); }
+        
         #toast-container { position: fixed; bottom: 30px; right: 30px; display: flex; flex-direction: column; gap: 12px; z-index: 9999; }
-        .toast { background: rgba(15,15,20,0.9); border: 1px solid var(--cp-green); color: white; padding: 18px 25px; border-left: 4px solid var(--cp-green); }
+        .toast { background: rgba(15,15,20,0.9); backdrop-filter: blur(10px); border: 1px solid var(--cp-green); color: white; padding: 18px 25px; font-family: var(--font-mono); border-left: 4px solid var(--cp-green); box-shadow: 0 5px 20px rgba(0,255,102,0.3); animation: slideInRight 0.4s; }
+        @keyframes slideInRight { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+
+        @media (max-width: 1024px) {
+            .agenda-grid { grid-template-columns: 1fr 300px; }
+            .finance-grid { grid-template-columns: 300px 1fr; }
+        }
+
+        @media (max-width: 768px) {
+            header { flex-direction: column; gap: 10px; padding: 15px; text-align: center; }
+            .player-info { text-align: center; }
+            .player-name { font-size: 1.8rem; }
+            main { padding: 15px; }
+            .panel { padding-bottom: 30px; }
+            .overview-box { padding: 20px; }
+            .dash-stats-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
+            .dash-card-value { font-size: 1.8rem; }
+            .form-row { grid-template-columns: 1fr; gap: 15px; }
+            .protocol-grid, .note-grid { grid-template-columns: 1fr; }
+            .detail-header-panel { flex-direction: column; align-items: flex-start; padding: 15px; gap: 15px; }
+            .detail-header-panel > div:last-child { width: 100%; flex-direction: column; }
+            .detail-header-panel button { width: 100%; }
+            .phase-header { font-size: 1.1rem; padding: 12px 15px; }
+            .phase-body { padding: 15px; }
+            .agenda-grid { display: flex; flex-direction: column-reverse; gap: 25px; }
+            .agenda-grid > div:last-child { position: static; } 
+            .task-card { flex-direction: column; align-items: flex-start; gap: 15px; padding: 15px; }
+            .task-card > div:last-child { width: 100%; display: flex; gap: 10px; }
+            .task-card button { flex: 1; padding: 8px; font-size: 0.85rem; }
+            .finance-grid { display: flex; flex-direction: column; gap: 25px; }
+            .finance-stats { grid-template-columns: 1fr; gap: 10px; margin-bottom: 15px; }
+            .stat-card { padding: 15px; }
+            .trans-card { flex-direction: column; align-items: flex-start; gap: 10px; padding: 15px; }
+            .trans-card > div:last-child { width: 100%; justify-content: space-between; margin-top: 10px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 10px;}
+            .modal-content { padding: 20px; width: 95%; max-height: 90vh; overflow-y: auto; }
+            .modal-content > div:last-child { flex-direction: column-reverse; }
+            .modal-content button { width: 100%; margin-top: 10px;}
+            #mindmap-detail-panel { width: 100%; border-left: none; border-top: 2px solid var(--cp-cyan); padding: 20px; }
+        }
     </style>
 </head>
 <body>
 
+    <!-- Effets d'interface -->
     <div class="scanlines"></div>
     <canvas id="data-rain-canvas"></canvas>
 
     <header>
-        <div class="sys-status cyber-number" id="sys-clock">ACTUALISATION...</div>
-        <div class="player-info"><div class="player-name" style="color: var(--cp-yellow); font-family: var(--font-title); font-size: 2rem;">V</div></div>
+        <div class="sys-status cyber-number" id="sys-clock">
+            <span class="blink">▶</span> CHARGEMENT TEMPOREL...
+        </div>
+        <div class="player-info">
+            <div class="player-name">V</div>
+        </div>
     </header>
 
     <nav>
-        <button class="nav-btn active" onclick="switchTab('view-nexus')">CENTRE DE CONTRÔLE</button>
-        <button class="nav-btn" onclick="switchTab('view-protocols')">PROTOCOLES</button>
-        <button class="nav-btn" onclick="switchTab('view-finance')">FINANCE</button>
+        <button class="nav-btn chamfer active" onclick="switchTab('view-nexus')">CENTRE DE CONTRÔLE</button>
+        <button class="nav-btn chamfer" onclick="switchTab('view-protocols')">PROTOCOLES</button>
+        <button class="nav-btn chamfer" onclick="switchTab('view-database')">BASE DE DONNÉES</button>
+        <button class="nav-btn chamfer" onclick="switchTab('view-mindmap')">MINDMAP</button>
+        <button class="nav-btn chamfer" onclick="switchTab('view-agenda')">PLANIFICATEUR</button>
+        <button class="nav-btn chamfer" onclick="switchTab('view-finance')">FINANCE</button>
     </nav>
 
     <main>
+        <!-- VIEW: NEXUS (Dashboard) -->
         <div id="view-nexus" class="panel active">
-            <h2 class="section-title">État du Système (Cloud)</h2>
-            <div class="dash-stats-grid">
-                <div class="dash-card" style="border-color: var(--cp-cyan);">
-                    <div style="font-family: var(--font-mono);">PROTOCOLES ACTIFS</div>
-                    <div class="dash-card-value cyber-number" id="sum-protocols">0</div>
-                </div>
-                <div class="dash-card" style="border-color: var(--cp-green);">
-                    <div style="font-family: var(--font-mono);">CAPITAL ARIDAGO</div>
-                    <div class="dash-card-value cyber-number" id="sum-finance">0.00 ¥</div>
+            <h2 class="section-title">Centre de Contrôle Global</h2>
+            <div class="overview-grid">
+                <div class="overview-box glass-panel chamfer-reverse">
+                    <h3 style="color: var(--cp-yellow); font-family: var(--font-title); margin-bottom: 25px; text-shadow: 0 0 10px rgba(252,238,10,0.3);">RÉSUMÉ OPÉRATIONNEL</h3>
+                    
+                    <div class="dash-stats-grid">
+                        <div class="dash-card" style="border-left-color: var(--cp-cyan);">
+                            <div class="dash-card-title">PROTOCOLES ACTIFS</div>
+                            <div class="dash-card-value cyber-number" id="sum-protocols">0</div>
+                        </div>
+                        <div class="dash-card" style="border-left-color: var(--cp-yellow);">
+                            <div class="dash-card-title">ACTIONS PLANIFIÉES</div>
+                            <div class="dash-card-value cyber-number" id="sum-agenda">0</div>
+                        </div>
+                        <div class="dash-card" style="border-left-color: var(--cp-purple);">
+                            <div class="dash-card-title">ENTRÉES BDD</div>
+                            <div class="dash-card-value cyber-number" id="sum-notes">0</div>
+                        </div>
+                        <div class="dash-card" style="border-left-color: var(--cp-green);">
+                            <div class="dash-card-title">CAPITAL DISPONIBLE</div>
+                            <div class="dash-card-value cyber-number" id="sum-finance" style="font-size: 1.8rem;">0.00 ¥</div>
+                        </div>
+                    </div>
+                    
+                    <p style="font-family: var(--font-mono); color: var(--cp-cyan); margin-top: 30px; font-size: 1.1rem; text-shadow: 0 0 5px rgba(0,229,255,0.5);">> Synthèse des données en temps réel. Le système est opérationnel.</p>
                 </div>
             </div>
         </div>
 
+        <!-- VIEW: PROTOCOLES -->
         <div id="view-protocols" class="panel">
-            <div style="display: flex; justify-content: space-between; align-items: center;">
-                <h2 class="section-title">Base de Stratégies</h2>
-                <button class="cp-btn" onclick="openModal('modal-new-protocol')">+ NOUVELLE STRATÉGIE</button>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; flex-wrap: wrap; gap: 15px;">
+                <h2 class="section-title" style="margin: 0;">Base de Protocoles</h2>
+                <button class="cp-btn chamfer" onclick="openModal('modal-new-protocol')">+ NOUVEAU PROTOCOLE</button>
             </div>
             <div class="protocol-grid" id="protocol-grid"></div>
         </div>
 
-        <div id="view-finance" class="panel">
-            <h2 class="section-title">Gestion Budgétaire</h2>
-            <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 20px;">
-                <div class="glass-panel">
-                    <h3 style="color: var(--cp-cyan); margin-bottom: 15px;">NOUVEAU FLUX</h3>
-                    <select id="fin-type" class="cp-select"><option value="in">Revenu (+)</option><option value="out">Dépense (-)</option></select>
-                    <input type="text" id="fin-label" class="cp-input" placeholder="Libellé">
-                    <input type="number" id="fin-amount" class="cp-input" placeholder="Montant">
-                    <button class="cp-btn" style="width: 100%; margin-top: 10px;" onclick="addTransaction()">ENREGISTRER</button>
+        <!-- VIEW: PROTOCOLE DETAIL (Formulaire) -->
+        <div id="view-protocol-detail" class="panel">
+            <button class="cp-btn-outline chamfer" style="align-self: flex-start; margin-bottom: 20px;" onclick="closeProtocolDetail()">[ RETOUR AUX PROTOCOLES ]</button>
+            
+            <div class="detail-header-panel glass-panel chamfer-reverse">
+                <div>
+                    <div class="cyber-number" style="color: #aaa; margin-bottom: 5px;" id="detail-last-mod">--</div>
+                    <h2 style="font-family: var(--font-title); font-size: 2.2rem; color: white; text-shadow: 0 2px 5px rgba(0,0,0,0.8);" id="detail-title">Titre</h2>
                 </div>
-                <div class="glass-panel" id="fin-list" style="max-height: 400px; overflow-y: auto;"></div>
+                <div style="display: flex; gap: 15px;">
+                    <button class="cp-btn cyan chamfer" onclick="saveCurrentProtocol()">SAUVEGARDER L'ÉTAT</button>
+                    <button class="cp-btn danger chamfer" onclick="deleteCurrentProtocol()">SUPPRIMER</button>
+                </div>
+            </div>
+
+            <div class="phase-section glass-panel phase-a chamfer-reverse active"><div class="phase-header" onclick="togglePhase(this)"><div>A – Diagnostic : Comprendre avant d'agir</div><div class="cyber-toggle"><svg viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></svg></div></div><div class="phase-body"><div class="step-group"><label class="step-label">1) Nom du problème à traiter :</label><div class="step-subtext">→ Donne un titre clair et court.</div><input type="text" class="cp-input" id="step-1" style="font-size: 1.5rem; font-family: var(--font-title); border-color: var(--cp-red);"></div><div class="form-row"><div class="step-group"><label class="step-label">2) Définition du ou des problèmes :</label><div class="step-subtext">→ Qu'est-ce que c'est exactement et fait une liste.<br>→ Comment ce problème se manifeste concrètement ?</div><textarea class="cp-textarea" id="step-2"></textarea></div><div class="step-group"><label class="step-label">3) La raison qui a causé le problème :</label><div class="step-subtext">→ Causes directes, causes profondes, boucles qui entretiennent le problème.</div><textarea class="cp-textarea" id="step-3"></textarea></div></div><div class="step-group"><label class="step-label">4) Les risques et les conséquences de mon inaction :</label><div class="step-subtext">→ Si j'agis sans réfléchir : quels dommages possibles ? Si je ne fais rien : quelles conséquences ? Le résultat serait-il souhaitable ?</div><textarea class="cp-textarea" id="step-4"></textarea></div></div></div>
+            <div class="phase-section glass-panel phase-b chamfer-reverse"><div class="phase-header" onclick="togglePhase(this)"><div>B – Objectivité : Redéfinir le futur souhaité</div><div class="cyber-toggle"><svg viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></svg></div></div><div class="phase-body"><div class="form-row"><div class="step-group"><label class="step-label">5) Liste des objectifs :</label><div class="step-subtext">→ Objectifs principaux et secondaires.</div><textarea class="cp-textarea" id="step-5"></textarea></div><div class="step-group"><label class="step-label">6) Hiérarchisation :</label><div class="step-subtext">→ Classer les objectifs. Identifier le meilleur ratio Impact/Effort.</div><textarea class="cp-textarea" id="step-6"></textarea></div></div><div class="step-group"><label class="step-label">7) Échéances :</label><div class="step-subtext">→ Deadline globale, sous-deadlines, fenêtre d'opportunité.</div><input type="text" class="cp-input" id="step-7"></div></div></div>
+            <div class="phase-section glass-panel phase-c chamfer-reverse"><div class="phase-header" onclick="togglePhase(this)"><div>C – Génération de solutions : Ouvrir le champ des possibles</div><div class="cyber-toggle"><svg viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></svg></div></div><div class="phase-body"><div class="step-group"><label class="step-label">8) Brainstorming libre :</label><div class="step-subtext">→ Collecte d'idées sans jugement.</div><textarea class="cp-textarea" id="step-8"></textarea></div><div class="step-group"><label class="step-label">9) Vérification des ressources et faisabilité :</label><div class="step-subtext">→ Temps, Argent, Compétences, Probabilité de succès.</div><textarea class="cp-textarea" id="step-9"></textarea></div></div></div>
+            <div class="phase-section glass-panel phase-d chamfer-reverse"><div class="phase-header" onclick="togglePhase(this)"><div>D – Décision : Choisir et s'engager</div><div class="cyber-toggle"><svg viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></svg></div></div><div class="phase-body"><div class="step-group"><label class="step-label">10) Choix du traitement optimal :</label><div class="step-subtext">→ Le meilleur compromis Impact/Risque/Ressources.</div><textarea class="cp-textarea" id="step-10"></textarea></div><div class="step-group"><label class="step-label">11) Engagement personnel :</label><div class="step-subtext">→ Déclaration : "Je m'engage à..."</div><textarea class="cp-textarea" id="step-11"></textarea></div></div></div>
+            <div class="phase-section glass-panel phase-e chamfer-reverse"><div class="phase-header" onclick="togglePhase(this)"><div>E – Exécution : Transformer la théorie en pouvoir</div><div class="cyber-toggle"><svg viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></svg></div></div><div class="phase-body"><div class="step-group"><label class="step-label">12) Actions concrètes :</label><div class="step-subtext">→ Liste d'actions, ordre d'exécution.</div><textarea class="cp-textarea" id="step-12"></textarea></div><div class="form-row"><div class="step-group"><label class="step-label">13) Correction / Ajustements :</label><div class="step-subtext">→ Mesure des résultats, ajustements.</div><textarea class="cp-textarea" id="step-13"></textarea></div><div class="step-group"><label class="step-label">14) Prévention :</label><div class="step-subtext">→ Comment éviter que le problème réapparaisse ?</div><textarea class="cp-textarea" id="step-14"></textarea></div></div></div></div>
+            
+            <div class="phase-section glass-panel phase-f chamfer-reverse">
+                <div class="phase-header" onclick="togglePhase(this)">
+                    <div>F – Opération : Planificateur</div>
+                    <div class="cyber-toggle"><svg viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></svg></div>
+                </div>
+                <div class="phase-body">
+                    <div class="step-subtext" style="margin-bottom: 10px;">> Liste des actions de ce protocole extraites de votre Agenda.</div>
+                    <div id="protocol-agenda-list" style="display:flex; flex-direction:column; gap:12px; margin-bottom: 25px;"></div>
+                    <button class="cp-btn-outline orange chamfer" style="align-self: flex-start; padding: 12px 20px;" onclick="goToAgendaWithSource()">+ PLANIFIER UNE NOUVELLE ACTION</button>
+                </div>
             </div>
         </div>
+
+        <!-- VIEW: BASE DE DONNÉES (NOTES) -->
+        <div id="view-database" class="panel">
+             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; flex-wrap: wrap; gap: 15px;">
+                <h2 class="section-title" style="margin: 0;">Base de Données / Notes Libres</h2>
+                <button class="cp-btn cyan chamfer" onclick="openNewNoteModal()">+ NOUVELLE ENTRÉE</button>
+            </div>
+            <div id="note-filters" class="filter-bar"></div>
+            <div class="note-grid" id="note-list-container"></div>
+        </div>
+
+        <!-- VIEW: MINDMAP -->
+        <div id="view-mindmap" class="panel">
+            <h2 class="section-title">Réseau Neural / Mindmap</h2>
+            <div id="mindmap-container" class="glass-panel" style="position: relative; overflow: hidden; height: 75vh; min-height: 500px; border-radius: 4px;">
+                <canvas id="mindmap-canvas" style="touch-action: none;"></canvas>
+                <div class="zoom-controls">
+                    <button class="zoom-btn chamfer" onclick="zoomMindmap(0.2)">+</button>
+                    <button class="zoom-btn chamfer" onclick="resetMindmapView()">[ ]</button>
+                    <button class="zoom-btn chamfer" onclick="zoomMindmap(-0.2)">-</button>
+                </div>
+                <div style="position: absolute; top: 25px; left: 25px; font-family: var(--font-mono); color: var(--cp-cyan); pointer-events: none; text-shadow: 0 0 8px rgba(0,229,255,0.8);">
+                    > EXPLORATEUR ACTIF <br>> SCROLL = ZOOM <br>> GLISSER = NAVIGUER
+                </div>
+                
+                <div id="mindmap-detail-panel">
+                    <h3 id="mm-detail-title" style="color: var(--cp-cyan); font-family: var(--font-title); font-size: 1.5rem; margin-bottom: 15px;">Titre</h3>
+                    <div id="mm-readonly-content" style="display:none; font-family: var(--font-mono); color: #ccc; font-size: 1.05rem; line-height: 1.6; overflow-y: auto; flex-grow: 1; white-space: pre-wrap; margin-bottom: 20px;"></div>
+                    <textarea id="mm-edit-content" class="cp-textarea" style="flex-grow: 1; margin-bottom: 25px; font-family: var(--font-mono); font-size: 1.05rem;"></textarea>
+                    <div style="display:flex; flex-direction: column; gap:15px;">
+                        <button id="mm-save-btn" class="cp-btn cyan chamfer" style="width: 100%; padding: 15px;" onclick="saveMindmapNode()">SAUVEGARDER LA MODIFICATION</button>
+                        <button class="cp-btn-outline danger chamfer" style="width: 100%; padding: 12px;" onclick="closeMindmapDetail()">FERMER LE PANNEAU</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- VIEW: AGENDA -->
+        <div id="view-agenda" class="panel">
+            <h2 class="section-title">Planificateur Opérationnel</h2>
+            <div id="agenda-filters" class="filter-bar"></div>
+            <div class="agenda-grid">
+                <div class="task-list" id="agenda-list"></div>
+                <div>
+                    <div class="glass-panel chamfer-reverse" style="padding: 30px; position: sticky; top: 0;">
+                        <h3 style="color: var(--cp-cyan); margin-bottom: 25px; font-family: var(--font-title);" id="agenda-form-title">AJOUTER ACTION</h3>
+                        <div class="step-group"><label class="step-label" style="font-size:1rem;">Titre de l'action</label><input type="text" id="ag-title" class="cp-input"></div>
+                        <div class="step-group"><label class="step-label" style="font-size:1rem;">Date & Heure limite</label><input type="datetime-local" id="ag-date" class="cp-input" style="font-family: var(--font-mono);"></div>
+                        
+                        <div class="step-group">
+                            <label class="step-label" style="font-size:1rem;">Tags / Projet (Optionnel)</label>
+                            <input type="text" id="ag-tags" class="cp-input" placeholder="ex: #Aridago, #USTB">
+                        </div>
+
+                        <div class="step-group" style="margin-bottom: 30px;"><label class="step-label" style="font-size:1rem;">Source (Protocole lié)</label><input type="text" id="ag-source" class="cp-input" placeholder="Ex: Projet Alpha"></div>
+                        <button class="cp-btn chamfer" style="width: 100%;" id="ag-btn-submit" onclick="submitAgendaTask()">GÉNÉRER</button>
+                        <button class="cp-btn danger chamfer" style="width: 100%; margin-top: 15px; display: none;" id="ag-btn-cancel" onclick="resetAgendaForm()">ANNULER MODIFICATION</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- VIEW: FINANCE -->
+        <div id="view-finance" class="panel">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; flex-wrap: wrap; gap: 15px;">
+                <h2 class="section-title" style="margin: 0;">Gestion Budgétaire</h2>
+                <div class="glass-panel chamfer-reverse" style="display: flex; gap: 15px; align-items: center; padding: 10px 20px;">
+                    <label style="font-family: var(--font-mono); color: var(--cp-cyan); font-weight: bold;">DEVISE:</label>
+                    <select id="fin-currency" class="cp-select" style="padding: 5px 10px; width: auto; font-weight: bold;" onchange="changeCurrency()">
+                        <option value="EUR">Euro (€)</option>
+                        <option value="MGA">Ariary (Ar)</option>
+                        <option value="USD">Dollar ($)</option>
+                        <option value="CNY">Yuan (¥)</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="finance-stats">
+                <div class="stat-card glass-panel chamfer-reverse"><div class="stat-title">Solde Total</div><div class="stat-value cyber-number" id="fin-solde">0.00</div></div>
+                <div class="stat-card glass-panel chamfer-reverse"><div class="stat-title">Total Revenus</div><div class="stat-value cyber-number text-green" id="fin-revenus">0.00</div></div>
+                <div class="stat-card glass-panel chamfer-reverse"><div class="stat-title">Total Dépenses</div><div class="stat-value cyber-number text-red" id="fin-depenses">0.00</div></div>
+            </div>
+
+            <div class="finance-grid">
+                <div class="glass-panel chamfer-reverse" style="padding: 30px;">
+                    <h3 style="color: var(--cp-cyan); margin-bottom: 25px; font-family: var(--font-title);" id="fin-form-title">NOUVELLE TRANSACTION</h3>
+                    <div class="step-group"><label class="step-label" style="font-size:1rem;">Type</label><select id="fin-type" class="cp-select"><option value="in">Revenu (+)</option><option value="out">Dépense (-)</option></select></div>
+                    <div class="step-group"><label class="step-label" style="font-size:1rem;">Libellé</label><input type="text" id="fin-label" class="cp-input" placeholder="Ex: Loyer, Salaire"></div>
+                    <div class="step-group" style="margin-bottom: 30px;"><label class="step-label" style="font-size:1rem;">Montant (Devise choisie)</label><input type="number" id="fin-amount" class="cp-input" step="0.01"></div>
+                    <button class="cp-btn chamfer" style="width: 100%;" id="fin-btn-submit" onclick="submitTransaction()">ENREGISTRER LE FLUX</button>
+                    <button class="cp-btn danger chamfer" style="width: 100%; margin-top: 15px; display: none;" id="fin-btn-cancel" onclick="resetFinanceForm()">ANNULER MODIFICATION</button>
+                </div>
+                <div>
+                    <h3 style="color: #aaa; margin-bottom: 15px; font-family: var(--font-title);">HISTORIQUE DES FLUX</h3>
+                    <div id="fin-list" style="display: flex; flex-direction: column; gap: 12px; max-height: 480px; overflow-y: auto; padding-right: 5px;"></div>
+                </div>
+            </div>
+        </div>
+
     </main>
 
+    <!-- MODALS & TOASTS -->
+    <div id="toast-container"></div>
+    
     <div class="modal" id="modal-new-protocol">
-        <div class="modal-content glass-panel">
-            <h2 class="section-title">INITIALISATION CLOUD</h2>
-            <input type="text" id="new-p-name" class="cp-input" placeholder="Nom du problème">
-            <textarea id="new-p-desc" class="cp-textarea" placeholder="Description de la stratégie Ariel..."></textarea>
-            <div style="display:flex; gap:10px; margin-top:20px;">
-                <button class="cp-btn" onclick="addProtocol()">CRÉER</button>
-                <button class="cp-btn" style="background: var(--cp-red); color: white;" onclick="closeModal('modal-new-protocol')">ANNULER</button>
+        <div class="modal-content glass-panel chamfer">
+            <h2 class="section-title">INITIALISATION</h2>
+            <div class="step-group" style="margin-bottom: 25px;">
+                <label style="color: white; font-size: 1.1rem; font-family: var(--font-ui);">Nom du problème</label>
+                <input type="text" id="new-p-name" class="cp-input" style="font-size: 1.2rem;">
+            </div>
+            <div style="display:flex; gap:15px; justify-content:flex-end;">
+                <button class="cp-btn chamfer" onclick="createProtocol()">CRÉER</button>
+                <button class="cp-btn-outline danger chamfer" onclick="closeModal('modal-new-protocol')">ANNULER</button>
             </div>
         </div>
     </div>
 
-    <div id="toast-container"></div>
+    <div class="modal" id="modal-new-note">
+        <div class="modal-content glass-panel chamfer">
+            <h2 class="section-title" id="note-modal-title" style="color: var(--cp-red); border-color: var(--cp-red);">NOUVELLE ENTRÉE (BDD)</h2>
+            <div class="step-group" style="margin-bottom: 15px;">
+                <label style="color: white; font-family: var(--font-ui);">Sujet / Titre</label>
+                <input type="text" id="new-n-title" class="cp-input" style="font-size: 1.1rem;">
+            </div>
+            <div class="step-group" style="margin-bottom: 15px;">
+                <label style="color: white; font-family: var(--font-ui);">Tags / Projet (Optionnel)</label>
+                <input type="text" id="new-n-tags" class="cp-input" style="font-size: 1.1rem;" placeholder="ex: #Aridago, #USTB">
+            </div>
+            <div class="step-group" style="margin-bottom: 25px;">
+                <label style="color: white; font-family: var(--font-ui);">Contenu des données</label>
+                <textarea id="new-n-content" class="cp-textarea"></textarea>
+            </div>
+            <div style="display:flex; gap:15px; justify-content:flex-end;">
+                <button class="cp-btn danger chamfer" onclick="submitNote()">SAUVEGARDER</button>
+                <button class="cp-btn-outline danger chamfer" onclick="closeModal('modal-new-note')">ANNULER</button>
+            </div>
+        </div>
+    </div>
 
+    <!-- ========================================== -->
+    <!-- SCRIPT FIREBASE (INTEGRATION CLOUD)        -->
+    <!-- ========================================== -->
     <script type="module">
-        // CONFIGURATION FIREBASE EXACTE
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
+        // Configuration Firebase originale
         const firebaseConfig = {
             apiKey: "AIzaSyDSk2LGZ_J4hrpzAslfoLbBt_lqeZMAZHE",
             authDomain: "ariel-os-database.firebaseapp.com",
@@ -138,88 +585,609 @@
 
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
+        
+        // On crée un document unique dans Firestore pour stocker TOUT ton OS
+        const stateDocRef = doc(db, "ArielOS", "MainState");
 
-        // --- LOGIQUE DE SYNCHRONISATION ---
+        window.isCloudReady = false;
 
-        // Écouter les Protocoles
-        onSnapshot(query(collection(db, "protocols"), orderBy("timestamp", "desc")), (snapshot) => {
-            const grid = document.getElementById('protocol-grid');
-            grid.innerHTML = '';
-            document.getElementById('sum-protocols').innerText = snapshot.size;
-            snapshot.forEach(d => {
-                const data = d.data();
-                grid.innerHTML += `
-                    <div class="protocol-card chamfer">
-                        <div style="color:var(--cp-cyan); font-family:var(--font-mono); font-size:0.8rem;">CLOUD_ID: ${d.id.substring(0,6)}</div>
-                        <h3 style="color:white; margin: 10px 0;">${data.name}</h3>
-                        <p style="font-size:0.9rem; color:#aaa;">${data.desc}</p>
-                        <button onclick="deleteCloudItem('protocols', '${d.id}')" style="margin-top:15px; background:none; color:var(--cp-red); border:1px solid var(--cp-red); cursor:pointer; padding:5px;">SUPPRIMER</button>
-                    </div>`;
-            });
+        // Ecoute en temps réel de la base de données
+        onSnapshot(stateDocRef, (docSnap) => {
+            if (docSnap.exists()) {
+                const data = docSnap.data();
+                if (window.parseDataCloud) {
+                    window.parseDataCloud(data);
+                }
+            }
+            if (!window.isCloudReady) {
+                window.isCloudReady = true;
+                if (window.showToast) window.showToast("CONNECTÉ AU SERVEUR CLOUD", "var(--cp-cyan)");
+                document.getElementById('sys-clock').innerHTML = `<span class="blink">▶</span> SYSTÈME EN LIGNE`;
+            }
         });
 
-        // Écouter les Finances
-        onSnapshot(query(collection(db, "transactions"), orderBy("timestamp", "desc")), (snapshot) => {
-            const list = document.getElementById('fin-list');
-            let total = 0;
-            list.innerHTML = '';
-            snapshot.forEach(d => {
-                const data = d.data();
-                const amt = parseFloat(data.amount);
-                total += (data.type === 'in' ? amt : -amt);
-                list.innerHTML += `
-                    <div style="display:flex; justify-content:space-between; padding:10px; border-bottom:1px solid #333; color:${data.type==='in'?'var(--cp-green)':'var(--cp-red)'}">
-                        <span>${data.label}</span>
-                        <span class="cyber-number">${data.type==='in'?'+':'-'} ${amt.toFixed(2)} ¥</span>
-                    </div>`;
+        // Fonction globale de sauvegarde appelée par ton script principal
+        window.saveDataToCloud = function(data) {
+            setDoc(stateDocRef, data).catch(e => {
+                console.error("Erreur de sauvegarde:", e);
+                if (window.showToast) window.showToast("ERREUR SYNCHRONISATION", "var(--cp-red)");
             });
-            document.getElementById('sum-finance').innerText = total.toFixed(2) + " ¥";
+        };
+    </script>
+
+    <!-- ========================================== -->
+    <!-- SCRIPT PRINCIPAL DU SITE                   -->
+    <!-- ========================================== -->
+    <script>
+        // --- DATA STATE ---
+        let protocols = [];
+        let notes = [];
+        let agendaTasks = [];
+        let transactions = [];
+        let currentCurrency = 'CNY';
+
+        let currentProtocolId = null;
+        let currentEditNoteId = null;
+        let currentEditTaskId = null;
+        let currentEditTransId = null;
+        
+        // Tags State
+        let currentNoteFilter = 'ALL';
+        let currentAgendaFilter = 'ALL';
+        
+        const exchangeRates = { 'EUR': 1, 'MGA': 4950, 'USD': 1.08, 'CNY': 7.8 };
+        const currencySymbols = { 'EUR': '€', 'MGA': 'Ar', 'USD': '$', 'CNY': '¥' };
+
+        // --- DATA RAIN ---
+        const rainCanvas = document.getElementById('data-rain-canvas');
+        const rainCtx = rainCanvas ? rainCanvas.getContext('2d') : null;
+        let rainDrops = []; let rainActive = false; let rainTimer = null;
+        const matrixChars = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZАБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ$+-*/=%#_";
+        
+        function initRain() {
+            if(!rainCanvas) return;
+            rainCanvas.width = window.innerWidth;
+            rainCanvas.height = window.innerHeight;
+            const columns = rainCanvas.width / 16;
+            rainDrops = [];
+            for(let x = 0; x < columns; x++) rainDrops[x] = 1;
+        }
+        function drawRain() {
+            if(!rainActive || !rainCtx) return;
+            rainCtx.fillStyle = "rgba(0, 0, 0, 0.08)";
+            rainCtx.fillRect(0, 0, rainCanvas.width, rainCanvas.height);
+            rainCtx.fillStyle = "#00e5ff";
+            rainCtx.font = "16px monospace";
+            for(let i = 0; i < rainDrops.length; i++) {
+                const text = matrixChars.charAt(Math.floor(Math.random() * matrixChars.length));
+                rainCtx.fillText(text, i * 16, rainDrops[i] * 16);
+                if(rainDrops[i] * 16 > rainCanvas.height && Math.random() > 0.975) rainDrops[i] = 0;
+                rainDrops[i]++;
+            }
+            requestAnimationFrame(drawRain);
+        }
+        
+        window.addEventListener('resize', () => {
+            initRain();
+            if (mmCanvas && document.getElementById('view-mindmap').classList.contains('active')) {
+                const container = document.getElementById('mindmap-container');
+                mmCanvas.width = container.clientWidth;
+                mmCanvas.height = container.clientHeight;
+            }
         });
 
-        // --- ACTIONS ---
-        window.addProtocol = async () => {
-            const name = document.getElementById('new-p-name').value;
-            const desc = document.getElementById('new-p-desc').value;
-            if(!name) return;
-            await addDoc(collection(db, "protocols"), { name, desc, timestamp: Date.now() });
-            closeModal('modal-new-protocol');
-            showToast("PROTOCOLE SYNCHRONISÉ");
-        };
-
-        window.addTransaction = async () => {
-            const label = document.getElementById('fin-label').value;
-            const amount = document.getElementById('fin-amount').value;
-            const type = document.getElementById('fin-type').value;
-            if(!label || !amount) return;
-            await addDoc(collection(db, "transactions"), { label, amount, type, timestamp: Date.now() });
-            showToast("FLUX ENREGISTRÉ");
-        };
-
-        window.deleteCloudItem = async (col, id) => {
-            if(confirm("Supprimer définitivement du Cloud ?")) await deleteDoc(doc(db, col, id));
-        };
-
-        // --- UI UTILS ---
-        window.switchTab = (id) => {
-            document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
-            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-            document.getElementById(id).classList.add('active');
-            event.target.classList.add('active');
-        };
-
-        window.openModal = (id) => document.getElementById(id).classList.add('active');
-        window.closeModal = (id) => document.getElementById(id).classList.remove('active');
-
-        function showToast(msg) {
-            const container = document.getElementById('toast-container');
-            const t = document.createElement('div'); t.className = 'toast'; t.innerText = msg;
-            container.appendChild(t); setTimeout(() => t.remove(), 3000);
+        function triggerDataRain() {
+            if(!rainCanvas) return;
+            if(!rainActive) {
+                initRain(); rainActive = true; rainCanvas.style.opacity = '0.35'; drawRain();
+            }
+            clearTimeout(rainTimer);
+            rainTimer = setTimeout(() => {
+                rainCanvas.style.opacity = '0';
+                setTimeout(() => { rainActive = false; }, 500);
+            }, 1200);
         }
 
-        setInterval(() => {
-            const d = new Date();
-            document.getElementById('sys-clock').innerText = d.toLocaleTimeString();
-        }, 1000);
+        function showToast(message, color = 'var(--cp-green)') {
+            const container = document.getElementById('toast-container');
+            if(container) {
+                const toast = document.createElement('div'); toast.className = 'toast glass-panel chamfer-reverse';
+                toast.style.borderColor = color; toast.style.borderLeftColor = color; toast.innerText = message;
+                container.appendChild(toast);
+                setTimeout(() => { toast.style.opacity = '0'; setTimeout(() => toast.remove(), 400); }, 3000);
+            }
+        }
+        window.showToast = showToast; // Exposer pour le module Firebase
+
+        // --- TAGS SYSTEM ---
+        function extractTags(str) {
+            if(!str) return [];
+            return str.split(',').map(s => s.trim().toUpperCase()).filter(s => s !== '').map(s => s.startsWith('#') ? s : '#' + s);
+        }
+
+        function setNoteFilter(tag) { currentNoteFilter = tag; renderNotes(); }
+        function setAgendaFilter(tag) { currentAgendaFilter = tag; renderAgenda(); }
+
+        // --- SAVE/LOAD SYSTEM (FIREBASE CLOUD) ---
+        function loadData() {
+            // Le chargement se fait automatiquement via le onSnapshot de Firebase.
+            document.getElementById('sys-clock').innerHTML = `<span class="blink">▶</span> CONNEXION CLOUD...`;
+        }
+
+        window.parseDataCloud = function(parsed) {
+            if(parsed) {
+                protocols = parsed.protocols || [];
+                notes = parsed.notes || [];
+                agendaTasks = parsed.agendaTasks || [];
+                transactions = parsed.transactions || [];
+                currentCurrency = parsed.currentCurrency || 'CNY';
+            }
+            let currencySelect = document.getElementById('fin-currency');
+            if(currencySelect) currencySelect.value = currentCurrency;
+
+            renderProtocols(); renderAgenda(); renderFinance(); renderNotes(); updateDashboardSummary();
+            
+            // Rafraichir le détail du protocole s'il est ouvert pour éviter les conflits d'interface
+            if(currentProtocolId) {
+                 const p = protocols.find(x => x.id === currentProtocolId);
+                 if(p) { renderProtocolAgenda(p.data.step1); } 
+                 else { closeProtocolDetail(); }
+            }
+            
+            if(mindmapAnimId) buildMindmapData();
+        };
+
+        function saveData() {
+            const dataToSave = { protocols, notes, agendaTasks, transactions, currentCurrency };
+            if (window.saveDataToCloud) {
+                window.saveDataToCloud(dataToSave);
+            }
+            triggerDataRain(); 
+        }
+
+        function stateChanged() {
+            saveData();
+            updateDashboardSummary();
+        }
+
+        // --- DASHBOARD SUMMARY ---
+        function updateDashboardSummary() {
+            let sumProtocols = document.getElementById('sum-protocols');
+            if(sumProtocols) sumProtocols.innerText = protocols.length;
+            
+            let sumAgenda = document.getElementById('sum-agenda');
+            if(sumAgenda) sumAgenda.innerText = agendaTasks.length;
+            
+            let sumNotes = document.getElementById('sum-notes');
+            if(sumNotes) sumNotes.innerText = notes.length;
+            
+            let sumFinance = document.getElementById('sum-finance');
+            if(sumFinance) {
+                let inT = 0, outT = 0;
+                transactions.forEach(t => { if(t.type === 'in') inT += t.baseAmount; else outT += t.baseAmount; });
+                sumFinance.innerText = formatCurrency(inT - outT);
+            }
+        }
+
+        // --- CLOCK ---
+        function updateClock() {
+            // L'horloge affiche l'heure normale après la connexion cloud.
+            if (!window.isCloudReady) return;
+            const days = ['Dimanche', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi'];
+            const months = ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'];
+            const pad = n => n.toString().padStart(2, '0'); const d = new Date();
+            let clockEl = document.getElementById('sys-clock');
+            if (clockEl) clockEl.innerHTML = `<span class="blink">▶</span> ${days[d.getDay()]} ${pad(d.getDate())} ${months[d.getMonth()]} ${d.getFullYear()} [${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}]`;
+        }
+        setInterval(updateClock, 1000);
+
+        function formatDateFull(timestamp) {
+            const pad = n => n.toString().padStart(2, '0'); const d = new Date(timestamp);
+            return `${pad(d.getDate())}/${pad(d.getMonth()+1)}/${d.getFullYear()} à ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+        }
+
+        // --- UTILS ---
+        function switchTab(viewId) {
+            if(mindmapAnimId) { cancelAnimationFrame(mindmapAnimId); mindmapAnimId = null; }
+            document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
+            if(event && event.target && event.target.classList) event.target.classList.add('active');
+            
+            document.querySelectorAll('.panel').forEach(panel => panel.classList.remove('active'));
+            let targetView = document.getElementById(viewId);
+            if(targetView) targetView.classList.add('active');
+            
+            if(viewId === 'view-mindmap') { setTimeout(initMindmap, 100); }
+        }
+
+        function togglePhase(element) { if(element && element.parentElement) element.parentElement.classList.toggle('active'); }
+        function openModal(id) { let modal = document.getElementById(id); if(modal) modal.classList.add('active'); }
+        function closeModal(id) { 
+            let modal = document.getElementById(id); if(modal) modal.classList.remove('active'); 
+            if(id==='modal-new-protocol') { let ni = document.getElementById('new-p-name'); if(ni) ni.value = ''; }
+            if(id==='modal-new-note') { document.getElementById('new-n-title').value = ''; document.getElementById('new-n-tags').value = ''; document.getElementById('new-n-content').value = ''; }
+        }
+
+        // --- PROTOCOLES ---
+        function renderProtocols() {
+            const grid = document.getElementById('protocol-grid'); if(!grid) return;
+            grid.innerHTML = '';
+            protocols.sort((a,b) => b.lastModified - a.lastModified).forEach(p => {
+                const card = document.createElement('div'); card.className = 'protocol-card glass-panel chamfer-reverse'; card.onclick = () => openProtocolDetail(p.id);
+                card.innerHTML = `<div class="cyber-number" style="color:var(--text-muted); font-size:0.8rem;">${formatDateFull(p.lastModified)}</div><div class="protocol-title">${p.data.step1 || 'Sans Titre'}</div>`;
+                grid.appendChild(card);
+            });
+        }
+        function openProtocolDetail(id) {
+            currentProtocolId = id; const p = protocols.find(x => x.id === id); if(!p) return;
+            for(let i=1; i<=14; i++) { const el = document.getElementById('step-'+i); if(el) el.value = p.data['step'+i] || ''; }
+            document.getElementById('detail-title').innerText = p.data.step1 || 'Protocole';
+            document.getElementById('detail-last-mod').innerText = formatDateFull(p.lastModified);
+            renderProtocolAgenda(p.data.step1);
+            document.querySelectorAll('.panel').forEach(el => el.classList.remove('active'));
+            document.getElementById('view-protocol-detail').classList.add('active');
+        }
+        function closeProtocolDetail() {
+            currentProtocolId = null; document.querySelectorAll('.panel').forEach(el => el.classList.remove('active'));
+            document.getElementById('view-protocols').classList.add('active'); 
+            renderProtocols(); if(mindmapAnimId) buildMindmapData();
+        }
+        function saveCurrentProtocol() {
+            if(!currentProtocolId) return; const p = protocols.find(x => x.id === currentProtocolId); if(!p) return;
+            let oldTitle = p.data.step1;
+            for(let i=1; i<=14; i++) { const el = document.getElementById('step-'+i); if(el) p.data['step'+i] = el.value; }
+            if(oldTitle !== p.data.step1 && oldTitle !== "") {
+                agendaTasks.forEach(t => { if(t.source === oldTitle) t.source = p.data.step1; }); renderAgenda();
+            }
+            p.lastModified = Date.now();
+            document.getElementById('detail-title').innerText = p.data.step1 || 'Sans Titre';
+            document.getElementById('detail-last-mod').innerText = formatDateFull(p.lastModified);
+            renderProtocolAgenda(p.data.step1); showToast("DONNÉES SAUVEGARDÉES", "var(--cp-green)"); stateChanged();
+        }
+        function createProtocol() {
+            let nameInput = document.getElementById('new-p-name'); if(!nameInput) return;
+            const name = nameInput.value; if(!name) return;
+            const newId = Date.now(); protocols.push({ id: newId, lastModified: Date.now(), data: { step1: name } });
+            stateChanged(); showToast("PROTOCOLE INITIALISÉ", "var(--cp-cyan)");
+            closeModal('modal-new-protocol'); renderProtocols(); openProtocolDetail(newId); 
+        }
+        function deleteCurrentProtocol() {
+            if(!currentProtocolId) return;
+            if(confirm("Confirmer la suppression de ce protocole ?")) {
+                protocols = protocols.filter(p => p.id !== currentProtocolId);
+                stateChanged(); showToast("PROTOCOLE SUPPRIMÉ", "var(--cp-red)"); closeProtocolDetail(); 
+            }
+        }
+
+        // --- AGENDA DANS PROTOCOLE (PHASE F) ---
+        function renderProtocolAgenda(sourceName) {
+            const container = document.getElementById('protocol-agenda-list'); if(!container) return;
+            container.innerHTML = '';
+            const tasks = agendaTasks.filter(t => t.source === sourceName);
+            if(tasks.length === 0) { container.innerHTML = '<div style="color:var(--cp-text); font-family:var(--font-mono); opacity:0.7;">Aucune action planifiée pour le moment.</div>'; return; }
+            tasks.forEach(t => {
+                container.innerHTML += `<div style="background:rgba(10,10,12,0.8); border-left:3px solid var(--cp-orange); padding:15px; font-family:var(--font-mono); color:white; display:flex; justify-content:space-between; align-items:center;"><div><div class="cyber-number" style="color:var(--cp-orange); font-size:0.85rem; margin-bottom:5px;">${t.date.replace('T', ' à ')}</div><div style="font-size: 1.1rem; font-weight:bold;">${t.title}</div></div></div>`;
+            });
+        }
+        function goToAgendaWithSource() {
+            if(!currentProtocolId) return; const p = protocols.find(x => x.id === currentProtocolId);
+            if(p) { switchTab('view-agenda'); document.getElementById('ag-source').value = p.data.step1; document.getElementById('ag-title').focus(); }
+        }
+
+        // --- BASE DE DONNÉES (NOTES) ---
+        function openNewNoteModal() {
+            currentEditNoteId = null; 
+            document.getElementById('new-n-title').value = ''; 
+            document.getElementById('new-n-tags').value = ''; 
+            document.getElementById('new-n-content').value = '';
+            document.getElementById('note-modal-title').innerText = "NOUVELLE ENTRÉE (BDD)"; 
+            openModal('modal-new-note');
+        }
+        function editNote(id) {
+            currentEditNoteId = id; const n = notes.find(x => x.id === id); if(!n) return;
+            document.getElementById('new-n-title').value = n.title; 
+            document.getElementById('new-n-tags').value = (n.tags || []).join(', ');
+            document.getElementById('new-n-content').value = n.content;
+            document.getElementById('note-modal-title').innerText = "MODIFIER L'ENTRÉE"; 
+            openModal('modal-new-note');
+        }
+        function renderNotes() {
+            const filtersContainer = document.getElementById('note-filters');
+            if(filtersContainer) {
+                let allTags = new Set();
+                notes.forEach(n => { if(n.tags) n.tags.forEach(t => allTags.add(t)); });
+                filtersContainer.innerHTML = `<button class="filter-btn ${currentNoteFilter === 'ALL' ? 'active' : ''}" onclick="setNoteFilter('ALL')">TOUT</button>`;
+                Array.from(allTags).sort().forEach(tag => {
+                    filtersContainer.innerHTML += `<button class="filter-btn ${currentNoteFilter === tag ? 'active' : ''}" onclick="setNoteFilter('${tag}')">${tag}</button>`;
+                });
+            }
+
+            const grid = document.getElementById('note-list-container'); if(!grid) return;
+            grid.innerHTML = '';
+            
+            let filteredNotes = currentNoteFilter === 'ALL' ? notes : notes.filter(n => n.tags && n.tags.includes(currentNoteFilter));
+
+            filteredNotes.forEach(n => {
+                let tagsHtml = n.tags ? n.tags.map(t => `<span class="tag-badge">${t}</span>`).join('') : '';
+                const card = document.createElement('div'); card.className = 'note-card glass-panel chamfer-reverse';
+                card.innerHTML = `<div class="note-title">${n.title}</div><div class="note-preview">${n.content.replace(/\n/g, '<br>')}</div><div style="margin-bottom: 15px;">${tagsHtml}</div><div style="display: flex; gap: 10px; margin-top: auto;"><button class="cp-btn-outline chamfer" style="padding: 8px 12px; font-size: 0.8rem;" onclick="editNote(${n.id}); event.stopPropagation();">MODIFIER</button><button class="cp-btn-outline danger chamfer" style="padding: 8px 12px; font-size: 0.8rem;" onclick="deleteNote(${n.id}); event.stopPropagation();">X</button></div>`;
+                grid.appendChild(card);
+            });
+        }
+        function submitNote() {
+            const title = document.getElementById('new-n-title').value; 
+            const tagsInput = document.getElementById('new-n-tags').value;
+            const content = document.getElementById('new-n-content').value;
+            const tags = extractTags(tagsInput);
+
+            if(!title) return showToast("Titre requis", "var(--cp-red)");
+            if(currentEditNoteId) { 
+                const n = notes.find(x => x.id === currentEditNoteId); 
+                if(n) { n.title = title; n.tags = tags; n.content = content; } 
+                showToast("NOTE MODIFIÉE"); 
+            } else { 
+                notes.push({ id: Date.now(), title, tags, content }); 
+                showToast("NOTE ENREGISTRÉE"); 
+            }
+            stateChanged(); closeModal('modal-new-note'); renderNotes(); if(mindmapAnimId) buildMindmapData();
+        }
+        function deleteNote(id) {
+            if(confirm("Confirmer la suppression de cette note ?")) { notes = notes.filter(n => n.id !== id); stateChanged(); renderNotes(); if(mindmapAnimId) buildMindmapData(); showToast("NOTE SUPPRIMÉE", "var(--cp-red)"); }
+        }
+
+        // --- AGENDA ---
+        function renderAgenda() {
+            const filtersContainer = document.getElementById('agenda-filters');
+            if(filtersContainer) {
+                let allTags = new Set();
+                agendaTasks.forEach(t => { if(t.tags) t.tags.forEach(tg => allTags.add(tg)); });
+                filtersContainer.innerHTML = `<button class="filter-btn ${currentAgendaFilter === 'ALL' ? 'active' : ''}" onclick="setAgendaFilter('ALL')">TOUT</button>`;
+                Array.from(allTags).sort().forEach(tag => {
+                    filtersContainer.innerHTML += `<button class="filter-btn ${currentAgendaFilter === tag ? 'active' : ''}" onclick="setAgendaFilter('${tag}')">${tag}</button>`;
+                });
+            }
+
+            const list = document.getElementById('agenda-list'); if(!list) return;
+            list.innerHTML = '';
+            
+            let filteredTasks = currentAgendaFilter === 'ALL' ? agendaTasks : agendaTasks.filter(t => t.tags && t.tags.includes(currentAgendaFilter));
+
+            filteredTasks.sort((a,b) => new Date(a.date) - new Date(b.date)).forEach(t => {
+                let tagsHtml = t.tags ? t.tags.map(tg => `<span class="tag-badge cyan">${tg}</span>`).join('') : '';
+                const d = new Date(t.date); const dateStr = `${d.getDate().toString().padStart(2,'0')}/${(d.getMonth()+1).toString().padStart(2,'0')} à ${d.getHours().toString().padStart(2,'0')}:${d.getMinutes().toString().padStart(2,'0')}`;
+                const card = document.createElement('div'); card.className = 'task-card glass-panel chamfer-reverse';
+                card.innerHTML = `<div><div class="task-date cyber-number">${dateStr}</div><div class="task-title">${t.title}</div>${t.source ? `<div style="color: var(--cp-cyan); font-family: var(--font-mono); font-size: 0.85rem; margin-top:5px;">> ${t.source}</div>` : ''}<div style="margin-top:5px;">${tagsHtml}</div></div><div style="display:flex; gap:10px;"><button class="cp-btn cyan chamfer" style="padding: 10px 15px;" onclick="completeAgendaTask(${t.id})">TERMINER</button><button class="cp-btn-outline chamfer" onclick="editAgendaTask(${t.id})">MODIFIER</button></div>`;
+                list.appendChild(card);
+            });
+        }
+        function submitAgendaTask() {
+            const title = document.getElementById('ag-title').value; 
+            const date = document.getElementById('ag-date').value; 
+            const tagsInput = document.getElementById('ag-tags').value;
+            const source = document.getElementById('ag-source').value;
+            const tags = extractTags(tagsInput);
+
+            if(!title || !date) return showToast("Requis", "var(--cp-red)");
+            if(currentEditTaskId) { 
+                const t = agendaTasks.find(x => x.id === currentEditTaskId); 
+                if(t){ t.title = title; t.date = date; t.tags = tags; t.source = source; showToast("ACTION MODIFIÉE");} 
+            } else { 
+                agendaTasks.push({ id: Date.now(), title, date, tags, source }); 
+                showToast("ACTION AJOUTÉE");
+            }
+            stateChanged(); resetAgendaForm(); renderAgenda();
+            if(currentProtocolId) { const p = protocols.find(x => x.id === currentProtocolId); if(p) renderProtocolAgenda(p.data.step1); }
+            if(mindmapAnimId) buildMindmapData();
+        }
+        function editAgendaTask(id) {
+            currentEditTaskId = id; const t = agendaTasks.find(x => x.id === id); if(!t) return;
+            document.getElementById('ag-title').value = t.title; 
+            document.getElementById('ag-date').value = t.date; 
+            document.getElementById('ag-tags').value = (t.tags || []).join(', ');
+            document.getElementById('ag-source').value = t.source || '';
+            document.getElementById('agenda-form-title').innerText = "MODIFIER L'ACTION"; document.getElementById('ag-btn-submit').innerText = "METTRE À JOUR"; document.getElementById('ag-btn-cancel').style.display = "block";
+        }
+        function completeAgendaTask(id) { 
+            agendaTasks = agendaTasks.filter(x => x.id !== id); stateChanged(); renderAgenda(); showToast("ACTION TERMINÉE"); 
+            if(currentProtocolId) { const p = protocols.find(x => x.id === currentProtocolId); if(p) renderProtocolAgenda(p.data.step1); }
+            if(mindmapAnimId) buildMindmapData();
+        }
+        function resetAgendaForm() {
+            currentEditTaskId = null; 
+            document.getElementById('ag-title').value = ''; 
+            document.getElementById('ag-date').value = ''; 
+            document.getElementById('ag-tags').value = ''; 
+            document.getElementById('ag-source').value = '';
+            document.getElementById('agenda-form-title').innerText = "AJOUTER ACTION"; document.getElementById('ag-btn-submit').innerText = "GÉNÉRER"; document.getElementById('ag-btn-cancel').style.display = "none";
+        }
+
+        // --- FINANCE ---
+        function formatCurrency(baseAmount) { return new Intl.NumberFormat('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(baseAmount * exchangeRates[currentCurrency]) + ' ' + currencySymbols[currentCurrency]; }
+        function changeCurrency() { currentCurrency = document.getElementById('fin-currency').value; stateChanged(); renderFinance(); }
+        function renderFinance() {
+            let inT = 0, outT = 0; const list = document.getElementById('fin-list'); if(!list) return;
+            list.innerHTML = '';
+            transactions.sort((a,b) => b.date - a.date).forEach(t => {
+                if(t.type === 'in') inT += t.baseAmount; else outT += t.baseAmount;
+                const card = document.createElement('div'); card.className = `trans-card glass-panel chamfer-reverse ${t.type}`;
+                card.innerHTML = `<div><div style="font-size: 1.2rem; color: white; font-weight: bold;">${t.label}</div><div class="trans-date cyber-number" style="font-size: 0.8rem; color: #888;">${formatDateFull(t.date)}</div></div><div style="display: flex; align-items: center; gap: 15px;"><div class="trans-amount cyber-number" style="font-size: 1.3rem; font-weight: bold; color: ${t.type === 'in' ? 'var(--cp-green)' : 'var(--cp-red)'}">${t.type === 'in' ? '+' : '-'}${formatCurrency(t.baseAmount)}</div><button class="cp-btn-outline warning chamfer" style="padding: 5px 10px;" onclick="editTransaction(${t.id})">MODIFIER</button><button class="cp-btn-outline danger chamfer" style="padding: 5px 10px;" onclick="deleteTransaction(${t.id})">X</button></div>`;
+                list.appendChild(card);
+            });
+            document.getElementById('fin-revenus').innerText = formatCurrency(inT); 
+            document.getElementById('fin-depenses').innerText = formatCurrency(outT);
+            const soldeEl = document.getElementById('fin-solde'); 
+            soldeEl.innerText = formatCurrency(inT - outT);
+            soldeEl.style.color = (inT - outT) >= 0 ? 'var(--cp-cyan)' : 'var(--cp-red)';
+        }
+        function submitTransaction() {
+            const type = document.getElementById('fin-type').value; const label = document.getElementById('fin-label').value; const amt = parseFloat(document.getElementById('fin-amount').value);
+            if(!label || isNaN(amt) || amt <= 0) return showToast("Erreur: Données invalides", "var(--cp-red)");
+            if(currentEditTransId) { const t = transactions.find(x => x.id === currentEditTransId); if(t) { t.type = type; t.label = label; t.baseAmount = amt / exchangeRates[currentCurrency]; } showToast("FLUX MODIFIÉ", "var(--cp-cyan)"); } 
+            else { transactions.push({ id: Date.now(), type, label, baseAmount: amt / exchangeRates[currentCurrency], date: Date.now() }); showToast("FLUX ENREGISTRÉ"); }
+            stateChanged(); resetFinanceForm(); renderFinance();
+        }
+        function editTransaction(id) {
+            currentEditTransId = id; const t = transactions.find(x => x.id === id); if(!t) return;
+            document.getElementById('fin-type').value = t.type; document.getElementById('fin-label').value = t.label; document.getElementById('fin-amount').value = (t.baseAmount * exchangeRates[currentCurrency]).toFixed(2);
+            document.getElementById('fin-form-title').innerText = "MODIFIER LA TRANSACTION"; document.getElementById('fin-btn-submit').innerText = "METTRE À JOUR"; document.getElementById('fin-btn-cancel').style.display = "block";
+        }
+        function deleteTransaction(id) { transactions = transactions.filter(t => t.id !== id); stateChanged(); renderFinance(); showToast("FLUX SUPPRIMÉ", "var(--cp-red)"); }
+        function resetFinanceForm() {
+            currentEditTransId = null; document.getElementById('fin-label').value = ''; document.getElementById('fin-amount').value = '';
+            document.getElementById('fin-form-title').innerText = "NOUVELLE TRANSACTION"; document.getElementById('fin-btn-submit').innerText = "ENREGISTRER LE FLUX"; document.getElementById('fin-btn-cancel').style.display = "none";
+        }
+
+        // --- MINDMAP ---
+        let mmNodes = [], mmLinks = [], mindmapAnimId = null, mmCanvas, mmCtx;
+        let draggedNode = null; let camera = { x: 0, y: 0, zoom: 1 }; let isDraggingMap = false; let startMapDrag = { x: 0, y: 0 }; let currentEditNode = null;
+
+        function initMindmap() {
+            const container = document.getElementById('mindmap-container'); mmCanvas = document.getElementById('mindmap-canvas'); if(!container || !mmCanvas) return;
+            mmCanvas.width = container.clientWidth; mmCanvas.height = container.clientHeight; mmCtx = mmCanvas.getContext('2d');
+            camera.x = mmCanvas.width / 2; camera.y = mmCanvas.height / 2; camera.zoom = 1;
+            buildMindmapData(); if(!mindmapAnimId) animateMindmap();
+        }
+
+        function buildMindmapData() {
+            mmNodes = []; mmLinks = []; 
+            let root = { id: 'root', label: 'MATRICE', type: 'root', x: 0, y: 0, vx: 0, vy: 0, color: '#fcee0a', text: "Cœur de la base de données.", editable: false }; mmNodes.push(root);
+            protocols.forEach(p => {
+                let pNode = { id: 'p_'+p.id, label: p.data.step1 || 'Anomalie', type: 'protocol', x: Math.random()*200-100, y: Math.random()*200-100, vx: 0, vy: 0, color: '#00e5ff', text: "Dossier source Protocole. Pour modifier le titre, allez dans l'onglet PROTOCOLES.", editable: false };
+                mmNodes.push(pNode); mmLinks.push({ source: root, target: pNode });
+                const phases = [ { id: 'Diag', steps: [2,3,4], name: "Diag" }, { id: 'Obj', steps: [5,6,7], name: "Objectifs" }, { id: 'Sol', steps: [8,9], name: "Solutions" }, { id: 'Dec', steps: [10,11], name: "Décision" }, { id: 'Exe', steps: [12,13,14], name: "Exécution" } ];
+                const titles = {2:"Déf",3:"Cause",4:"Risque",5:"Obj",6:"Hiér",7:"Échéance",8:"Idées",9:"Ressources",10:"Choix",11:"Engage",12:"Action",13:"Ajust",14:"Prév"};
+                phases.forEach(ph => {
+                    if(ph.steps.some(s => p.data['step'+s])) {
+                        let phNode = { id: `p_${p.id}_${ph.id}`, label: ph.name, type: 'phase', x: pNode.x+Math.random()*100-50, y: pNode.y+Math.random()*100-50, vx: 0, vy: 0, color: '#ff0055', text: `Regroupement Phase ${ph.name}`, editable: false };
+                        mmNodes.push(phNode); mmLinks.push({ source: pNode, target: phNode });
+                        ph.steps.forEach(s => {
+                            if(p.data['step'+s]) {
+                                let dNode = { id: `p_${p.id}_s${s}`, label: titles[s], type: 'detail', x: phNode.x+Math.random()*50-25, y: phNode.y+Math.random()*50-25, vx: 0, vy: 0, color: '#00ff66', text: p.data['step'+s], editable: true, refData: p.data, refKey: 'step'+s, parentId: p.id, callback: () => {if(currentProtocolId === p.id) openProtocolDetail(p.id);} };
+                                mmNodes.push(dNode); mmLinks.push({ source: phNode, target: dNode });
+                            }
+                        });
+                    }
+                });
+            });
+            notes.forEach(n => {
+                let nNode = { id: 'n_'+n.id, label: n.title, type: 'note', x: Math.random()*300-150, y: Math.random()*300-150, vx:0, vy:0, color: '#b000ff', text: n.content, editable: true, refData: n, refKey: 'content', callback: renderNotes };
+                mmNodes.push(nNode); mmLinks.push({ source: root, target: nNode });
+            });
+            agendaTasks.forEach(t => {
+                let targetParent = root; let pMatch = protocols.find(p => p.data.step1 === t.source);
+                if (pMatch) {
+                    let phaseFId = `p_${pMatch.id}_Op`; let phaseFNode = mmNodes.find(n => n.id === phaseFId);
+                    if (!phaseFNode) {
+                        let pNode = mmNodes.find(n => n.id === 'p_'+pMatch.id);
+                        phaseFNode = { id: phaseFId, label: "Opérations", type: 'phase', x: pNode.x+Math.random()*50-25, y: pNode.y+Math.random()*50-25, vx:0, vy:0, color: 'var(--cp-orange)', text: "Actions planifiées", editable: false };
+                        mmNodes.push(phaseFNode); mmLinks.push({ source: pNode, target: phaseFNode });
+                    }
+                    targetParent = phaseFNode;
+                }
+                let tNode = { id: 't_'+t.id, label: "Action", type: 'task', x: targetParent.x+Math.random()*40-20, y: targetParent.y+Math.random()*40-20, vx:0, vy:0, color: 'var(--cp-orange)', text: t.title, editable: true, refData: t, refKey: 'title', callback: () => { renderAgenda(); if(pMatch && currentProtocolId===pMatch.id) renderProtocolAgenda(pMatch.data.step1); } };
+                mmNodes.push(tNode); mmLinks.push({ source: targetParent, target: tNode });
+            });
+        }
+
+        function animateMindmap() {
+            if(!mmCtx) return; mmCtx.clearRect(0, 0, mmCanvas.width, mmCanvas.height);
+            for(let i=0; i<mmNodes.length; i++) {
+                mmNodes[i].vx -= mmNodes[i].x * 0.0005; mmNodes[i].vy -= mmNodes[i].y * 0.0005;
+                for(let j=i+1; j<mmNodes.length; j++) {
+                    let dx = mmNodes[j].x - mmNodes[i].x; let dy = mmNodes[j].y - mmNodes[i].y;
+                    let dist = Math.sqrt(dx*dx + dy*dy) || 1; let force = 8000 / (dist * dist); 
+                    mmNodes[i].vx -= (dx/dist)*force; mmNodes[i].vy -= (dy/dist)*force; mmNodes[j].vx += (dx/dist)*force; mmNodes[j].vy += (dy/dist)*force;
+                }
+            }
+            mmLinks.forEach(link => {
+                let dx = link.target.x - link.source.x; let dy = link.target.y - link.source.y;
+                let dist = Math.sqrt(dx*dx + dy*dy) || 1; let force = (dist - 100) * 0.05; 
+                link.source.vx += (dx/dist)*force; link.source.vy += (dy/dist)*force; link.target.vx -= (dx/dist)*force; link.target.vy -= (dy/dist)*force;
+            });
+            mmNodes.forEach(n => { if(n !== draggedNode) { n.vx *= 0.85; n.vy *= 0.85; n.x += n.vx; n.y += n.vy; } });
+
+            mmCtx.save(); mmCtx.translate(camera.x, camera.y); mmCtx.scale(camera.zoom, camera.zoom);
+            mmCtx.lineWidth = 1.5;
+            mmLinks.forEach(link => { mmCtx.beginPath(); mmCtx.moveTo(link.source.x, link.source.y); mmCtx.lineTo(link.target.x, link.target.y); mmCtx.strokeStyle = 'rgba(0, 229, 255, 0.4)'; mmCtx.stroke(); });
+            mmNodes.forEach(n => {
+                let r = n.type === 'root' ? 18 : n.type === 'protocol' ? 14 : n.type === 'phase' ? 10 : n.type === 'task' ? 9 : 8;
+                mmCtx.beginPath(); mmCtx.arc(n.x, n.y, r, 0, Math.PI*2); mmCtx.fillStyle = n.color; mmCtx.fill();
+                mmCtx.shadowBlur = 15; mmCtx.shadowColor = n.color; mmCtx.fillStyle = '#fff'; mmCtx.font = "14px 'Share Tech Mono'"; mmCtx.shadowBlur = 0; mmCtx.fillText(n.label, n.x + r + 6, n.y + 5);
+            });
+            mmCtx.restore(); mindmapAnimId = requestAnimationFrame(animateMindmap);
+        }
+        
+        let canvasEl = document.getElementById('mindmap-canvas');
+        if(canvasEl) {
+            canvasEl.addEventListener('wheel', e => { e.preventDefault(); zoomMindmap(e.deltaY * -0.001); });
+            canvasEl.addEventListener('mousedown', e => {
+                let rect = mmCanvas.getBoundingClientRect(); let mx = e.clientX - rect.left; let my = e.clientY - rect.top;
+                let worldX = (mx - camera.x) / camera.zoom; let worldY = (my - camera.y) / camera.zoom;
+                let clickedNode = false;
+                for(let n of mmNodes) { 
+                    let r = n.type === 'root' ? 18 : n.type === 'protocol' ? 14 : n.type === 'phase' ? 10 : 8;
+                    if(Math.hypot(n.x - worldX, n.y - worldY) < r + 10) { draggedNode = n; clickedNode = true; openMindmapPanel(n); break; } 
+                }
+                if(!clickedNode) { isDraggingMap = true; startMapDrag.x = mx - camera.x; startMapDrag.y = my - camera.y; }
+            });
+            canvasEl.addEventListener('mousemove', e => { 
+                let rect = mmCanvas.getBoundingClientRect(); let mx = e.clientX - rect.left; let my = e.clientY - rect.top;
+                if(draggedNode) { draggedNode.x = (mx - camera.x) / camera.zoom; draggedNode.y = (my - camera.y) / camera.zoom; } 
+                else if(isDraggingMap) { camera.x = mx - startMapDrag.x; camera.y = my - startMapDrag.y; }
+            });
+            canvasEl.addEventListener('mouseup', () => { draggedNode = null; isDraggingMap = false; }); 
+            canvasEl.addEventListener('mouseleave', () => { draggedNode = null; isDraggingMap = false; });
+
+            canvasEl.addEventListener('touchstart', e => {
+                if(e.touches.length === 1) {
+                    let rect = mmCanvas.getBoundingClientRect(); let mx = e.touches[0].clientX - rect.left; let my = e.touches[0].clientY - rect.top;
+                    let worldX = (mx - camera.x) / camera.zoom; let worldY = (my - camera.y) / camera.zoom;
+                    let clickedNode = false;
+                    for(let n of mmNodes) { 
+                        let r = n.type === 'root' ? 18 : n.type === 'protocol' ? 14 : n.type === 'phase' ? 10 : 8;
+                        if(Math.hypot(n.x - worldX, n.y - worldY) < r + 15) { draggedNode = n; clickedNode = true; openMindmapPanel(n); break; } 
+                    }
+                    if(!clickedNode) { isDraggingMap = true; startMapDrag.x = mx - camera.x; startMapDrag.y = my - camera.y; }
+                }
+            }, {passive: false});
+
+            canvasEl.addEventListener('touchmove', e => {
+                if(e.touches.length === 1) {
+                    e.preventDefault(); 
+                    let rect = mmCanvas.getBoundingClientRect(); let mx = e.touches[0].clientX - rect.left; let my = e.touches[0].clientY - rect.top;
+                    if(draggedNode) { draggedNode.x = (mx - camera.x) / camera.zoom; draggedNode.y = (my - camera.y) / camera.zoom; } 
+                    else if(isDraggingMap) { camera.x = mx - startMapDrag.x; camera.y = my - startMapDrag.y; }
+                }
+            }, {passive: false});
+            canvasEl.addEventListener('touchend', () => { draggedNode = null; isDraggingMap = false; });
+        }
+        
+        function zoomMindmap(amount) { camera.zoom += amount; camera.zoom = Math.max(0.3, Math.min(camera.zoom, 3)); }
+        function resetMindmapView() { camera.x = mmCanvas.width / 2; camera.y = mmCanvas.height / 2; camera.zoom = 1; }
+        
+        function openMindmapPanel(node) {
+            currentEditNode = node; document.getElementById('mm-detail-title').innerText = node.label;
+            let readOnlyEl = document.getElementById('mm-readonly-content'); let editAreaEl = document.getElementById('mm-edit-content'); let saveBtnEl = document.getElementById('mm-save-btn');
+            if(node.editable) { readOnlyEl.style.display = 'none'; editAreaEl.style.display = 'block'; editAreaEl.value = node.text; saveBtnEl.style.display = 'block'; } 
+            else { readOnlyEl.style.display = 'block'; editAreaEl.style.display = 'none'; readOnlyEl.innerText = node.text; saveBtnEl.style.display = 'none'; }
+            
+            document.getElementById('mindmap-detail-panel').style.transform = 'translateX(0)';
+        }
+        
+        function saveMindmapNode() {
+            if(!currentEditNode || !currentEditNode.editable) return;
+            let newValue = document.getElementById('mm-edit-content').value;
+            currentEditNode.refData[currentEditNode.refKey] = newValue; currentEditNode.text = newValue; 
+            if(currentEditNode.parentId) { let p = protocols.find(x => x.id === currentEditNode.parentId); if(p) p.lastModified = Date.now(); }
+            stateChanged(); showToast("DONNÉES MISES À JOUR", "var(--cp-cyan)"); if(currentEditNode.callback) currentEditNode.callback();
+        }
+        
+        function closeMindmapDetail() { 
+            let panelEl = document.getElementById('mindmap-detail-panel'); 
+            if(panelEl) panelEl.style.transform = 'translateX(100%)'; 
+            currentEditNode = null; 
+        }
+
+        window.onload = () => { loadData(); };
     </script>
 </body>
 </html>
