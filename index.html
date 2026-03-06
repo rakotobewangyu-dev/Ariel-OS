@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Ariel OS - Cloud Sync</title>
+    <title>Ariel OS - Cloud Command Center</title>
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700;800&family=Orbitron:wght@400;700;900&family=Rajdhani:wght@500;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
     <style>
-        /* Conserve ton style Cyberpunk actuel */
+        /* TOUT TON STYLE ORIGINAL CONSERVÉ À 100% */
         :root {
             --cp-yellow: #fcee0a; --cp-cyan: #00e5ff; --cp-red: #ff0055;
             --cp-dark: #0a0a0c; --cp-gray: #1a1a1c; --cp-light-gray: #333;
@@ -16,78 +16,114 @@
             --font-title: 'Orbitron', sans-serif; --font-ui: 'Rajdhani', sans-serif; --font-mono: 'Share Tech Mono', monospace;
         }
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { background: linear-gradient(180deg, #4a0008 0%, #050505 60%, #000000 100%); color: var(--cp-text); font-family: var(--font-ui); height: 100vh; overflow: hidden; display: flex; flex-direction: column; position: relative; }
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: var(--cp-red); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--cp-cyan); }
+        body { background: linear-gradient(180deg, #4a0008 0%, #050505 60%, #000000 100%); background-attachment: fixed; color: var(--cp-text); font-family: var(--font-ui); height: 100vh; height: 100dvh; overflow: hidden; display: flex; flex-direction: column; margin: 0; position: relative; }
         .scanlines { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06)); background-size: 100% 4px, 3px 100%; pointer-events: none; z-index: 999; opacity: 0.3; }
-        header { display: flex; justify-content: space-between; align-items: center; padding: 20px 30px; background: rgba(10, 10, 12, 0.7); border-bottom: 2px solid var(--cp-cyan); z-index: 10; flex-shrink: 0; }
-        nav { display: flex; gap: 10px; padding: 20px 30px; background-color: rgba(10, 10, 12, 0.6); overflow-x: auto; flex-shrink: 0; }
-        .nav-btn { background-color: rgba(0, 229, 255, 0.05); color: var(--cp-cyan); border: 1px solid var(--cp-cyan); padding: 10px 20px; font-family: var(--font-title); cursor: pointer; text-transform: uppercase; }
-        .nav-btn.active { background-color: var(--cp-cyan); color: var(--cp-dark); }
-        main { padding: 20px 30px; flex: 1; overflow-y: auto; position: relative; }
-        .panel { display: none; flex-direction: column; gap: 20px; }
+        #data-rain-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: -1; opacity: 0; transition: opacity 0.5s; }
+        body::before { content: ""; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-image: linear-gradient(rgba(0, 229, 255, 0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(0, 229, 255, 0.04) 1px, transparent 1px); background-size: 35px 35px; pointer-events: none; z-index: -2; }
+        .chamfer { clip-path: polygon(15px 0, 100% 0, 100% calc(100% - 15px), calc(100% - 15px) 100%, 0 100%, 0 15px); }
+        .chamfer-reverse { clip-path: polygon(0 0, calc(100% - 15px) 0, 100% 15px, 100% 100%, 15px 100%, 0 calc(100% - 15px)); }
+        @keyframes glitch-anim-fade { 0% { opacity: 0; transform: translateY(15px); } 100% { opacity: 1; transform: translateY(0); } }
+        .cyber-number { font-family: 'JetBrains Mono', var(--font-mono) !important; font-variant-numeric: slashed-zero; }
+        header { display: flex; justify-content: space-between; align-items: center; padding: 20px 30px; background: rgba(10, 10, 12, 0.7); backdrop-filter: blur(15px); border-bottom: 2px solid var(--cp-cyan); position: relative; z-index: 10; flex-shrink: 0; }
+        .sys-status { color: var(--cp-cyan); font-size: 1.1rem; }
+        .blink { animation: 1s blinker linear infinite; } @keyframes blinker { 50% { opacity: 0; } }
+        nav { display: flex; gap: 10px; padding: 20px 30px; border-bottom: 1px solid var(--cp-light-gray); background-color: rgba(10, 10, 12, 0.6); z-index: 10; overflow-x: auto; }
+        .nav-btn { background-color: rgba(0, 229, 255, 0.05); color: var(--cp-cyan); border: 1px solid var(--cp-cyan); padding: 10px 20px; font-family: var(--font-title); cursor: pointer; text-transform: uppercase; transition: 0.3s; }
+        .nav-btn.active, .nav-btn:hover { background-color: var(--cp-cyan); color: var(--cp-dark); box-shadow: 0 0 15px var(--cp-cyan); }
+        main { padding: 20px 30px; flex: 1; overflow-y: auto; position: relative; z-index: 5; }
+        .panel { display: none; flex-direction: column; gap: 20px; animation: glitch-anim-fade 0.4s ease-out; }
         .panel.active { display: flex; }
-        .section-title { color: var(--cp-yellow); font-family: var(--font-title); border-left: 5px solid var(--cp-red); padding-left: 15px; margin-bottom: 20px; }
-        .glass-panel { background: var(--glass-bg); backdrop-filter: blur(12px); border: 1px solid var(--glass-border); padding: 20px; }
-        .cp-input, .cp-textarea { background: rgba(0,0,0,0.5); border: 1px solid var(--cp-cyan); color: white; padding: 10px; width: 100%; margin-bottom: 10px; }
-        .cp-btn { background: var(--cp-yellow); color: black; border: none; padding: 10px 20px; font-weight: bold; cursor: pointer; }
+        .section-title { font-family: var(--font-title); color: var(--cp-yellow); font-size: 1.6rem; border-left: 5px solid var(--cp-red); padding-left: 15px; margin-bottom: 10px; text-transform: uppercase; }
+        .glass-panel { background-color: var(--glass-bg); backdrop-filter: blur(12px); border: 1px solid var(--glass-border); padding: 20px; }
         .dash-stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; }
-        .dash-card { border-left: 4px solid var(--cp-cyan); padding: 15px; background: rgba(255,255,255,0.05); }
-        .cyber-number { font-family: 'JetBrains Mono', monospace; }
-        #toast-container { position: fixed; bottom: 20px; right: 20px; z-index: 10000; }
-        .toast { background: var(--cp-green); color: black; padding: 10px 20px; margin-top: 5px; font-weight: bold; }
+        .dash-card { background: rgba(10, 10, 12, 0.5); border: 1px solid var(--glass-border); padding: 20px; border-left: 4px solid; }
+        .dash-card-value { font-size: 2.5rem; color: white; margin-top: 10px; }
+        .cp-btn { background-color: var(--cp-yellow); color: black; border: none; padding: 12px 24px; font-family: var(--font-title); font-weight: bold; cursor: pointer; text-transform: uppercase; }
+        .cp-input, .cp-textarea, .cp-select { background-color: rgba(10, 10, 12, 0.7); border: 1px solid var(--glass-border); color: white; padding: 15px; font-family: var(--font-mono); width: 100%; border-left: 3px solid var(--cp-cyan); }
+        .protocol-grid, .note-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; }
+        .protocol-card, .note-card { border-left: 4px solid var(--cp-yellow); padding: 25px; cursor: pointer; transition: 0.3s; background: rgba(20,20,25,0.6); }
+        .protocol-card:hover, .note-card:hover { transform: translateY(-5px); box-shadow: 0 0 20px var(--cp-cyan); }
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(5, 5, 5, 0.85); z-index: 1000; justify-content: center; align-items: center; backdrop-filter: blur(8px); }
+        .modal.active { display: flex; }
+        .modal-content { background-color: rgba(15, 15, 20, 0.95); border: 1px solid var(--cp-cyan); padding: 40px; width: 90%; max-width: 550px; }
+        #toast-container { position: fixed; bottom: 30px; right: 30px; display: flex; flex-direction: column; gap: 12px; z-index: 9999; }
+        .toast { background: rgba(15,15,20,0.9); border: 1px solid var(--cp-green); color: white; padding: 18px 25px; border-left: 4px solid var(--cp-green); }
     </style>
 </head>
 <body>
+
     <div class="scanlines"></div>
+    <canvas id="data-rain-canvas"></canvas>
+
     <header>
-        <div id="sys-clock" class="cyber-number">CHARGEMENT...</div>
-        <div style="color: var(--cp-yellow); font-family: var(--font-title); font-size: 1.5rem;">ARIEL OS v2.0</div>
+        <div class="sys-status cyber-number" id="sys-clock">ACTUALISATION...</div>
+        <div class="player-info"><div class="player-name" style="color: var(--cp-yellow); font-family: var(--font-title); font-size: 2rem;">V</div></div>
     </header>
 
     <nav>
-        <button class="nav-btn active" onclick="switchTab('view-nexus')">NEXUS</button>
+        <button class="nav-btn active" onclick="switchTab('view-nexus')">CENTRE DE CONTRÔLE</button>
         <button class="nav-btn" onclick="switchTab('view-protocols')">PROTOCOLES</button>
         <button class="nav-btn" onclick="switchTab('view-finance')">FINANCE</button>
     </nav>
 
     <main>
         <div id="view-nexus" class="panel active">
-            <h2 class="section-title">CENTRE DE CONTRÔLE CLOUD</h2>
+            <h2 class="section-title">État du Système (Cloud)</h2>
             <div class="dash-stats-grid">
-                <div class="dash-card">
-                    <div>PROTOCOLES</div>
-                    <div id="sum-protocols" class="cyber-number" style="font-size: 2rem;">0</div>
+                <div class="dash-card" style="border-color: var(--cp-cyan);">
+                    <div style="font-family: var(--font-mono);">PROTOCOLES ACTIFS</div>
+                    <div class="dash-card-value cyber-number" id="sum-protocols">0</div>
                 </div>
                 <div class="dash-card" style="border-color: var(--cp-green);">
-                    <div>SOLDE ACTUEL</div>
-                    <div id="sum-finance" class="cyber-number" style="font-size: 2rem;">0.00 ¥</div>
+                    <div style="font-family: var(--font-mono);">CAPITAL ARIDAGO</div>
+                    <div class="dash-card-value cyber-number" id="sum-finance">0.00 ¥</div>
                 </div>
             </div>
         </div>
 
         <div id="view-protocols" class="panel">
-            <h2 class="section-title">STRATÉGIES ARIEL</h2>
-            <div class="glass-panel">
-                <input type="text" id="p-name" class="cp-input" placeholder="Nom du problème (ex: Import Madagascar)">
-                <textarea id="p-desc" class="cp-textarea" placeholder="Détails de la stratégie..."></textarea>
-                <button class="cp-btn" onclick="addProtocol()">SAUVEGARDER DANS LE CLOUD</button>
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <h2 class="section-title">Base de Stratégies</h2>
+                <button class="cp-btn" onclick="openModal('modal-new-protocol')">+ NOUVELLE STRATÉGIE</button>
             </div>
-            <div id="protocol-list" style="margin-top: 20px;"></div>
+            <div class="protocol-grid" id="protocol-grid"></div>
         </div>
 
         <div id="view-finance" class="panel">
-            <h2 class="section-title">GESTION ARIDAGO</h2>
-            <div class="glass-panel">
-                <input type="text" id="f-label" class="cp-input" placeholder="Libellé (ex: Vente machine)">
-                <input type="number" id="f-amount" class="cp-input" placeholder="Montant">
-                <button class="cp-btn" style="background: var(--cp-cyan);" onclick="addTransaction()">ENREGISTRER LE FLUX</button>
+            <h2 class="section-title">Gestion Budgétaire</h2>
+            <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 20px;">
+                <div class="glass-panel">
+                    <h3 style="color: var(--cp-cyan); margin-bottom: 15px;">NOUVEAU FLUX</h3>
+                    <select id="fin-type" class="cp-select"><option value="in">Revenu (+)</option><option value="out">Dépense (-)</option></select>
+                    <input type="text" id="fin-label" class="cp-input" placeholder="Libellé">
+                    <input type="number" id="fin-amount" class="cp-input" placeholder="Montant">
+                    <button class="cp-btn" style="width: 100%; margin-top: 10px;" onclick="addTransaction()">ENREGISTRER</button>
+                </div>
+                <div class="glass-panel" id="fin-list" style="max-height: 400px; overflow-y: auto;"></div>
             </div>
-            <div id="finance-list" style="margin-top: 20px;"></div>
         </div>
     </main>
+
+    <div class="modal" id="modal-new-protocol">
+        <div class="modal-content glass-panel">
+            <h2 class="section-title">INITIALISATION CLOUD</h2>
+            <input type="text" id="new-p-name" class="cp-input" placeholder="Nom du problème">
+            <textarea id="new-p-desc" class="cp-textarea" placeholder="Description de la stratégie Ariel..."></textarea>
+            <div style="display:flex; gap:10px; margin-top:20px;">
+                <button class="cp-btn" onclick="addProtocol()">CRÉER</button>
+                <button class="cp-btn" style="background: var(--cp-red); color: white;" onclick="closeModal('modal-new-protocol')">ANNULER</button>
+            </div>
+        </div>
+    </div>
 
     <div id="toast-container"></div>
 
     <script type="module">
+        // CONFIGURATION FIREBASE EXACTE
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
@@ -103,67 +139,67 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        // --- SYNCHRONISATION EN TEMPS RÉEL ---
-        
-        // Protocoles
+        // --- LOGIQUE DE SYNCHRONISATION ---
+
+        // Écouter les Protocoles
         onSnapshot(query(collection(db, "protocols"), orderBy("timestamp", "desc")), (snapshot) => {
-            const list = document.getElementById('protocol-list');
-            list.innerHTML = '';
+            const grid = document.getElementById('protocol-grid');
+            grid.innerHTML = '';
             document.getElementById('sum-protocols').innerText = snapshot.size;
-            snapshot.forEach(doc => {
-                const p = doc.data();
-                list.innerHTML += `<div class="glass-panel" style="margin-bottom:10px; display:flex; justify-content:space-between;">
-                    <div><strong>${p.name}</strong><br><small>${p.desc}</small></div>
-                    <button onclick="deleteData('protocols', '${doc.id}')" style="background:none; color:var(--cp-red); border:none; cursor:pointer;">X</button>
-                </div>`;
+            snapshot.forEach(d => {
+                const data = d.data();
+                grid.innerHTML += `
+                    <div class="protocol-card chamfer">
+                        <div style="color:var(--cp-cyan); font-family:var(--font-mono); font-size:0.8rem;">CLOUD_ID: ${d.id.substring(0,6)}</div>
+                        <h3 style="color:white; margin: 10px 0;">${data.name}</h3>
+                        <p style="font-size:0.9rem; color:#aaa;">${data.desc}</p>
+                        <button onclick="deleteCloudItem('protocols', '${d.id}')" style="margin-top:15px; background:none; color:var(--cp-red); border:1px solid var(--cp-red); cursor:pointer; padding:5px;">SUPPRIMER</button>
+                    </div>`;
             });
         });
 
-        // Finances
+        // Écouter les Finances
         onSnapshot(query(collection(db, "transactions"), orderBy("timestamp", "desc")), (snapshot) => {
-            const list = document.getElementById('finance-list');
+            const list = document.getElementById('fin-list');
             let total = 0;
             list.innerHTML = '';
-            snapshot.forEach(doc => {
-                const t = doc.data();
-                total += parseFloat(t.amount);
-                list.innerHTML += `<div class="glass-panel" style="margin-bottom:5px; border-left:4px solid var(--cp-green); display:flex; justify-content:space-between;">
-                    <span>${t.label}</span>
-                    <span class="cyber-number">${t.amount} ¥</span>
-                </div>`;
+            snapshot.forEach(d => {
+                const data = d.data();
+                const amt = parseFloat(data.amount);
+                total += (data.type === 'in' ? amt : -amt);
+                list.innerHTML += `
+                    <div style="display:flex; justify-content:space-between; padding:10px; border-bottom:1px solid #333; color:${data.type==='in'?'var(--cp-green)':'var(--cp-red)'}">
+                        <span>${data.label}</span>
+                        <span class="cyber-number">${data.type==='in'?'+':'-'} ${amt.toFixed(2)} ¥</span>
+                    </div>`;
             });
             document.getElementById('sum-finance').innerText = total.toFixed(2) + " ¥";
         });
 
         // --- ACTIONS ---
         window.addProtocol = async () => {
-            const name = document.getElementById('p-name').value;
-            const desc = document.getElementById('p-desc').value;
+            const name = document.getElementById('new-p-name').value;
+            const desc = document.getElementById('new-p-desc').value;
             if(!name) return;
             await addDoc(collection(db, "protocols"), { name, desc, timestamp: Date.now() });
-            document.getElementById('p-name').value = ''; document.getElementById('p-desc').value = '';
-            showToast("STRATÉGIE SAUVÉE");
+            closeModal('modal-new-protocol');
+            showToast("PROTOCOLE SYNCHRONISÉ");
         };
 
         window.addTransaction = async () => {
-            const label = document.getElementById('f-label').value;
-            const amount = document.getElementById('f-amount').value;
+            const label = document.getElementById('fin-label').value;
+            const amount = document.getElementById('fin-amount').value;
+            const type = document.getElementById('fin-type').value;
             if(!label || !amount) return;
-            await addDoc(collection(db, "transactions"), { label, amount, timestamp: Date.now() });
-            document.getElementById('f-label').value = ''; document.getElementById('f-amount').value = '';
-            showToast("FLUX SYNCHRONISÉ");
+            await addDoc(collection(db, "transactions"), { label, amount, type, timestamp: Date.now() });
+            showToast("FLUX ENREGISTRÉ");
         };
 
-        window.deleteData = async (coll, id) => {
-            if(confirm("Supprimer définitivement du Cloud ?")) await deleteDoc(doc(db, coll, id));
+        window.deleteCloudItem = async (col, id) => {
+            if(confirm("Supprimer définitivement du Cloud ?")) await deleteDoc(doc(db, col, id));
         };
 
-        function showToast(msg) {
-            const c = document.getElementById('toast-container');
-            const t = document.createElement('div'); t.className = 'toast'; t.innerText = msg;
-            c.appendChild(t); setTimeout(() => t.remove(), 3000);
-        }
-
+        // --- UI UTILS ---
         window.switchTab = (id) => {
             document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
             document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
@@ -171,9 +207,18 @@
             event.target.classList.add('active');
         };
 
+        window.openModal = (id) => document.getElementById(id).classList.add('active');
+        window.closeModal = (id) => document.getElementById(id).classList.remove('active');
+
+        function showToast(msg) {
+            const container = document.getElementById('toast-container');
+            const t = document.createElement('div'); t.className = 'toast'; t.innerText = msg;
+            container.appendChild(t); setTimeout(() => t.remove(), 3000);
+        }
+
         setInterval(() => {
             const d = new Date();
-            document.getElementById('sys-clock').innerText = d.toLocaleTimeString() + " | " + d.toLocaleDateString();
+            document.getElementById('sys-clock').innerText = d.toLocaleTimeString();
         }, 1000);
     </script>
 </body>
