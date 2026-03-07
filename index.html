@@ -94,6 +94,18 @@
         @keyframes pulse { 0% { opacity: 0.5; } 50% { opacity: 1; text-shadow: 0 0 10px var(--cp-cyan); box-shadow: 0 0 20px var(--cp-cyan); } 100% { opacity: 0.5; } }
         @keyframes glitch-anim-fade { 0% { opacity: 0; transform: translateY(15px); } 100% { opacity: 1; transform: translateY(0); } }
 
+        /* Swipe Animations */
+        @keyframes slideInRightCyber {
+            0% { opacity: 0; transform: translateX(50px) scale(0.98); filter: hue-rotate(90deg); }
+            100% { opacity: 1; transform: translateX(0) scale(1); filter: hue-rotate(0deg); }
+        }
+        @keyframes slideInLeftCyber {
+            0% { opacity: 0; transform: translateX(-50px) scale(0.98); filter: hue-rotate(-90deg); }
+            100% { opacity: 1; transform: translateX(0) scale(1); filter: hue-rotate(0deg); }
+        }
+        .panel.active.slide-right { animation: slideInRightCyber 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards; }
+        .panel.active.slide-left { animation: slideInLeftCyber 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards; }
+
         /* Nombres Cyber avec Zéro Barré */
         .cyber-number, .dash-card-value, .stat-value, .sys-status, .task-date, .trans-amount, .trans-date, input[type="number"] {
             font-family: 'JetBrains Mono', var(--font-mono) !important;
@@ -120,6 +132,8 @@
         .sys-status { color: var(--cp-cyan); font-size: 1.1rem; display: flex; align-items: center; gap: 10px; text-shadow: 0 0 8px rgba(0, 229, 255, 0.5); }
         .blink { animation: blinker 1s linear infinite; }
 
+        .fs-btn { padding: 5px 10px; margin-left: 15px; font-size: 1.2rem; }
+
         .player-info { display: flex; align-items: center; gap: 15px; text-align: right; }
         .player-name { font-family: var(--font-title); font-size: 2.2rem; color: var(--cp-yellow); text-shadow: 0 0 10px rgba(252, 238, 10, 0.5); letter-spacing: 2px; }
 
@@ -128,7 +142,7 @@
             display: flex; gap: 10px; padding: 20px 30px; border-bottom: 1px solid var(--cp-light-gray); 
             background-color: rgba(10, 10, 12, 0.6); backdrop-filter: blur(10px); z-index: 10; flex-wrap: nowrap; flex-shrink: 0;
             box-shadow: 0 5px 20px rgba(0,0,0,0.3);
-            overflow-x: auto; -webkit-overflow-scrolling: touch;
+            overflow-x: auto; -webkit-overflow-scrolling: touch; scroll-behavior: smooth;
         }
         nav::-webkit-scrollbar { height: 4px; }
         nav::-webkit-scrollbar-thumb { background: var(--cp-cyan); border-radius: 4px; }
@@ -255,7 +269,7 @@
 
         /* VIEW: MINDMAP */
         #view-mindmap { padding: 0; position: relative; overflow: hidden; border: 1px solid var(--glass-border); height: 75vh; min-height: 500px; border-radius: 4px; }
-        #mindmap-canvas { display: block; width: 100%; height: 100%; cursor: grab; }
+        #mindmap-canvas { display: block; width: 100%; height: 100%; cursor: grab; touch-action: none; }
         #mindmap-canvas:active { cursor: grabbing; }
         
         #mindmap-detail-panel { 
@@ -316,6 +330,9 @@
             header { padding: 10px; justify-content: center; }
             .player-info { display: none; } 
             
+            /* Taille ajustée du bouton plein écran */
+            .fs-btn { padding: 3px 6px; margin-left: 8px; font-size: 0.9rem; }
+            
             /* 3. Réduction des marges internes pour compacter l'UI */
             main { padding: 10px; }
             nav { padding: 10px; }
@@ -370,7 +387,7 @@
                 <span class="blink">▶</span> CHARGEMENT TEMPOREL...
             </div>
             <!-- Bouton pour forcer le plein écran sur mobile/navigateur -->
-            <button id="fullscreen-btn" onclick="toggleFullScreen()" class="cp-btn-outline chamfer" style="padding: 5px 10px; margin-left: 15px; font-size: 1.2rem;" title="Plein Écran">[ ]</button>
+            <button id="fullscreen-btn" onclick="toggleFullScreen()" class="cp-btn-outline chamfer fs-btn" title="Plein Écran">[ ]</button>
         </div>
         <div class="player-info">
             <div class="player-name">V</div>
@@ -386,7 +403,7 @@
         <button class="nav-btn chamfer" onclick="switchTab('view-finance')">FINANCE</button>
     </nav>
 
-    <main>
+    <main id="main-view">
         <!-- VIEW: NEXUS (Dashboard) -->
         <div id="view-nexus" class="panel active">
             <h2 class="section-title">Centre de Contrôle Global</h2>
@@ -482,7 +499,7 @@
                     <button class="zoom-btn chamfer" onclick="zoomMindmap(-0.2)">-</button>
                 </div>
                 <div style="position: absolute; top: 25px; left: 25px; font-family: var(--font-mono); color: var(--cp-cyan); pointer-events: none; text-shadow: 0 0 8px rgba(0,229,255,0.8);">
-                    > EXPLORATEUR ACTIF <br>> SCROLL = ZOOM <br>> GLISSER = NAVIGUER
+                    > EXPLORATEUR ACTIF <br>> SCROLL/PINCER = ZOOM <br>> GLISSER = NAVIGUER
                 </div>
                 
                 <div id="mindmap-detail-panel">
@@ -607,7 +624,6 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // Configuration Firebase originale
         const firebaseConfig = {
             apiKey: "AIzaSyDSk2LGZ_J4hrpzAslfoLbBt_lqeZMAZHE",
             authDomain: "ariel-os-database.firebaseapp.com",
@@ -619,19 +635,14 @@
 
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
-        
-        // On crée un document unique dans Firestore pour stocker TOUT ton OS
         const stateDocRef = doc(db, "ArielOS", "MainState");
 
         window.isCloudReady = false;
 
-        // Ecoute en temps réel de la base de données
         onSnapshot(stateDocRef, (docSnap) => {
             if (docSnap.exists()) {
                 const data = docSnap.data();
-                if (window.parseDataCloud) {
-                    window.parseDataCloud(data);
-                }
+                if (window.parseDataCloud) window.parseDataCloud(data);
             }
             if (!window.isCloudReady) {
                 window.isCloudReady = true;
@@ -640,7 +651,6 @@
             }
         });
 
-        // Fonction globale de sauvegarde appelée par ton script principal
         window.saveDataToCloud = function(data) {
             setDoc(stateDocRef, data).catch(e => {
                 console.error("Erreur de sauvegarde:", e);
@@ -653,46 +663,135 @@
     <!-- SCRIPT PRINCIPAL DU SITE                   -->
     <!-- ========================================== -->
     <script>
+        // --- SYNTHÉTISEUR AUDIO CYBERPUNK ---
+        const CyberSFX = (() => {
+            let actx = null;
+            
+            const init = () => {
+                if(!actx) actx = new (window.AudioContext || window.webkitAudioContext)();
+                if(actx.state === 'suspended') actx.resume();
+            };
+
+            const playTone = (type, freq1, freq2, duration, vol, type2) => {
+                try {
+                    init();
+                    const osc = actx.createOscillator();
+                    const gain = actx.createGain();
+                    osc.type = type;
+                    osc.frequency.setValueAtTime(freq1, actx.currentTime);
+                    if(freq2) osc.frequency.exponentialRampToValueAtTime(freq2, actx.currentTime + duration);
+                    
+                    gain.gain.setValueAtTime(vol, actx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.01, actx.currentTime + duration);
+                    
+                    osc.connect(gain);
+                    gain.connect(actx.destination);
+                    osc.start();
+                    osc.stop(actx.currentTime + duration);
+                    
+                    if(type2) {
+                       const osc2 = actx.createOscillator();
+                       osc2.type = type2;
+                       osc2.frequency.setValueAtTime(freq1*1.5, actx.currentTime);
+                       if(freq2) osc2.frequency.exponentialRampToValueAtTime(freq2*1.5, actx.currentTime + duration);
+                       osc2.connect(gain);
+                       osc2.start();
+                       osc2.stop(actx.currentTime + duration);
+                    }
+                } catch(e){}
+            };
+
+            return {
+                hover: () => playTone('sine', 800, 1200, 0.05, 0.01),
+                click: () => playTone('square', 300, 150, 0.1, 0.03),
+                success: () => playTone('triangle', 400, 800, 0.2, 0.05, 'sine'),
+                error: () => playTone('sawtooth', 200, 50, 0.25, 0.05, 'square'),
+                swipe: () => playTone('sine', 150, 600, 0.15, 0.02, 'triangle') // Nouveau son de swipe
+            };
+        })();
+
+        // --- GESTIONNAIRES D'ÉVÉNEMENTS AUDIO ---
+        document.addEventListener('mousedown', (e) => {
+            const btn = e.target.closest('button, .phase-header, .protocol-card, .task-card, .note-card, .filter-btn');
+            if (!btn) return;
+            const text = btn.innerText.toUpperCase();
+            const isDanger = btn.classList.contains('danger') || text.includes('SUPPRIMER') || text === 'X' || text.includes('ANNULER');
+            const isSuccess = text.includes('SAUVEGARDER') || text.includes('CRÉER') || text.includes('GÉNÉRER') || text.includes('TERMINER') || text.includes('ENREGISTRER');
+            if (isDanger) CyberSFX.error();
+            else if (isSuccess) CyberSFX.success();
+            else CyberSFX.click();
+        });
+
+        document.addEventListener('mouseover', (e) => {
+            if(window.innerWidth < 768) return; 
+            const btn = e.target.closest('button, .phase-header, .protocol-card, .task-card, .note-card, .filter-btn');
+            if (!btn || btn.dataset.hovered) return;
+            btn.dataset.hovered = true;
+            CyberSFX.hover();
+            btn.addEventListener('mouseleave', () => { delete btn.dataset.hovered; }, {once: true});
+        });
+
         // --- FONCTION PLEIN ECRAN ---
         function toggleFullScreen() {
             if (!document.fullscreenElement && !document.mozFullScreenElement && !document.webkitFullscreenElement && !document.msFullscreenElement) {
-                if (document.documentElement.requestFullscreen) {
-                    document.documentElement.requestFullscreen();
-                } else if (document.documentElement.msRequestFullscreen) {
-                    document.documentElement.msRequestFullscreen();
-                } else if (document.documentElement.mozRequestFullScreen) {
-                    document.documentElement.mozRequestFullScreen();
-                } else if (document.documentElement.webkitRequestFullscreen) {
-                    document.documentElement.webkitRequestFullscreen(Element.ALLOW_KEYBOARD_INPUT);
-                }
+                if (document.documentElement.requestFullscreen) document.documentElement.requestFullscreen();
+                else if (document.documentElement.msRequestFullscreen) document.documentElement.msRequestFullscreen();
+                else if (document.documentElement.mozRequestFullScreen) document.documentElement.mozRequestFullScreen();
+                else if (document.documentElement.webkitRequestFullscreen) document.documentElement.webkitRequestFullscreen(Element.ALLOW_KEYBOARD_INPUT);
             } else {
-                if (document.exitFullscreen) {
-                    document.exitFullscreen();
-                } else if (document.msExitFullscreen) {
-                    document.msExitFullscreen();
-                } else if (document.mozCancelFullScreen) {
-                    document.mozCancelFullScreen();
-                } else if (document.webkitExitFullscreen) {
-                    document.webkitExitFullscreen();
+                if (document.exitFullscreen) document.exitFullscreen();
+                else if (document.msExitFullscreen) document.msExitFullscreen();
+                else if (document.mozCancelFullScreen) document.mozCancelFullScreen();
+                else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+            }
+        }
+
+        // --- SWIPE GESTURES ---
+        let touchStartX = 0;
+        let touchStartY = 0;
+        const viewOrder = ['view-nexus', 'view-protocols', 'view-database', 'view-mindmap', 'view-agenda', 'view-finance'];
+
+        document.addEventListener('touchstart', e => {
+            // Ignorer le swipe si on dessine dans la mindmap, on tape dans un input, ou si on scroll la nav
+            if (e.target.closest('#mindmap-canvas') || e.target.closest('nav') || e.target.closest('.modal') || 
+                e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') return;
+            touchStartX = e.changedTouches[0].screenX;
+            touchStartY = e.changedTouches[0].screenY;
+        }, {passive: true});
+
+        document.addEventListener('touchend', e => {
+            if (e.target.closest('#mindmap-canvas') || e.target.closest('nav') || e.target.closest('.modal') || 
+                e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') return;
+            let touchEndX = e.changedTouches[0].screenX;
+            let touchEndY = e.changedTouches[0].screenY;
+            handleSwipe(touchStartX, touchStartY, touchEndX, touchEndY);
+        }, {passive: true});
+
+        function handleSwipe(startX, startY, endX, endY) {
+            let dx = endX - startX;
+            let dy = endY - startY;
+            
+            // Vérifie si le swipe est principalement horizontal et assez long
+            if (Math.abs(dx) > 70 && Math.abs(dx) > Math.abs(dy)) {
+                let currentActive = document.querySelector('.panel.active').id;
+                let currentIndex = viewOrder.indexOf(currentActive);
+                
+                if (dx < 0 && currentIndex < viewOrder.length - 1) { 
+                    // Swipe à gauche -> page suivante
+                    switchTab(viewOrder[currentIndex + 1], 'right');
+                    CyberSFX.swipe();
+                } else if (dx > 0 && currentIndex > 0) { 
+                    // Swipe à droite -> page précédente
+                    switchTab(viewOrder[currentIndex - 1], 'left');
+                    CyberSFX.swipe();
                 }
             }
         }
 
         // --- DATA STATE ---
-        let protocols = [];
-        let notes = [];
-        let agendaTasks = [];
-        let transactions = [];
-        let currentCurrency = 'CNY';
-
-        let currentProtocolId = null;
-        let currentEditNoteId = null;
-        let currentEditTaskId = null;
-        let currentEditTransId = null;
-        
-        // Tags State
-        let currentNoteFilter = 'ALL';
-        let currentAgendaFilter = 'ALL';
+        let protocols = []; let notes = []; let agendaTasks = []; let transactions = []; let currentCurrency = 'CNY';
+        let currentProtocolId = null; let currentEditNoteId = null; let currentEditTaskId = null; let currentEditTransId = null;
+        let currentNoteFilter = 'ALL'; let currentAgendaFilter = 'ALL';
         
         const exchangeRates = { 'EUR': 1, 'MGA': 4950, 'USD': 1.08, 'CNY': 7.8 };
         const currencySymbols = { 'EUR': '€', 'MGA': 'Ar', 'USD': '$', 'CNY': '¥' };
@@ -737,14 +836,9 @@
 
         function triggerDataRain() {
             if(!rainCanvas) return;
-            if(!rainActive) {
-                initRain(); rainActive = true; rainCanvas.style.opacity = '0.35'; drawRain();
-            }
+            if(!rainActive) { initRain(); rainActive = true; rainCanvas.style.opacity = '0.35'; drawRain(); }
             clearTimeout(rainTimer);
-            rainTimer = setTimeout(() => {
-                rainCanvas.style.opacity = '0';
-                setTimeout(() => { rainActive = false; }, 500);
-            }, 1200);
+            rainTimer = setTimeout(() => { rainCanvas.style.opacity = '0'; setTimeout(() => { rainActive = false; }, 500); }, 1200);
         }
 
         function showToast(message, color = 'var(--cp-green)') {
@@ -756,29 +850,20 @@
                 setTimeout(() => { toast.style.opacity = '0'; setTimeout(() => toast.remove(), 400); }, 3000);
             }
         }
-        window.showToast = showToast; // Exposer pour le module Firebase
+        window.showToast = showToast; 
 
         // --- TAGS SYSTEM ---
-        function extractTags(str) {
-            if(!str) return [];
-            return str.split(',').map(s => s.trim().toUpperCase()).filter(s => s !== '').map(s => s.startsWith('#') ? s : '#' + s);
-        }
-
+        function extractTags(str) { return !str ? [] : str.split(',').map(s => s.trim().toUpperCase()).filter(s => s !== '').map(s => s.startsWith('#') ? s : '#' + s); }
         function setNoteFilter(tag) { currentNoteFilter = tag; renderNotes(); }
         function setAgendaFilter(tag) { currentAgendaFilter = tag; renderAgenda(); }
 
         // --- SAVE/LOAD SYSTEM (FIREBASE CLOUD) ---
-        function loadData() {
-            // Le chargement se fait automatiquement via le onSnapshot de Firebase.
-            document.getElementById('sys-clock').innerHTML = `<span class="blink">▶</span> CONNEXION CLOUD...`;
-        }
+        function loadData() { document.getElementById('sys-clock').innerHTML = `<span class="blink">▶</span> CONNEXION CLOUD...`; }
 
         window.parseDataCloud = function(parsed) {
             if(parsed) {
-                protocols = parsed.protocols || [];
-                notes = parsed.notes || [];
-                agendaTasks = parsed.agendaTasks || [];
-                transactions = parsed.transactions || [];
+                protocols = parsed.protocols || []; notes = parsed.notes || [];
+                agendaTasks = parsed.agendaTasks || []; transactions = parsed.transactions || [];
                 currentCurrency = parsed.currentCurrency || 'CNY';
             }
             let currencySelect = document.getElementById('fin-currency');
@@ -786,40 +871,25 @@
 
             renderProtocols(); renderAgenda(); renderFinance(); renderNotes(); updateDashboardSummary();
             
-            // Rafraichir le détail du protocole s'il est ouvert pour éviter les conflits d'interface
             if(currentProtocolId) {
                  const p = protocols.find(x => x.id === currentProtocolId);
-                 if(p) { renderProtocolAgenda(p.data.step1); } 
-                 else { closeProtocolDetail(); }
+                 if(p) { renderProtocolAgenda(p.data.step1); } else { closeProtocolDetail(); }
             }
-            
             if(mindmapAnimId) buildMindmapData();
         };
 
         function saveData() {
-            const dataToSave = { protocols, notes, agendaTasks, transactions, currentCurrency };
-            if (window.saveDataToCloud) {
-                window.saveDataToCloud(dataToSave);
-            }
+            if (window.saveDataToCloud) window.saveDataToCloud({ protocols, notes, agendaTasks, transactions, currentCurrency });
             triggerDataRain(); 
         }
 
-        function stateChanged() {
-            saveData();
-            updateDashboardSummary();
-        }
+        function stateChanged() { saveData(); updateDashboardSummary(); }
 
         // --- DASHBOARD SUMMARY ---
         function updateDashboardSummary() {
-            let sumProtocols = document.getElementById('sum-protocols');
-            if(sumProtocols) sumProtocols.innerText = protocols.length;
-            
-            let sumAgenda = document.getElementById('sum-agenda');
-            if(sumAgenda) sumAgenda.innerText = agendaTasks.length;
-            
-            let sumNotes = document.getElementById('sum-notes');
-            if(sumNotes) sumNotes.innerText = notes.length;
-            
+            let sumProtocols = document.getElementById('sum-protocols'); if(sumProtocols) sumProtocols.innerText = protocols.length;
+            let sumAgenda = document.getElementById('sum-agenda'); if(sumAgenda) sumAgenda.innerText = agendaTasks.length;
+            let sumNotes = document.getElementById('sum-notes'); if(sumNotes) sumNotes.innerText = notes.length;
             let sumFinance = document.getElementById('sum-finance');
             if(sumFinance) {
                 let inT = 0, outT = 0;
@@ -830,7 +900,6 @@
 
         // --- CLOCK ---
         function updateClock() {
-            // L'horloge affiche l'heure normale après la connexion cloud.
             if (!window.isCloudReady) return;
             const days = ['Dimanche', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi'];
             const months = ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'];
@@ -846,14 +915,28 @@
         }
 
         // --- UTILS ---
-        function switchTab(viewId) {
+        function switchTab(viewId, direction = 'fade') {
             if(mindmapAnimId) { cancelAnimationFrame(mindmapAnimId); mindmapAnimId = null; }
-            document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
-            if(event && event.target && event.target.classList) event.target.classList.add('active');
             
-            document.querySelectorAll('.panel').forEach(panel => panel.classList.remove('active'));
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.classList.remove('active');
+                if(btn.getAttribute('onclick').includes(viewId)) {
+                    btn.classList.add('active');
+                    // Scroll automatique vers l'onglet actif sur mobile
+                    btn.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+                }
+            });
+            
+            document.querySelectorAll('.panel').forEach(panel => {
+                panel.classList.remove('active', 'slide-right', 'slide-left');
+            });
+            
             let targetView = document.getElementById(viewId);
-            if(targetView) targetView.classList.add('active');
+            if(targetView) {
+                targetView.classList.add('active');
+                if(direction === 'right') targetView.classList.add('slide-right');
+                else if(direction === 'left') targetView.classList.add('slide-left');
+            }
             
             if(viewId === 'view-mindmap') { setTimeout(initMindmap, 100); }
         }
@@ -868,8 +951,7 @@
 
         // --- PROTOCOLES ---
         function renderProtocols() {
-            const grid = document.getElementById('protocol-grid'); if(!grid) return;
-            grid.innerHTML = '';
+            const grid = document.getElementById('protocol-grid'); if(!grid) return; grid.innerHTML = '';
             protocols.sort((a,b) => b.lastModified - a.lastModified).forEach(p => {
                 const card = document.createElement('div'); card.className = 'protocol-card glass-panel chamfer-reverse'; card.onclick = () => openProtocolDetail(p.id);
                 card.innerHTML = `<div class="cyber-number" style="color:var(--text-muted); font-size:0.8rem;">${formatDateFull(p.lastModified)}</div><div class="protocol-title">${p.data.step1 || 'Sans Titre'}</div>`;
@@ -879,53 +961,40 @@
         function openProtocolDetail(id) {
             currentProtocolId = id; const p = protocols.find(x => x.id === id); if(!p) return;
             for(let i=1; i<=14; i++) { const el = document.getElementById('step-'+i); if(el) el.value = p.data['step'+i] || ''; }
-            document.getElementById('detail-title').innerText = p.data.step1 || 'Protocole';
-            document.getElementById('detail-last-mod').innerText = formatDateFull(p.lastModified);
+            document.getElementById('detail-title').innerText = p.data.step1 || 'Protocole'; document.getElementById('detail-last-mod').innerText = formatDateFull(p.lastModified);
             renderProtocolAgenda(p.data.step1);
             document.querySelectorAll('.panel').forEach(el => el.classList.remove('active'));
             document.getElementById('view-protocol-detail').classList.add('active');
         }
         function closeProtocolDetail() {
             currentProtocolId = null; document.querySelectorAll('.panel').forEach(el => el.classList.remove('active'));
-            document.getElementById('view-protocols').classList.add('active'); 
-            renderProtocols(); if(mindmapAnimId) buildMindmapData();
+            document.getElementById('view-protocols').classList.add('active'); renderProtocols(); if(mindmapAnimId) buildMindmapData();
         }
         function saveCurrentProtocol() {
             if(!currentProtocolId) return; const p = protocols.find(x => x.id === currentProtocolId); if(!p) return;
             let oldTitle = p.data.step1;
             for(let i=1; i<=14; i++) { const el = document.getElementById('step-'+i); if(el) p.data['step'+i] = el.value; }
-            if(oldTitle !== p.data.step1 && oldTitle !== "") {
-                agendaTasks.forEach(t => { if(t.source === oldTitle) t.source = p.data.step1; }); renderAgenda();
-            }
+            if(oldTitle !== p.data.step1 && oldTitle !== "") { agendaTasks.forEach(t => { if(t.source === oldTitle) t.source = p.data.step1; }); renderAgenda(); }
             p.lastModified = Date.now();
-            document.getElementById('detail-title').innerText = p.data.step1 || 'Sans Titre';
-            document.getElementById('detail-last-mod').innerText = formatDateFull(p.lastModified);
+            document.getElementById('detail-title').innerText = p.data.step1 || 'Sans Titre'; document.getElementById('detail-last-mod').innerText = formatDateFull(p.lastModified);
             renderProtocolAgenda(p.data.step1); showToast("DONNÉES SAUVEGARDÉES", "var(--cp-green)"); stateChanged();
         }
         function createProtocol() {
-            let nameInput = document.getElementById('new-p-name'); if(!nameInput) return;
-            const name = nameInput.value; if(!name) return;
+            let nameInput = document.getElementById('new-p-name'); if(!nameInput) return; const name = nameInput.value; if(!name) return;
             const newId = Date.now(); protocols.push({ id: newId, lastModified: Date.now(), data: { step1: name } });
-            stateChanged(); showToast("PROTOCOLE INITIALISÉ", "var(--cp-cyan)");
-            closeModal('modal-new-protocol'); renderProtocols(); openProtocolDetail(newId); 
+            stateChanged(); showToast("PROTOCOLE INITIALISÉ", "var(--cp-cyan)"); closeModal('modal-new-protocol'); renderProtocols(); openProtocolDetail(newId); 
         }
         function deleteCurrentProtocol() {
             if(!currentProtocolId) return;
             if(confirm("Confirmer la suppression de ce protocole ?")) {
-                protocols = protocols.filter(p => p.id !== currentProtocolId);
-                stateChanged(); showToast("PROTOCOLE SUPPRIMÉ", "var(--cp-red)"); closeProtocolDetail(); 
+                protocols = protocols.filter(p => p.id !== currentProtocolId); stateChanged(); showToast("PROTOCOLE SUPPRIMÉ", "var(--cp-red)"); closeProtocolDetail(); 
             }
         }
-
-        // --- AGENDA DANS PROTOCOLE (PHASE F) ---
         function renderProtocolAgenda(sourceName) {
-            const container = document.getElementById('protocol-agenda-list'); if(!container) return;
-            container.innerHTML = '';
+            const container = document.getElementById('protocol-agenda-list'); if(!container) return; container.innerHTML = '';
             const tasks = agendaTasks.filter(t => t.source === sourceName);
             if(tasks.length === 0) { container.innerHTML = '<div style="color:var(--cp-text); font-family:var(--font-mono); opacity:0.7;">Aucune action planifiée pour le moment.</div>'; return; }
-            tasks.forEach(t => {
-                container.innerHTML += `<div style="background:rgba(10,10,12,0.8); border-left:3px solid var(--cp-orange); padding:15px; font-family:var(--font-mono); color:white; display:flex; justify-content:space-between; align-items:center;"><div><div class="cyber-number" style="color:var(--cp-orange); font-size:0.85rem; margin-bottom:5px;">${t.date.replace('T', ' à ')}</div><div style="font-size: 1.1rem; font-weight:bold;">${t.title}</div></div></div>`;
-            });
+            tasks.forEach(t => { container.innerHTML += `<div style="background:rgba(10,10,12,0.8); border-left:3px solid var(--cp-orange); padding:15px; font-family:var(--font-mono); color:white; display:flex; justify-content:space-between; align-items:center;"><div><div class="cyber-number" style="color:var(--cp-orange); font-size:0.85rem; margin-bottom:5px;">${t.date.replace('T', ' à ')}</div><div style="font-size: 1.1rem; font-weight:bold;">${t.title}</div></div></div>`; });
         }
         function goToAgendaWithSource() {
             if(!currentProtocolId) return; const p = protocols.find(x => x.id === currentProtocolId);
@@ -933,38 +1002,17 @@
         }
 
         // --- BASE DE DONNÉES (NOTES) ---
-        function openNewNoteModal() {
-            currentEditNoteId = null; 
-            document.getElementById('new-n-title').value = ''; 
-            document.getElementById('new-n-tags').value = ''; 
-            document.getElementById('new-n-content').value = '';
-            document.getElementById('note-modal-title').innerText = "NOUVELLE ENTRÉE (BDD)"; 
-            openModal('modal-new-note');
-        }
-        function editNote(id) {
-            currentEditNoteId = id; const n = notes.find(x => x.id === id); if(!n) return;
-            document.getElementById('new-n-title').value = n.title; 
-            document.getElementById('new-n-tags').value = (n.tags || []).join(', ');
-            document.getElementById('new-n-content').value = n.content;
-            document.getElementById('note-modal-title').innerText = "MODIFIER L'ENTRÉE"; 
-            openModal('modal-new-note');
-        }
+        function openNewNoteModal() { currentEditNoteId = null; document.getElementById('new-n-title').value = ''; document.getElementById('new-n-tags').value = ''; document.getElementById('new-n-content').value = ''; document.getElementById('note-modal-title').innerText = "NOUVELLE ENTRÉE (BDD)"; openModal('modal-new-note'); }
+        function editNote(id) { currentEditNoteId = id; const n = notes.find(x => x.id === id); if(!n) return; document.getElementById('new-n-title').value = n.title; document.getElementById('new-n-tags').value = (n.tags || []).join(', '); document.getElementById('new-n-content').value = n.content; document.getElementById('note-modal-title').innerText = "MODIFIER L'ENTRÉE"; openModal('modal-new-note'); }
         function renderNotes() {
             const filtersContainer = document.getElementById('note-filters');
             if(filtersContainer) {
-                let allTags = new Set();
-                notes.forEach(n => { if(n.tags) n.tags.forEach(t => allTags.add(t)); });
+                let allTags = new Set(); notes.forEach(n => { if(n.tags) n.tags.forEach(t => allTags.add(t)); });
                 filtersContainer.innerHTML = `<button class="filter-btn ${currentNoteFilter === 'ALL' ? 'active' : ''}" onclick="setNoteFilter('ALL')">TOUT</button>`;
-                Array.from(allTags).sort().forEach(tag => {
-                    filtersContainer.innerHTML += `<button class="filter-btn ${currentNoteFilter === tag ? 'active' : ''}" onclick="setNoteFilter('${tag}')">${tag}</button>`;
-                });
+                Array.from(allTags).sort().forEach(tag => { filtersContainer.innerHTML += `<button class="filter-btn ${currentNoteFilter === tag ? 'active' : ''}" onclick="setNoteFilter('${tag}')">${tag}</button>`; });
             }
-
-            const grid = document.getElementById('note-list-container'); if(!grid) return;
-            grid.innerHTML = '';
-            
+            const grid = document.getElementById('note-list-container'); if(!grid) return; grid.innerHTML = '';
             let filteredNotes = currentNoteFilter === 'ALL' ? notes : notes.filter(n => n.tags && n.tags.includes(currentNoteFilter));
-
             filteredNotes.forEach(n => {
                 let tagsHtml = n.tags ? n.tags.map(t => `<span class="tag-badge">${t}</span>`).join('') : '';
                 const card = document.createElement('div'); card.className = 'note-card glass-panel chamfer-reverse';
@@ -973,43 +1021,24 @@
             });
         }
         function submitNote() {
-            const title = document.getElementById('new-n-title').value; 
-            const tagsInput = document.getElementById('new-n-tags').value;
-            const content = document.getElementById('new-n-content').value;
-            const tags = extractTags(tagsInput);
-
+            const title = document.getElementById('new-n-title').value; const tagsInput = document.getElementById('new-n-tags').value; const content = document.getElementById('new-n-content').value; const tags = extractTags(tagsInput);
             if(!title) return showToast("Titre requis", "var(--cp-red)");
-            if(currentEditNoteId) { 
-                const n = notes.find(x => x.id === currentEditNoteId); 
-                if(n) { n.title = title; n.tags = tags; n.content = content; } 
-                showToast("NOTE MODIFIÉE"); 
-            } else { 
-                notes.push({ id: Date.now(), title, tags, content }); 
-                showToast("NOTE ENREGISTRÉE"); 
-            }
+            if(currentEditNoteId) { const n = notes.find(x => x.id === currentEditNoteId); if(n) { n.title = title; n.tags = tags; n.content = content; } showToast("NOTE MODIFIÉE"); } 
+            else { notes.push({ id: Date.now(), title, tags, content }); showToast("NOTE ENREGISTRÉE"); }
             stateChanged(); closeModal('modal-new-note'); renderNotes(); if(mindmapAnimId) buildMindmapData();
         }
-        function deleteNote(id) {
-            if(confirm("Confirmer la suppression de cette note ?")) { notes = notes.filter(n => n.id !== id); stateChanged(); renderNotes(); if(mindmapAnimId) buildMindmapData(); showToast("NOTE SUPPRIMÉE", "var(--cp-red)"); }
-        }
+        function deleteNote(id) { if(confirm("Confirmer la suppression de cette note ?")) { notes = notes.filter(n => n.id !== id); stateChanged(); renderNotes(); if(mindmapAnimId) buildMindmapData(); showToast("NOTE SUPPRIMÉE", "var(--cp-red)"); } }
 
         // --- AGENDA ---
         function renderAgenda() {
             const filtersContainer = document.getElementById('agenda-filters');
             if(filtersContainer) {
-                let allTags = new Set();
-                agendaTasks.forEach(t => { if(t.tags) t.tags.forEach(tg => allTags.add(tg)); });
+                let allTags = new Set(); agendaTasks.forEach(t => { if(t.tags) t.tags.forEach(tg => allTags.add(tg)); });
                 filtersContainer.innerHTML = `<button class="filter-btn ${currentAgendaFilter === 'ALL' ? 'active' : ''}" onclick="setAgendaFilter('ALL')">TOUT</button>`;
-                Array.from(allTags).sort().forEach(tag => {
-                    filtersContainer.innerHTML += `<button class="filter-btn ${currentAgendaFilter === tag ? 'active' : ''}" onclick="setAgendaFilter('${tag}')">${tag}</button>`;
-                });
+                Array.from(allTags).sort().forEach(tag => { filtersContainer.innerHTML += `<button class="filter-btn ${currentAgendaFilter === tag ? 'active' : ''}" onclick="setAgendaFilter('${tag}')">${tag}</button>`; });
             }
-
-            const list = document.getElementById('agenda-list'); if(!list) return;
-            list.innerHTML = '';
-            
+            const list = document.getElementById('agenda-list'); if(!list) return; list.innerHTML = '';
             let filteredTasks = currentAgendaFilter === 'ALL' ? agendaTasks : agendaTasks.filter(t => t.tags && t.tags.includes(currentAgendaFilter));
-
             filteredTasks.sort((a,b) => new Date(a.date) - new Date(b.date)).forEach(t => {
                 let tagsHtml = t.tags ? t.tags.map(tg => `<span class="tag-badge cyan">${tg}</span>`).join('') : '';
                 const d = new Date(t.date); const dateStr = `${d.getDate().toString().padStart(2,'0')}/${(d.getMonth()+1).toString().padStart(2,'0')} à ${d.getHours().toString().padStart(2,'0')}:${d.getMinutes().toString().padStart(2,'0')}`;
@@ -1019,30 +1048,17 @@
             });
         }
         function submitAgendaTask() {
-            const title = document.getElementById('ag-title').value; 
-            const date = document.getElementById('ag-date').value; 
-            const tagsInput = document.getElementById('ag-tags').value;
-            const source = document.getElementById('ag-source').value;
-            const tags = extractTags(tagsInput);
-
+            const title = document.getElementById('ag-title').value; const date = document.getElementById('ag-date').value; const tagsInput = document.getElementById('ag-tags').value; const source = document.getElementById('ag-source').value; const tags = extractTags(tagsInput);
             if(!title || !date) return showToast("Requis", "var(--cp-red)");
-            if(currentEditTaskId) { 
-                const t = agendaTasks.find(x => x.id === currentEditTaskId); 
-                if(t){ t.title = title; t.date = date; t.tags = tags; t.source = source; showToast("ACTION MODIFIÉE");} 
-            } else { 
-                agendaTasks.push({ id: Date.now(), title, date, tags, source }); 
-                showToast("ACTION AJOUTÉE");
-            }
+            if(currentEditTaskId) { const t = agendaTasks.find(x => x.id === currentEditTaskId); if(t){ t.title = title; t.date = date; t.tags = tags; t.source = source; showToast("ACTION MODIFIÉE");} } 
+            else { agendaTasks.push({ id: Date.now(), title, date, tags, source }); showToast("ACTION AJOUTÉE"); }
             stateChanged(); resetAgendaForm(); renderAgenda();
             if(currentProtocolId) { const p = protocols.find(x => x.id === currentProtocolId); if(p) renderProtocolAgenda(p.data.step1); }
             if(mindmapAnimId) buildMindmapData();
         }
         function editAgendaTask(id) {
             currentEditTaskId = id; const t = agendaTasks.find(x => x.id === id); if(!t) return;
-            document.getElementById('ag-title').value = t.title; 
-            document.getElementById('ag-date').value = t.date; 
-            document.getElementById('ag-tags').value = (t.tags || []).join(', ');
-            document.getElementById('ag-source').value = t.source || '';
+            document.getElementById('ag-title').value = t.title; document.getElementById('ag-date').value = t.date; document.getElementById('ag-tags').value = (t.tags || []).join(', '); document.getElementById('ag-source').value = t.source || '';
             document.getElementById('agenda-form-title').innerText = "MODIFIER L'ACTION"; document.getElementById('ag-btn-submit').innerText = "METTRE À JOUR"; document.getElementById('ag-btn-cancel').style.display = "block";
         }
         function completeAgendaTask(id) { 
@@ -1051,11 +1067,7 @@
             if(mindmapAnimId) buildMindmapData();
         }
         function resetAgendaForm() {
-            currentEditTaskId = null; 
-            document.getElementById('ag-title').value = ''; 
-            document.getElementById('ag-date').value = ''; 
-            document.getElementById('ag-tags').value = ''; 
-            document.getElementById('ag-source').value = '';
+            currentEditTaskId = null; document.getElementById('ag-title').value = ''; document.getElementById('ag-date').value = ''; document.getElementById('ag-tags').value = ''; document.getElementById('ag-source').value = '';
             document.getElementById('agenda-form-title').innerText = "AJOUTER ACTION"; document.getElementById('ag-btn-submit').innerText = "GÉNÉRER"; document.getElementById('ag-btn-cancel').style.display = "none";
         }
 
@@ -1063,19 +1075,15 @@
         function formatCurrency(baseAmount) { return new Intl.NumberFormat('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(baseAmount * exchangeRates[currentCurrency]) + ' ' + currencySymbols[currentCurrency]; }
         function changeCurrency() { currentCurrency = document.getElementById('fin-currency').value; stateChanged(); renderFinance(); }
         function renderFinance() {
-            let inT = 0, outT = 0; const list = document.getElementById('fin-list'); if(!list) return;
-            list.innerHTML = '';
+            let inT = 0, outT = 0; const list = document.getElementById('fin-list'); if(!list) return; list.innerHTML = '';
             transactions.sort((a,b) => b.date - a.date).forEach(t => {
                 if(t.type === 'in') inT += t.baseAmount; else outT += t.baseAmount;
                 const card = document.createElement('div'); card.className = `trans-card glass-panel chamfer-reverse ${t.type}`;
                 card.innerHTML = `<div><div style="font-size: 1.2rem; color: white; font-weight: bold;">${t.label}</div><div class="trans-date cyber-number" style="font-size: 0.8rem; color: #888;">${formatDateFull(t.date)}</div></div><div style="display: flex; align-items: center; gap: 15px;"><div class="trans-amount cyber-number" style="font-size: 1.3rem; font-weight: bold; color: ${t.type === 'in' ? 'var(--cp-green)' : 'var(--cp-red)'}">${t.type === 'in' ? '+' : '-'}${formatCurrency(t.baseAmount)}</div><button class="cp-btn-outline warning chamfer" style="padding: 5px 10px;" onclick="editTransaction(${t.id})">MODIFIER</button><button class="cp-btn-outline danger chamfer" style="padding: 5px 10px;" onclick="deleteTransaction(${t.id})">X</button></div>`;
                 list.appendChild(card);
             });
-            document.getElementById('fin-revenus').innerText = formatCurrency(inT); 
-            document.getElementById('fin-depenses').innerText = formatCurrency(outT);
-            const soldeEl = document.getElementById('fin-solde'); 
-            soldeEl.innerText = formatCurrency(inT - outT);
-            soldeEl.style.color = (inT - outT) >= 0 ? 'var(--cp-cyan)' : 'var(--cp-red)';
+            document.getElementById('fin-revenus').innerText = formatCurrency(inT); document.getElementById('fin-depenses').innerText = formatCurrency(outT);
+            const soldeEl = document.getElementById('fin-solde'); soldeEl.innerText = formatCurrency(inT - outT); soldeEl.style.color = (inT - outT) >= 0 ? 'var(--cp-cyan)' : 'var(--cp-red)';
         }
         function submitTransaction() {
             const type = document.getElementById('fin-type').value; const label = document.getElementById('fin-label').value; const amt = parseFloat(document.getElementById('fin-amount').value);
@@ -1098,6 +1106,7 @@
         // --- MINDMAP ---
         let mmNodes = [], mmLinks = [], mindmapAnimId = null, mmCanvas, mmCtx;
         let draggedNode = null; let camera = { x: 0, y: 0, zoom: 1 }; let isDraggingMap = false; let startMapDrag = { x: 0, y: 0 }; let currentEditNode = null;
+        let initialPinchDist = null; let initialPinchZoom = null;
 
         function initMindmap() {
             const container = document.getElementById('mindmap-container'); mmCanvas = document.getElementById('mindmap-canvas'); if(!container || !mmCanvas) return;
@@ -1196,6 +1205,7 @@
             canvasEl.addEventListener('mouseup', () => { draggedNode = null; isDraggingMap = false; }); 
             canvasEl.addEventListener('mouseleave', () => { draggedNode = null; isDraggingMap = false; });
 
+            // GESTION TACTILE MINDMAP : DRAG (1 DOIGT) ET PINCH ZOOM (2 DOIGTS)
             canvasEl.addEventListener('touchstart', e => {
                 if(e.touches.length === 1) {
                     let rect = mmCanvas.getBoundingClientRect(); let mx = e.touches[0].clientX - rect.left; let my = e.touches[0].clientY - rect.top;
@@ -1206,6 +1216,12 @@
                         if(Math.hypot(n.x - worldX, n.y - worldY) < r + 15) { draggedNode = n; clickedNode = true; openMindmapPanel(n); break; } 
                     }
                     if(!clickedNode) { isDraggingMap = true; startMapDrag.x = mx - camera.x; startMapDrag.y = my - camera.y; }
+                } else if(e.touches.length === 2) {
+                    e.preventDefault();
+                    let dx = e.touches[0].clientX - e.touches[1].clientX;
+                    let dy = e.touches[0].clientY - e.touches[1].clientY;
+                    initialPinchDist = Math.sqrt(dx*dx + dy*dy);
+                    initialPinchZoom = camera.zoom;
                 }
             }, {passive: false});
 
@@ -1215,9 +1231,21 @@
                     let rect = mmCanvas.getBoundingClientRect(); let mx = e.touches[0].clientX - rect.left; let my = e.touches[0].clientY - rect.top;
                     if(draggedNode) { draggedNode.x = (mx - camera.x) / camera.zoom; draggedNode.y = (my - camera.y) / camera.zoom; } 
                     else if(isDraggingMap) { camera.x = mx - startMapDrag.x; camera.y = my - startMapDrag.y; }
+                } else if(e.touches.length === 2) {
+                    e.preventDefault();
+                    if (initialPinchDist) {
+                        let dx = e.touches[0].clientX - e.touches[1].clientX;
+                        let dy = e.touches[0].clientY - e.touches[1].clientY;
+                        let newDist = Math.sqrt(dx*dx + dy*dy);
+                        camera.zoom = initialPinchZoom * (newDist / initialPinchDist);
+                        camera.zoom = Math.max(0.3, Math.min(camera.zoom, 3)); 
+                    }
                 }
             }, {passive: false});
-            canvasEl.addEventListener('touchend', () => { draggedNode = null; isDraggingMap = false; });
+            canvasEl.addEventListener('touchend', (e) => { 
+                if(e.touches.length < 2) { initialPinchDist = null; initialPinchZoom = null; }
+                draggedNode = null; isDraggingMap = false; 
+            });
         }
         
         function zoomMindmap(amount) { camera.zoom += amount; camera.zoom = Math.max(0.3, Math.min(camera.zoom, 3)); }
