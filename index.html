@@ -162,7 +162,7 @@
 
         /* ZONE PRINCIPALE SCROLLABLE */
         main { 
-            padding: 20px 30px; flex: 1 1 0; min-height: 0; overflow-y: auto; overflow-x: hidden; position: relative; z-index: 5;
+            padding: 20px 30px; flex: 1 1 0; min-height: 0; overflow-y: auto; overflow-x: hidden; position: relative; z-index: 5; scroll-behavior: smooth;
         }
         
         .panel { display: none; flex-direction: column; gap: 20px; width: 100%; animation: glitch-anim-fade 0.4s ease-out; padding-bottom: 80px; }
@@ -267,8 +267,17 @@
         .note-title { color: var(--cp-red); font-family: var(--font-title); font-size: 1.3rem; margin-bottom: 15px; }
         .note-preview { font-family: var(--font-mono); font-size: 1rem; color: #ccc; display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; flex-grow: 1; margin-bottom: 10px; line-height: 1.5; }
 
-        /* VIEW: MINDMAP */
-        #view-mindmap { padding: 0; position: relative; overflow: hidden; border: 1px solid var(--glass-border); height: 75vh; min-height: 500px; border-radius: 4px; }
+        /* VIEW: MINDMAP STRUCTURATION */
+        .mm-overlay-text {
+            position: absolute; top: 25px; left: 25px; font-family: var(--font-mono); color: var(--cp-cyan); pointer-events: none; text-shadow: 0 0 8px rgba(0,229,255,0.8);
+        }
+        .mindmap-wrapper {
+            position: relative; overflow: hidden; border: 1px solid var(--glass-border); border-radius: 4px;
+            display: flex; flex-direction: row; height: 75vh; min-height: 500px;
+        }
+        #mindmap-container {
+            flex-grow: 1; position: relative; overflow: hidden; height: 100%;
+        }
         #mindmap-canvas { display: block; width: 100%; height: 100%; cursor: grab; touch-action: none; }
         #mindmap-canvas:active { cursor: grabbing; }
         
@@ -279,6 +288,7 @@
             transform: translateX(100%); transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
             z-index: 10; display: flex; flex-direction: column; box-shadow: -10px 0 30px rgba(0,0,0,0.8); 
         }
+        #mindmap-detail-panel.open { transform: translateX(0); }
         
         .zoom-controls { position: absolute; bottom: 25px; right: 25px; display: flex; flex-direction: column; gap: 10px; z-index: 5; }
         .zoom-btn { width: 45px; height: 45px; background: rgba(10, 10, 12, 0.8); border: 1px solid var(--cp-cyan); color: var(--cp-cyan); font-family: var(--font-mono); font-size: 1.5rem; font-weight: bold; cursor: pointer; transition: 0.3s; display: flex; justify-content: center; align-items: center; }
@@ -330,8 +340,8 @@
             header { padding: 10px; justify-content: center; }
             .player-info { display: none; } 
             
-            /* Taille ajustée du bouton plein écran */
-            .fs-btn { padding: 3px 6px; margin-left: 8px; font-size: 0.9rem; }
+            /* Taille EXTRÊMEMENT réduite du bouton plein écran */
+            .fs-btn { padding: 2px 6px; margin-left: 6px; font-size: 0.7rem; height: 24px; display: flex; align-items: center; justify-content: center; letter-spacing: -1px; border-width: 1px; }
             
             /* 3. Réduction des marges internes pour compacter l'UI */
             main { padding: 10px; }
@@ -354,6 +364,15 @@
             .phase-header { font-size: 1.1rem; padding: 10px 15px; }
             .phase-body { padding: 15px; gap: 15px; }
             
+            /* Remplacement de la structure Mindmap sur Mobile */
+            .mindmap-wrapper { flex-direction: column; height: auto; min-height: auto; overflow: visible; border: none; }
+            #mindmap-container { height: 50vh; min-height: 350px; flex-shrink: 0; border: 1px solid var(--glass-border); border-radius: 4px; }
+            #mindmap-detail-panel { 
+                position: relative; width: 100%; height: auto; transform: none; border-left: none; padding: 20px; 
+                box-shadow: none; border-top: 2px solid var(--cp-cyan); display: none; margin-top: 15px; border-radius: 4px; background: rgba(10, 10, 12, 0.6); 
+            }
+            #mindmap-detail-panel.open { display: flex; animation: glitch-anim-fade 0.3s ease-out; }
+
             .agenda-grid { display: flex; flex-direction: column-reverse; gap: 15px; }
             .agenda-grid > div:last-child { position: static; } 
             .task-card { flex-direction: column; align-items: flex-start; gap: 10px; padding: 12px; }
@@ -371,7 +390,6 @@
             .modal-content { padding: 15px; width: 95%; max-height: 90vh; overflow-y: auto; }
             .modal-content > div:last-child { flex-direction: column-reverse; }
             .modal-content button { width: 100%; margin-top: 10px;}
-            #mindmap-detail-panel { width: 100%; border-left: none; border-top: 2px solid var(--cp-cyan); padding: 15px; }
         }
     </style>
 </head>
@@ -491,18 +509,22 @@
         <!-- VIEW: MINDMAP -->
         <div id="view-mindmap" class="panel">
             <h2 class="section-title">Réseau Neural / Mindmap</h2>
-            <div id="mindmap-container" class="glass-panel" style="position: relative; overflow: hidden; height: 75vh; min-height: 500px; border-radius: 4px;">
-                <canvas id="mindmap-canvas" style="touch-action: none;"></canvas>
-                <div class="zoom-controls">
-                    <button class="zoom-btn chamfer" onclick="zoomMindmap(0.2)">+</button>
-                    <button class="zoom-btn chamfer" onclick="resetMindmapView()">[ ]</button>
-                    <button class="zoom-btn chamfer" onclick="zoomMindmap(-0.2)">-</button>
-                </div>
-                <div style="position: absolute; top: 25px; left: 25px; font-family: var(--font-mono); color: var(--cp-cyan); pointer-events: none; text-shadow: 0 0 8px rgba(0,229,255,0.8);">
-                    > EXPLORATEUR ACTIF <br>> SCROLL/PINCER = ZOOM <br>> GLISSER = NAVIGUER
+            
+            <!-- Restructuration pour le Panel Mobile -->
+            <div class="mindmap-wrapper">
+                <div id="mindmap-container" class="glass-panel">
+                    <canvas id="mindmap-canvas"></canvas>
+                    <div class="zoom-controls">
+                        <button class="zoom-btn chamfer" onclick="zoomMindmap(0.2)">+</button>
+                        <button class="zoom-btn chamfer" onclick="resetMindmapView()">[ ]</button>
+                        <button class="zoom-btn chamfer" onclick="zoomMindmap(-0.2)">-</button>
+                    </div>
+                    <div class="mm-overlay-text">
+                        > EXPLORATEUR ACTIF <br>> SCROLL/PINCER = ZOOM <br>> GLISSER = NAVIGUER
+                    </div>
                 </div>
                 
-                <div id="mindmap-detail-panel">
+                <div id="mindmap-detail-panel" class="glass-panel">
                     <h3 id="mm-detail-title" style="color: var(--cp-cyan); font-family: var(--font-title); font-size: 1.5rem; margin-bottom: 15px;">Titre</h3>
                     <div id="mm-readonly-content" style="display:none; font-family: var(--font-mono); color: #ccc; font-size: 1.05rem; line-height: 1.6; overflow-y: auto; flex-grow: 1; white-space: pre-wrap; margin-bottom: 20px;"></div>
                     <textarea id="mm-edit-content" class="cp-textarea" style="flex-grow: 1; margin-bottom: 25px; font-family: var(--font-mono); font-size: 1.05rem;"></textarea>
@@ -706,7 +728,7 @@
                 click: () => playTone('square', 300, 150, 0.1, 0.03),
                 success: () => playTone('triangle', 400, 800, 0.2, 0.05, 'sine'),
                 error: () => playTone('sawtooth', 200, 50, 0.25, 0.05, 'square'),
-                swipe: () => playTone('sine', 150, 600, 0.15, 0.02, 'triangle') // Nouveau son de swipe
+                swipe: () => playTone('sine', 150, 600, 0.15, 0.02, 'triangle') // Son de swipe/changement
             };
         })();
 
@@ -752,7 +774,6 @@
         const viewOrder = ['view-nexus', 'view-protocols', 'view-database', 'view-mindmap', 'view-agenda', 'view-finance'];
 
         document.addEventListener('touchstart', e => {
-            // Ignorer le swipe si on dessine dans la mindmap, on tape dans un input, ou si on scroll la nav
             if (e.target.closest('#mindmap-canvas') || e.target.closest('nav') || e.target.closest('.modal') || 
                 e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') return;
             touchStartX = e.changedTouches[0].screenX;
@@ -771,17 +792,14 @@
             let dx = endX - startX;
             let dy = endY - startY;
             
-            // Vérifie si le swipe est principalement horizontal et assez long
             if (Math.abs(dx) > 70 && Math.abs(dx) > Math.abs(dy)) {
                 let currentActive = document.querySelector('.panel.active').id;
                 let currentIndex = viewOrder.indexOf(currentActive);
                 
                 if (dx < 0 && currentIndex < viewOrder.length - 1) { 
-                    // Swipe à gauche -> page suivante
                     switchTab(viewOrder[currentIndex + 1], 'right');
                     CyberSFX.swipe();
                 } else if (dx > 0 && currentIndex > 0) { 
-                    // Swipe à droite -> page précédente
                     switchTab(viewOrder[currentIndex - 1], 'left');
                     CyberSFX.swipe();
                 }
@@ -922,7 +940,6 @@
                 btn.classList.remove('active');
                 if(btn.getAttribute('onclick').includes(viewId)) {
                     btn.classList.add('active');
-                    // Scroll automatique vers l'onglet actif sur mobile
                     btn.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
                 }
             });
@@ -1073,7 +1090,12 @@
 
         // --- FINANCE ---
         function formatCurrency(baseAmount) { return new Intl.NumberFormat('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(baseAmount * exchangeRates[currentCurrency]) + ' ' + currencySymbols[currentCurrency]; }
-        function changeCurrency() { currentCurrency = document.getElementById('fin-currency').value; stateChanged(); renderFinance(); }
+        function changeCurrency() { 
+            if(CyberSFX) CyberSFX.click(); 
+            currentCurrency = document.getElementById('fin-currency').value; 
+            stateChanged(); 
+            renderFinance(); 
+        }
         function renderFinance() {
             let inT = 0, outT = 0; const list = document.getElementById('fin-list'); if(!list) return; list.innerHTML = '';
             transactions.sort((a,b) => b.date - a.date).forEach(t => {
@@ -1257,7 +1279,13 @@
             if(node.editable) { readOnlyEl.style.display = 'none'; editAreaEl.style.display = 'block'; editAreaEl.value = node.text; saveBtnEl.style.display = 'block'; } 
             else { readOnlyEl.style.display = 'block'; editAreaEl.style.display = 'none'; readOnlyEl.innerText = node.text; saveBtnEl.style.display = 'none'; }
             
-            document.getElementById('mindmap-detail-panel').style.transform = 'translateX(0)';
+            document.getElementById('mindmap-detail-panel').classList.add('open');
+            
+            if (window.innerWidth <= 768) {
+                setTimeout(() => {
+                    document.getElementById('mindmap-detail-panel').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                }, 100);
+            }
         }
         
         function saveMindmapNode() {
@@ -1269,8 +1297,7 @@
         }
         
         function closeMindmapDetail() { 
-            let panelEl = document.getElementById('mindmap-detail-panel'); 
-            if(panelEl) panelEl.style.transform = 'translateX(100%)'; 
+            document.getElementById('mindmap-detail-panel').classList.remove('open'); 
             currentEditNode = null; 
         }
 
