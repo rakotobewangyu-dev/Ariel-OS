@@ -121,6 +121,11 @@
         .tag-badge { display: inline-block; padding: 3px 8px; background: rgba(255, 0, 85, 0.15); border: 1px solid var(--cp-red); color: var(--cp-red); font-size: 0.75rem; font-family: var(--font-mono); margin-right: 5px; margin-top: 5px; border-radius: 2px; }
         .tag-badge.cyan { background: rgba(0, 229, 255, 0.15); border-color: var(--cp-cyan); color: var(--cp-cyan); }
 
+        /* UI XP Bars */
+        .xp-bar-bg { background: rgba(0, 0, 0, 0.6); border: 1px solid rgba(0, 229, 255, 0.3); height: 12px; width: 100%; position: relative; overflow: hidden; margin-top: 8px; border-radius: 2px; }
+        .xp-bar-fill { background: linear-gradient(90deg, var(--cp-purple), var(--cp-cyan)); height: 100%; width: 0%; transition: width 0.5s ease-out; box-shadow: 0 0 10px var(--cp-cyan); }
+        .xp-header { display: flex; justify-content: space-between; font-family: var(--font-mono); color: white; font-size: 0.95rem; align-items: flex-end;}
+
         /* Header / HUD */
         header {
             display: flex; justify-content: space-between; align-items: center; padding: 20px 30px;
@@ -333,17 +338,14 @@
         }
 
         @media (max-width: 768px) {
-            /* 1. Échelle réduite globale sur mobile */
             html { font-size: 14px; } 
             
-            /* 2. Suppression du "V" et centrage */
             header { padding: 10px; justify-content: center; }
             .player-info { display: none; } 
             
-            /* Taille EXTRÊMEMENT réduite du bouton plein écran */
+            /* Bouton plein écran réduit au maximum */
             .fs-btn { padding: 2px 4px; margin-left: 5px; font-size: 0.6rem; height: 20px; display: flex; align-items: center; justify-content: center; letter-spacing: -1px; border-width: 1px; line-height: 1; }
             
-            /* 3. Réduction des marges internes pour compacter l'UI */
             main { padding: 10px; }
             nav { padding: 10px; }
             .nav-btn { padding: 8px 12px; font-size: 0.95rem; }
@@ -449,6 +451,14 @@
                     </div>
                     
                     <p style="font-family: var(--font-mono); color: var(--cp-cyan); margin-top: 30px; font-size: 1.1rem; text-shadow: 0 0 5px rgba(0,229,255,0.5);">> Synthèse des données en temps réel. Le système est opérationnel.</p>
+                </div>
+                
+                <!-- NOUVEAU : SYSTÈME D'XP POUR LES PROTOCOLES -->
+                <div class="overview-box glass-panel chamfer-reverse">
+                    <h3 style="color: var(--cp-purple); font-family: var(--font-title); margin-bottom: 25px; text-shadow: 0 0 10px rgba(176,0,255,0.3);">TRACKING DES MISSIONS (XP)</h3>
+                    <div id="xp-bars-container" style="display: flex; flex-direction: column; gap: 20px;">
+                        <!-- Les barres d'XP seront générées ici par JS -->
+                    </div>
                 </div>
             </div>
         </div>
@@ -696,22 +706,16 @@
                 if(actx.state === 'suspended') actx.resume();
             };
 
-            // Fonction pour générer un "clic" digital synthétique très sec
             const playCyberClick = (startFreq, endFreq, duration, type, vol = 0.05) => {
                 try {
                     init();
                     const osc = actx.createOscillator();
                     const gain = actx.createGain();
                     osc.type = type;
-                    
-                    // Chute rapide de fréquence pour un effet de "clic" mécanique
                     osc.frequency.setValueAtTime(startFreq, actx.currentTime);
                     osc.frequency.exponentialRampToValueAtTime(endFreq, actx.currentTime + duration);
-                    
-                    // Enveloppe sonore très courte
                     gain.gain.setValueAtTime(vol, actx.currentTime);
                     gain.gain.exponentialRampToValueAtTime(0.001, actx.currentTime + duration);
-                    
                     osc.connect(gain);
                     gain.connect(actx.destination);
                     osc.start();
@@ -720,19 +724,14 @@
             };
 
             return {
-                // Bruit statique très léger
                 hover: () => playCyberClick(2500, 2000, 0.015, 'square', 0.01),
-                // Clic UI standard, sec et digital
                 click: () => playCyberClick(1500, 500, 0.03, 'square', 0.03),
-                // Double clic aigu pour une réussite
                 success: () => { 
                     playCyberClick(2000, 4000, 0.04, 'square', 0.04); 
                     setTimeout(() => playCyberClick(4000, 6000, 0.04, 'square', 0.04), 60); 
                 },
-                // Bruit grave et "crunchy" pour une erreur ou suppression
                 error: () => playCyberClick(300, 100, 0.08, 'sawtooth', 0.05),
-                // Bruit de balayage digital
-                swipe: () => playCyberClick(800, 1200, 0.02, 'sine', 0.03)
+                swipe: () => playCyberClick(800, 1200, 0.02, 'square', 0.02)
             };
         })();
 
@@ -816,16 +815,12 @@
         if(mmEditInput) {
             mmEditInput.addEventListener('focus', function() {
                 if(window.innerWidth <= 768) {
-                    // Masquer temporairement la carte pour laisser la place totale au texte
                     document.getElementById('mindmap-container').style.display = 'none';
-                    setTimeout(() => {
-                        this.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                    }, 300); // Laisse le temps au clavier d'apparaître
+                    setTimeout(() => { this.scrollIntoView({ behavior: 'smooth', block: 'center' }); }, 300);
                 }
             });
             mmEditInput.addEventListener('blur', function() {
                 if(window.innerWidth <= 768) {
-                    // Faire réapparaître la carte
                     document.getElementById('mindmap-container').style.display = 'block';
                 }
             });
@@ -837,6 +832,8 @@
         let currentProtocolId = null; let currentEditNoteId = null; let currentEditTaskId = null; let currentEditTransId = null;
         let currentNoteFilter = 'ALL'; let currentAgendaFilter = 'ALL';
         
+        let completedSecondaryTasks = 0; // Traqueur pour les missions non liées aux protocoles
+
         const exchangeRates = { 'EUR': 1, 'MGA': 4950, 'USD': 1.08, 'CNY': 7.8 };
         const currencySymbols = { 'EUR': '€', 'MGA': 'Ar', 'USD': '$', 'CNY': '¥' };
 
@@ -909,6 +906,7 @@
                 protocols = parsed.protocols || []; notes = parsed.notes || [];
                 agendaTasks = parsed.agendaTasks || []; transactions = parsed.transactions || [];
                 currentCurrency = parsed.currentCurrency || 'CNY';
+                completedSecondaryTasks = parsed.completedSecondaryTasks || 0;
             }
             let currencySelect = document.getElementById('fin-currency');
             if(currencySelect) currencySelect.value = currentCurrency;
@@ -923,13 +921,13 @@
         };
 
         function saveData() {
-            if (window.saveDataToCloud) window.saveDataToCloud({ protocols, notes, agendaTasks, transactions, currentCurrency });
+            if (window.saveDataToCloud) window.saveDataToCloud({ protocols, notes, agendaTasks, transactions, currentCurrency, completedSecondaryTasks });
             triggerDataRain(); 
         }
 
         function stateChanged() { saveData(); updateDashboardSummary(); }
 
-        // --- DASHBOARD SUMMARY ---
+        // --- DASHBOARD SUMMARY ET NOUVEAU SYSTÈME XP ---
         function updateDashboardSummary() {
             let sumProtocols = document.getElementById('sum-protocols'); if(sumProtocols) sumProtocols.innerText = protocols.length;
             let sumAgenda = document.getElementById('sum-agenda'); if(sumAgenda) sumAgenda.innerText = agendaTasks.length;
@@ -939,6 +937,84 @@
                 let inT = 0, outT = 0;
                 transactions.forEach(t => { if(t.type === 'in') inT += t.baseAmount; else outT += t.baseAmount; });
                 sumFinance.innerText = formatCurrency(inT - outT);
+            }
+            renderXP();
+        }
+
+        // --- FONCTION RENDU DES BARRES D'XP ---
+        function renderXP() {
+            const container = document.getElementById('xp-bars-container');
+            if(!container) return;
+            container.innerHTML = '';
+
+            let hasMissions = false;
+
+            // 1. XP des Protocoles Principaux
+            protocols.forEach(p => {
+                const sourceName = p.data.step1;
+                if(!sourceName) return;
+
+                const pendingTasks = agendaTasks.filter(t => t.source === sourceName).length;
+                const completedTasks = (p.stats && p.stats.done) ? p.stats.done : 0;
+                const totalTasks = pendingTasks + completedTasks;
+
+                if(totalTasks > 0) {
+                    hasMissions = true;
+                    const percentDone = Math.round((completedTasks / totalTasks) * 100);
+                    const percentLeft = 100 - percentDone;
+                    const xpGained = completedTasks * 100;
+                    const xpTotal = totalTasks * 100;
+
+                    const html = `
+                        <div>
+                            <div class="xp-header">
+                                <span style="font-weight: bold; color: var(--cp-yellow); text-shadow: 0 0 5px rgba(252,238,10,0.5);">> ${sourceName.toUpperCase()}</span>
+                                <span class="cyber-number" style="color: var(--cp-cyan); font-size: 0.9rem;">${xpGained} / ${xpTotal} XP</span>
+                            </div>
+                            <div class="xp-bar-bg chamfer-reverse">
+                                <div class="xp-bar-fill" style="width: ${percentDone}%;"></div>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; font-size: 0.75rem; color: #888; font-family: var(--font-mono); margin-top: 5px;">
+                                <span>${completedTasks} ACCOMPLI(S) (${percentDone}%)</span>
+                                <span style="color: var(--cp-red);">${pendingTasks} NON FAIT (${percentLeft}%)</span>
+                            </div>
+                        </div>
+                    `;
+                    container.innerHTML += html;
+                }
+            });
+
+            // 2. XP des Missions Secondaires (Aucun protocole lié)
+            const pendingSecondary = agendaTasks.filter(t => !t.source || !protocols.some(p => p.data.step1 === t.source)).length;
+            const totalSecondary = pendingSecondary + completedSecondaryTasks;
+
+            if (totalSecondary > 0) {
+                hasMissions = true;
+                const percentDone = Math.round((completedSecondaryTasks / totalSecondary) * 100);
+                const percentLeft = 100 - percentDone;
+                const xpGained = completedSecondaryTasks * 50; // 50 XP pour les secondaires
+                const xpTotal = totalSecondary * 50;
+
+                const html = `
+                    <div>
+                        <div class="xp-header">
+                            <span style="font-weight: bold; color: var(--cp-orange); text-shadow: 0 0 5px rgba(255,140,0,0.5);">> MISSIONS SECONDAIRES</span>
+                            <span class="cyber-number" style="color: var(--cp-cyan); font-size: 0.9rem;">${xpGained} / ${xpTotal} XP</span>
+                        </div>
+                        <div class="xp-bar-bg chamfer-reverse">
+                            <div class="xp-bar-fill" style="width: ${percentDone}%; background: linear-gradient(90deg, #555, var(--cp-orange)); box-shadow: 0 0 10px var(--cp-orange);"></div>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; font-size: 0.75rem; color: #888; font-family: var(--font-mono); margin-top: 5px;">
+                            <span>${completedSecondaryTasks} ACCOMPLI(S) (${percentDone}%)</span>
+                            <span style="color: var(--cp-red);">${pendingSecondary} NON FAIT (${percentLeft}%)</span>
+                        </div>
+                    </div>
+                `;
+                container.innerHTML += html;
+            }
+
+            if(!hasMissions) {
+                container.innerHTML = '<div style="color:var(--cp-text); font-family:var(--font-mono); opacity:0.7;">> AUCUNE MISSION ACTIVE. PLANIFIEZ DES ACTIONS POUR GAGNER DE L\'XP.</div>';
             }
         }
 
@@ -1104,11 +1180,36 @@
             document.getElementById('ag-title').value = t.title; document.getElementById('ag-date').value = t.date; document.getElementById('ag-tags').value = (t.tags || []).join(', '); document.getElementById('ag-source').value = t.source || '';
             document.getElementById('agenda-form-title').innerText = "MODIFIER L'ACTION"; document.getElementById('ag-btn-submit').innerText = "METTRE À JOUR"; document.getElementById('ag-btn-cancel').style.display = "block";
         }
+        
+        // FONCTION MODIFIÉE : Quand une tâche est terminée, on ajoute de l'XP
         function completeAgendaTask(id) { 
-            agendaTasks = agendaTasks.filter(x => x.id !== id); stateChanged(); renderAgenda(); showToast("ACTION TERMINÉE"); 
+            const t = agendaTasks.find(x => x.id === id);
+            
+            if(t) {
+                if (t.source) {
+                    const p = protocols.find(x => x.data.step1 === t.source);
+                    if(p) {
+                        if(!p.stats) p.stats = { done: 0 };
+                        p.stats.done += 1;
+                    } else {
+                        // Si le protocole lié a été supprimé ou n'existe pas, on compte en secondaire
+                        completedSecondaryTasks += 1;
+                    }
+                } else {
+                    // Si aucune source n'est définie, c'est une mission secondaire
+                    completedSecondaryTasks += 1;
+                }
+            }
+
+            agendaTasks = agendaTasks.filter(x => x.id !== id); 
+            stateChanged(); 
+            renderAgenda(); 
+            showToast("ACTION TERMINÉE"); 
+            
             if(currentProtocolId) { const p = protocols.find(x => x.id === currentProtocolId); if(p) renderProtocolAgenda(p.data.step1); }
             if(mindmapAnimId) buildMindmapData();
         }
+        
         function resetAgendaForm() {
             currentEditTaskId = null; document.getElementById('ag-title').value = ''; document.getElementById('ag-date').value = ''; document.getElementById('ag-tags').value = ''; document.getElementById('ag-source').value = '';
             document.getElementById('agenda-form-title').innerText = "AJOUTER ACTION"; document.getElementById('ag-btn-submit').innerText = "GÉNÉRER"; document.getElementById('ag-btn-cancel').style.display = "none";
@@ -1166,6 +1267,8 @@
         function buildMindmapData() {
             mmNodes = []; mmLinks = []; 
             let root = { id: 'root', label: 'MATRICE', type: 'root', x: 0, y: 0, vx: 0, vy: 0, color: '#fcee0a', text: "Cœur de la base de données.", editable: false }; mmNodes.push(root);
+            
+            // On ajoute les protocoles et leurs phases
             protocols.forEach(p => {
                 let pNode = { id: 'p_'+p.id, label: p.data.step1 || 'Anomalie', type: 'protocol', x: Math.random()*200-100, y: Math.random()*200-100, vx: 0, vy: 0, color: '#00e5ff', text: "Dossier source Protocole. Pour modifier le titre, allez dans l'onglet PROTOCOLES.", editable: false };
                 mmNodes.push(pNode); mmLinks.push({ source: root, target: pNode });
@@ -1184,10 +1287,8 @@
                     }
                 });
             });
-            notes.forEach(n => {
-                let nNode = { id: 'n_'+n.id, label: n.title, type: 'note', x: Math.random()*300-150, y: Math.random()*300-150, vx:0, vy:0, color: '#b000ff', text: n.content, editable: true, refData: n, refKey: 'content', callback: renderNotes };
-                mmNodes.push(nNode); mmLinks.push({ source: root, target: nNode });
-            });
+
+            // On ajoute l'agenda lié aux protocoles
             agendaTasks.forEach(t => {
                 let targetParent = root; let pMatch = protocols.find(p => p.data.step1 === t.source);
                 if (pMatch) {
