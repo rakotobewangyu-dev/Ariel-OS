@@ -273,10 +273,10 @@
         }
         .mindmap-wrapper {
             position: relative; overflow: hidden; border: 1px solid var(--glass-border); border-radius: 4px;
-            display: flex; flex-direction: row; height: 75vh; min-height: 500px;
+            display: flex; flex-direction: row; height: 75vh; min-height: 500px; transition: all 0.3s;
         }
         #mindmap-container {
-            flex-grow: 1; position: relative; overflow: hidden; height: 100%;
+            flex-grow: 1; position: relative; overflow: hidden; height: 100%; transition: all 0.3s;
         }
         #mindmap-canvas { display: block; width: 100%; height: 100%; cursor: grab; touch-action: none; }
         #mindmap-canvas:active { cursor: grabbing; }
@@ -341,7 +341,7 @@
             .player-info { display: none; } 
             
             /* Taille EXTRÊMEMENT réduite du bouton plein écran */
-            .fs-btn { padding: 2px 6px; margin-left: 6px; font-size: 0.7rem; height: 24px; display: flex; align-items: center; justify-content: center; letter-spacing: -1px; border-width: 1px; }
+            .fs-btn { padding: 2px 4px; margin-left: 5px; font-size: 0.6rem; height: 20px; display: flex; align-items: center; justify-content: center; letter-spacing: -1px; border-width: 1px; line-height: 1; }
             
             /* 3. Réduction des marges internes pour compacter l'UI */
             main { padding: 10px; }
@@ -366,7 +366,7 @@
             
             /* Remplacement de la structure Mindmap sur Mobile */
             .mindmap-wrapper { flex-direction: column; height: auto; min-height: auto; overflow: visible; border: none; }
-            #mindmap-container { height: 50vh; min-height: 350px; flex-shrink: 0; border: 1px solid var(--glass-border); border-radius: 4px; }
+            #mindmap-container { height: 45vh; min-height: 300px; flex-shrink: 0; border: 1px solid var(--glass-border); border-radius: 4px; }
             #mindmap-detail-panel { 
                 position: relative; width: 100%; height: auto; transform: none; border-left: none; padding: 20px; 
                 box-shadow: none; border-top: 2px solid var(--cp-cyan); display: none; margin-top: 15px; border-radius: 4px; background: rgba(10, 10, 12, 0.6); 
@@ -404,7 +404,7 @@
             <div class="sys-status cyber-number" id="sys-clock">
                 <span class="blink">▶</span> CHARGEMENT TEMPOREL...
             </div>
-            <!-- Bouton pour forcer le plein écran sur mobile/navigateur -->
+            <!-- Bouton pour forcer le plein écran ultra-réduit sur mobile -->
             <button id="fullscreen-btn" onclick="toggleFullScreen()" class="cp-btn-outline chamfer fs-btn" title="Plein Écran">[ ]</button>
         </div>
         <div class="player-info">
@@ -527,7 +527,9 @@
                 <div id="mindmap-detail-panel" class="glass-panel">
                     <h3 id="mm-detail-title" style="color: var(--cp-cyan); font-family: var(--font-title); font-size: 1.5rem; margin-bottom: 15px;">Titre</h3>
                     <div id="mm-readonly-content" style="display:none; font-family: var(--font-mono); color: #ccc; font-size: 1.05rem; line-height: 1.6; overflow-y: auto; flex-grow: 1; white-space: pre-wrap; margin-bottom: 20px;"></div>
+                    
                     <textarea id="mm-edit-content" class="cp-textarea" style="flex-grow: 1; margin-bottom: 25px; font-family: var(--font-mono); font-size: 1.05rem;"></textarea>
+                    
                     <div style="display:flex; flex-direction: column; gap:15px;">
                         <button id="mm-save-btn" class="cp-btn cyan chamfer" style="width: 100%; padding: 15px;" onclick="saveMindmapNode()">SAUVEGARDER LA MODIFICATION</button>
                         <button class="cp-btn-outline danger chamfer" style="width: 100%; padding: 12px;" onclick="closeMindmapDetail()">FERMER LE PANNEAU</button>
@@ -685,7 +687,7 @@
     <!-- SCRIPT PRINCIPAL DU SITE                   -->
     <!-- ========================================== -->
     <script>
-        // --- SYNTHÉTISEUR AUDIO CYBERPUNK ---
+        // --- NOUVEAU SYNTHÉTISEUR AUDIO CYBERPUNK (Cliquetis secs) ---
         const CyberSFX = (() => {
             let actx = null;
             
@@ -694,41 +696,43 @@
                 if(actx.state === 'suspended') actx.resume();
             };
 
-            const playTone = (type, freq1, freq2, duration, vol, type2) => {
+            // Fonction pour générer un "clic" digital synthétique très sec
+            const playCyberClick = (startFreq, endFreq, duration, type, vol = 0.05) => {
                 try {
                     init();
                     const osc = actx.createOscillator();
                     const gain = actx.createGain();
                     osc.type = type;
-                    osc.frequency.setValueAtTime(freq1, actx.currentTime);
-                    if(freq2) osc.frequency.exponentialRampToValueAtTime(freq2, actx.currentTime + duration);
                     
+                    // Chute rapide de fréquence pour un effet de "clic" mécanique
+                    osc.frequency.setValueAtTime(startFreq, actx.currentTime);
+                    osc.frequency.exponentialRampToValueAtTime(endFreq, actx.currentTime + duration);
+                    
+                    // Enveloppe sonore très courte
                     gain.gain.setValueAtTime(vol, actx.currentTime);
-                    gain.gain.exponentialRampToValueAtTime(0.01, actx.currentTime + duration);
+                    gain.gain.exponentialRampToValueAtTime(0.001, actx.currentTime + duration);
                     
                     osc.connect(gain);
                     gain.connect(actx.destination);
                     osc.start();
                     osc.stop(actx.currentTime + duration);
-                    
-                    if(type2) {
-                       const osc2 = actx.createOscillator();
-                       osc2.type = type2;
-                       osc2.frequency.setValueAtTime(freq1*1.5, actx.currentTime);
-                       if(freq2) osc2.frequency.exponentialRampToValueAtTime(freq2*1.5, actx.currentTime + duration);
-                       osc2.connect(gain);
-                       osc2.start();
-                       osc2.stop(actx.currentTime + duration);
-                    }
                 } catch(e){}
             };
 
             return {
-                hover: () => playTone('sine', 800, 1200, 0.05, 0.01),
-                click: () => playTone('square', 300, 150, 0.1, 0.03),
-                success: () => playTone('triangle', 400, 800, 0.2, 0.05, 'sine'),
-                error: () => playTone('sawtooth', 200, 50, 0.25, 0.05, 'square'),
-                swipe: () => playTone('sine', 150, 600, 0.15, 0.02, 'triangle') // Son de swipe/changement
+                // Bruit statique très léger
+                hover: () => playCyberClick(2500, 2000, 0.015, 'square', 0.01),
+                // Clic UI standard, sec et digital
+                click: () => playCyberClick(1500, 500, 0.03, 'square', 0.03),
+                // Double clic aigu pour une réussite
+                success: () => { 
+                    playCyberClick(2000, 4000, 0.04, 'square', 0.04); 
+                    setTimeout(() => playCyberClick(4000, 6000, 0.04, 'square', 0.04), 60); 
+                },
+                // Bruit grave et "crunchy" pour une erreur ou suppression
+                error: () => playCyberClick(300, 100, 0.08, 'sawtooth', 0.05),
+                // Bruit de balayage digital
+                swipe: () => playCyberClick(800, 1200, 0.02, 'sine', 0.03)
             };
         })();
 
@@ -755,6 +759,7 @@
 
         // --- FONCTION PLEIN ECRAN ---
         function toggleFullScreen() {
+            CyberSFX.click();
             if (!document.fullscreenElement && !document.mozFullScreenElement && !document.webkitFullscreenElement && !document.msFullscreenElement) {
                 if (document.documentElement.requestFullscreen) document.documentElement.requestFullscreen();
                 else if (document.documentElement.msRequestFullscreen) document.documentElement.msRequestFullscreen();
@@ -805,6 +810,27 @@
                 }
             }
         }
+
+        // --- GESTION DU CLAVIER MOBILE MINDMAP ---
+        const mmEditInput = document.getElementById('mm-edit-content');
+        if(mmEditInput) {
+            mmEditInput.addEventListener('focus', function() {
+                if(window.innerWidth <= 768) {
+                    // Masquer temporairement la carte pour laisser la place totale au texte
+                    document.getElementById('mindmap-container').style.display = 'none';
+                    setTimeout(() => {
+                        this.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }, 300); // Laisse le temps au clavier d'apparaître
+                }
+            });
+            mmEditInput.addEventListener('blur', function() {
+                if(window.innerWidth <= 768) {
+                    // Faire réapparaître la carte
+                    document.getElementById('mindmap-container').style.display = 'block';
+                }
+            });
+        }
+
 
         // --- DATA STATE ---
         let protocols = []; let notes = []; let agendaTasks = []; let transactions = []; let currentCurrency = 'CNY';
