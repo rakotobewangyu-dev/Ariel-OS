@@ -268,7 +268,7 @@
         .note-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; }
         .note-card { border-left: 4px solid var(--cp-red); padding: 25px; display: flex; flex-direction: column; position: relative; transition: all 0.3s; min-height: 200px; }
         .note-card::before { content: ''; position: absolute; top: 0; right: 0; border-style: solid; border-width: 0 20px 20px 0; border-color: transparent rgba(0,0,0,0.8) transparent transparent; }
-        .note-card:hover { background-color: rgba(30, 20, 20, 0.8); border-left-color: var(--cp-yellow); box-shadow: 0 10px 25px rgba(255,0,85,0.2); transform: translateY(-4px); }
+        .note-card:hover { background: rgba(30, 20, 20, 0.8); border-left-color: var(--cp-yellow); box-shadow: 0 10px 25px rgba(255,0,85,0.2); transform: translateY(-4px); }
         .note-title { color: var(--cp-red); font-family: var(--font-title); font-size: 1.3rem; margin-bottom: 15px; }
         .note-preview { font-family: var(--font-mono); font-size: 1rem; color: #ccc; display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; flex-grow: 1; margin-bottom: 10px; line-height: 1.5; }
 
@@ -307,6 +307,10 @@
         .task-card:hover { transform: translateX(8px); border-color: var(--cp-cyan); box-shadow: -5px 5px 20px rgba(0,229,255,0.15); background-color: rgba(30, 30, 35, 0.8); }
         .task-date { color: var(--cp-yellow); font-size: 0.95rem; margin-bottom: 8px; }
         .task-title { font-size: 1.3rem; font-weight: bold; color: white; }
+        
+        /* Modificateur pour les tâches accomplies */
+        .task-card.completed-task { opacity: 0.6; border-left-color: var(--cp-green); }
+        .task-card.completed-task:hover { opacity: 1; border-color: var(--cp-green); box-shadow: -5px 5px 20px rgba(0,255,102,0.15); }
 
         /* VIEW: FINANCE */
         .finance-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 25px; margin-bottom: 25px; }
@@ -343,7 +347,6 @@
             header { padding: 10px; justify-content: center; }
             .player-info { display: none; } 
             
-            /* Bouton plein écran réduit au maximum */
             .fs-btn { padding: 2px 4px; margin-left: 5px; font-size: 0.6rem; height: 20px; display: flex; align-items: center; justify-content: center; letter-spacing: -1px; border-width: 1px; line-height: 1; }
             
             main { padding: 10px; }
@@ -366,7 +369,6 @@
             .phase-header { font-size: 1.1rem; padding: 10px 15px; }
             .phase-body { padding: 15px; gap: 15px; }
             
-            /* Remplacement de la structure Mindmap sur Mobile */
             .mindmap-wrapper { flex-direction: column; height: auto; min-height: auto; overflow: visible; border: none; }
             #mindmap-container { height: 45vh; min-height: 300px; flex-shrink: 0; border: 1px solid var(--glass-border); border-radius: 4px; }
             #mindmap-detail-panel { 
@@ -387,7 +389,6 @@
             .trans-card { flex-direction: column; align-items: flex-start; gap: 8px; padding: 12px; }
             .trans-card > div:last-child { width: 100%; justify-content: space-between; margin-top: 5px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 8px;}
             
-            /* Ajustements des inputs et modales */
             .cp-input, .cp-select, .cp-textarea { padding: 10px; }
             .modal-content { padding: 15px; width: 95%; max-height: 90vh; overflow-y: auto; }
             .modal-content > div:last-child { flex-direction: column-reverse; }
@@ -453,7 +454,7 @@
                     <p style="font-family: var(--font-mono); color: var(--cp-cyan); margin-top: 30px; font-size: 1.1rem; text-shadow: 0 0 5px rgba(0,229,255,0.5);">> Synthèse des données en temps réel. Le système est opérationnel.</p>
                 </div>
                 
-                <!-- NOUVEAU : SYSTÈME D'XP POUR LES PROTOCOLES -->
+                <!-- SYSTÈME D'XP POUR LES PROTOCOLES -->
                 <div class="overview-box glass-panel chamfer-reverse">
                     <h3 style="color: var(--cp-purple); font-family: var(--font-title); margin-bottom: 25px; text-shadow: 0 0 10px rgba(176,0,255,0.3);">TRACKING DES MISSIONS (XP)</h3>
                     <div id="xp-bars-container" style="display: flex; flex-direction: column; gap: 20px;">
@@ -520,7 +521,6 @@
         <div id="view-mindmap" class="panel">
             <h2 class="section-title">Réseau Neural / Mindmap</h2>
             
-            <!-- Restructuration pour le Panel Mobile -->
             <div class="mindmap-wrapper">
                 <div id="mindmap-container" class="glass-panel">
                     <canvas id="mindmap-canvas"></canvas>
@@ -551,6 +551,13 @@
         <!-- VIEW: AGENDA -->
         <div id="view-agenda" class="panel">
             <h2 class="section-title">Planificateur Opérationnel</h2>
+            
+            <!-- NOUVEAU : Toggle entre Tâches en attente et Archives -->
+            <div style="display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 1px solid var(--glass-border); padding-bottom: 15px;">
+                <button class="cp-btn-outline active chamfer" id="btn-agenda-pending" onclick="setAgendaTab('pending')">EN ATTENTE</button>
+                <button class="cp-btn-outline chamfer" id="btn-agenda-completed" onclick="setAgendaTab('completed')">ARCHIVES (ACCOMPLIES)</button>
+            </div>
+            
             <div id="agenda-filters" class="filter-bar"></div>
             <div class="agenda-grid">
                 <div class="task-list" id="agenda-list"></div>
@@ -673,6 +680,14 @@
 
         window.isCloudReady = false;
 
+        window.saveDataToCloud = function(data) {
+            const cleanData = JSON.parse(JSON.stringify(data)); 
+            setDoc(stateDocRef, cleanData).catch(e => {
+                console.error("Erreur de sauvegarde Firebase:", e);
+                if (window.showToast) window.showToast("ERREUR CLOUD: " + e.message, "var(--cp-red)");
+            });
+        };
+
         onSnapshot(stateDocRef, (docSnap) => {
             if (docSnap.exists()) {
                 const data = docSnap.data();
@@ -683,14 +698,11 @@
                 if (window.showToast) window.showToast("CONNECTÉ AU SERVEUR CLOUD", "var(--cp-cyan)");
                 document.getElementById('sys-clock').innerHTML = `<span class="blink">▶</span> SYSTÈME EN LIGNE`;
             }
+        }, (error) => {
+            console.error("Erreur Firebase:", error);
+            if (window.showToast) window.showToast("ACCÈS REFUSÉ BDD (Voir Console)", "var(--cp-red)");
+            document.getElementById('sys-clock').innerHTML = `<span class="blink" style="color:var(--cp-red)">▶</span> ERREUR CONNEXION`;
         });
-
-        window.saveDataToCloud = function(data) {
-            setDoc(stateDocRef, data).catch(e => {
-                console.error("Erreur de sauvegarde:", e);
-                if (window.showToast) window.showToast("ERREUR SYNCHRONISATION", "var(--cp-red)");
-            });
-        };
     </script>
 
     <!-- ========================================== -->
@@ -700,12 +712,10 @@
         // --- NOUVEAU SYNTHÉTISEUR AUDIO CYBERPUNK (Cliquetis secs) ---
         const CyberSFX = (() => {
             let actx = null;
-            
             const init = () => {
                 if(!actx) actx = new (window.AudioContext || window.webkitAudioContext)();
                 if(actx.state === 'suspended') actx.resume();
             };
-
             const playCyberClick = (startFreq, endFreq, duration, type, vol = 0.05) => {
                 try {
                     init();
@@ -735,7 +745,6 @@
             };
         })();
 
-        // --- GESTIONNAIRES D'ÉVÉNEMENTS AUDIO ---
         document.addEventListener('mousedown', (e) => {
             const btn = e.target.closest('button, .phase-header, .protocol-card, .task-card, .note-card, .filter-btn');
             if (!btn) return;
@@ -756,7 +765,6 @@
             btn.addEventListener('mouseleave', () => { delete btn.dataset.hovered; }, {once: true});
         });
 
-        // --- FONCTION PLEIN ECRAN ---
         function toggleFullScreen() {
             CyberSFX.click();
             if (!document.fullscreenElement && !document.mozFullScreenElement && !document.webkitFullscreenElement && !document.msFullscreenElement) {
@@ -773,43 +781,28 @@
         }
 
         // --- SWIPE GESTURES ---
-        let touchStartX = 0;
-        let touchStartY = 0;
+        let touchStartX = 0; let touchStartY = 0;
         const viewOrder = ['view-nexus', 'view-protocols', 'view-database', 'view-mindmap', 'view-agenda', 'view-finance'];
 
         document.addEventListener('touchstart', e => {
             if (e.target.closest('#mindmap-canvas') || e.target.closest('nav') || e.target.closest('.modal') || 
                 e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') return;
-            touchStartX = e.changedTouches[0].screenX;
-            touchStartY = e.changedTouches[0].screenY;
+            touchStartX = e.changedTouches[0].screenX; touchStartY = e.changedTouches[0].screenY;
         }, {passive: true});
 
         document.addEventListener('touchend', e => {
             if (e.target.closest('#mindmap-canvas') || e.target.closest('nav') || e.target.closest('.modal') || 
                 e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') return;
-            let touchEndX = e.changedTouches[0].screenX;
-            let touchEndY = e.changedTouches[0].screenY;
+            let touchEndX = e.changedTouches[0].screenX; let touchEndY = e.changedTouches[0].screenY;
             handleSwipe(touchStartX, touchStartY, touchEndX, touchEndY);
         }, {passive: true});
 
         function handleSwipe(startX, startY, endX, endY) {
-            let dx = endX - startX;
-            let dy = endY - startY;
-            
+            let dx = endX - startX; let dy = endY - startY;
             if (Math.abs(dx) > 70 && Math.abs(dx) > Math.abs(dy)) {
                 let currentActive = document.querySelector('.panel.active').id;
                 let currentIndex = viewOrder.indexOf(currentActive);
-                
-                if (dx < 0 && currentIndex < viewOrder.length - 1) { 
-                    switchTab(viewOrder[currentIndex + 1], 'right');
-                    CyberSFX.swipe();
-                } else if (dx > 0 && currentIndex > 0) { 
-                    switchTab(viewOrder[currentIndex - 1], 'left');
-                    CyberSFX.swipe();
-                }
-            }
-        }
-
+                if (dx < 0 && currentIndex < viewOrder.length - 1) { switchTab(viewOrder[currentIndex + 1], 'right'); CyberSFX.swipe(); } 
         // --- GESTION DU CLAVIER MOBILE MINDMAP ---
         const mmEditInput = document.getElementById('mm-edit-content');
         if(mmEditInput) {
@@ -829,10 +822,12 @@
 
         // --- DATA STATE ---
         let protocols = []; let notes = []; let agendaTasks = []; let transactions = []; let currentCurrency = 'CNY';
+        let completedTasksList = []; // NOUVEAU: Stockage des tâches accomplies
+        
         let currentProtocolId = null; let currentEditNoteId = null; let currentEditTaskId = null; let currentEditTransId = null;
         let currentNoteFilter = 'ALL'; let currentAgendaFilter = 'ALL';
-        
-        let completedSecondaryTasks = 0; // Traqueur pour les missions non liées aux protocoles
+        let currentAgendaTab = 'pending'; // NOUVEAU: Onglet actif dans l'agenda
+        let currentEditTaskType = 'pending'; // NOUVEAU: Pour savoir si on modifie une tâche archivée ou en attente
 
         const exchangeRates = { 'EUR': 1, 'MGA': 4950, 'USD': 1.08, 'CNY': 7.8 };
         const currencySymbols = { 'EUR': '€', 'MGA': 'Ar', 'USD': '$', 'CNY': '¥' };
@@ -882,17 +877,6 @@
             rainTimer = setTimeout(() => { rainCanvas.style.opacity = '0'; setTimeout(() => { rainActive = false; }, 500); }, 1200);
         }
 
-        function showToast(message, color = 'var(--cp-green)') {
-            const container = document.getElementById('toast-container');
-            if(container) {
-                const toast = document.createElement('div'); toast.className = 'toast glass-panel chamfer-reverse';
-                toast.style.borderColor = color; toast.style.borderLeftColor = color; toast.innerText = message;
-                container.appendChild(toast);
-                setTimeout(() => { toast.style.opacity = '0'; setTimeout(() => toast.remove(), 400); }, 3000);
-            }
-        }
-        window.showToast = showToast; 
-
         // --- TAGS SYSTEM ---
         function extractTags(str) { return !str ? [] : str.split(',').map(s => s.trim().toUpperCase()).filter(s => s !== '').map(s => s.startsWith('#') ? s : '#' + s); }
         function setNoteFilter(tag) { currentNoteFilter = tag; renderNotes(); }
@@ -905,8 +889,8 @@
             if(parsed) {
                 protocols = parsed.protocols || []; notes = parsed.notes || [];
                 agendaTasks = parsed.agendaTasks || []; transactions = parsed.transactions || [];
+                completedTasksList = parsed.completedTasksList || [];
                 currentCurrency = parsed.currentCurrency || 'CNY';
-                completedSecondaryTasks = parsed.completedSecondaryTasks || 0;
             }
             let currencySelect = document.getElementById('fin-currency');
             if(currencySelect) currencySelect.value = currentCurrency;
@@ -921,13 +905,14 @@
         };
 
         function saveData() {
-            if (window.saveDataToCloud) window.saveDataToCloud({ protocols, notes, agendaTasks, transactions, currentCurrency, completedSecondaryTasks });
+            if(!window.isCloudReady) return; 
+            if (window.saveDataToCloud) window.saveDataToCloud({ protocols, notes, agendaTasks, completedTasksList, transactions, currentCurrency });
             triggerDataRain(); 
         }
 
         function stateChanged() { saveData(); updateDashboardSummary(); }
 
-        // --- DASHBOARD SUMMARY ET NOUVEAU SYSTÈME XP ---
+        // --- DASHBOARD SUMMARY ET SYSTÈME XP ---
         function updateDashboardSummary() {
             let sumProtocols = document.getElementById('sum-protocols'); if(sumProtocols) sumProtocols.innerText = protocols.length;
             let sumAgenda = document.getElementById('sum-agenda'); if(sumAgenda) sumAgenda.innerText = agendaTasks.length;
@@ -941,6 +926,15 @@
             renderXP();
         }
 
+        function renderXP() {
+            const container = document.getElementById('xp-bars-container');
+            if(!container) return;
+            container.innerHTML = '';
+
+            let hasMissions = false;
+
+            // 1. Pourcentages des Protocoles Principaux
+            protocols.forEach(p => {
         // --- FONCTION RENDU DES BARRES D'XP ---
         function renderXP() {
             const container = document.getElementById('xp-bars-container');
@@ -949,34 +943,32 @@
 
             let hasMissions = false;
 
-            // 1. XP des Protocoles Principaux
+            // 1. Pourcentages des Protocoles Principaux
             protocols.forEach(p => {
                 const sourceName = p.data.step1;
                 if(!sourceName) return;
 
                 const pendingTasks = agendaTasks.filter(t => t.source === sourceName).length;
-                const completedTasks = (p.stats && p.stats.done) ? p.stats.done : 0;
-                const totalTasks = pendingTasks + completedTasks;
+                let actualCompleted = completedTasksList.filter(t => t.source === sourceName).length;
+                
+                const totalTasks = pendingTasks + actualCompleted;
 
                 if(totalTasks > 0) {
                     hasMissions = true;
-                    const percentDone = Math.round((completedTasks / totalTasks) * 100);
-                    const percentLeft = 100 - percentDone;
-                    const xpGained = completedTasks * 100;
-                    const xpTotal = totalTasks * 100;
+                    const percentDone = Math.round((actualCompleted / totalTasks) * 100);
 
                     const html = `
                         <div>
                             <div class="xp-header">
                                 <span style="font-weight: bold; color: var(--cp-yellow); text-shadow: 0 0 5px rgba(252,238,10,0.5);">> ${sourceName.toUpperCase()}</span>
-                                <span class="cyber-number" style="color: var(--cp-cyan); font-size: 0.9rem;">${xpGained} / ${xpTotal} XP</span>
+                                <span class="cyber-number" style="color: var(--cp-cyan); font-size: 1.1rem; font-weight: bold;">${percentDone}%</span>
                             </div>
                             <div class="xp-bar-bg chamfer-reverse">
                                 <div class="xp-bar-fill" style="width: ${percentDone}%;"></div>
                             </div>
                             <div style="display: flex; justify-content: space-between; font-size: 0.75rem; color: #888; font-family: var(--font-mono); margin-top: 5px;">
-                                <span>${completedTasks} ACCOMPLI(S) (${percentDone}%)</span>
-                                <span style="color: var(--cp-red);">${pendingTasks} NON FAIT (${percentLeft}%)</span>
+                                <span>${actualCompleted} ACCOMPLI(S)</span>
+                                <span style="color: var(--cp-red);">${pendingTasks} EN ATTENTE</span>
                             </div>
                         </div>
                     `;
@@ -984,29 +976,28 @@
                 }
             });
 
-            // 2. XP des Missions Secondaires (Aucun protocole lié)
+            // 2. Pourcentages des Missions Secondaires
             const pendingSecondary = agendaTasks.filter(t => !t.source || !protocols.some(p => p.data.step1 === t.source)).length;
-            const totalSecondary = pendingSecondary + completedSecondaryTasks;
+            let actualCompletedSec = completedTasksList.filter(t => !t.source || !protocols.some(p => p.data.step1 === t.source)).length;
+            
+            const totalSecondary = pendingSecondary + actualCompletedSec;
 
             if (totalSecondary > 0) {
                 hasMissions = true;
-                const percentDone = Math.round((completedSecondaryTasks / totalSecondary) * 100);
-                const percentLeft = 100 - percentDone;
-                const xpGained = completedSecondaryTasks * 50; // 50 XP pour les secondaires
-                const xpTotal = totalSecondary * 50;
+                const percentDone = Math.round((actualCompletedSec / totalSecondary) * 100);
 
                 const html = `
                     <div>
                         <div class="xp-header">
                             <span style="font-weight: bold; color: var(--cp-orange); text-shadow: 0 0 5px rgba(255,140,0,0.5);">> MISSIONS SECONDAIRES</span>
-                            <span class="cyber-number" style="color: var(--cp-cyan); font-size: 0.9rem;">${xpGained} / ${xpTotal} XP</span>
+                            <span class="cyber-number" style="color: var(--cp-orange); font-size: 1.1rem; font-weight: bold;">${percentDone}%</span>
                         </div>
                         <div class="xp-bar-bg chamfer-reverse">
                             <div class="xp-bar-fill" style="width: ${percentDone}%; background: linear-gradient(90deg, #555, var(--cp-orange)); box-shadow: 0 0 10px var(--cp-orange);"></div>
                         </div>
                         <div style="display: flex; justify-content: space-between; font-size: 0.75rem; color: #888; font-family: var(--font-mono); margin-top: 5px;">
-                            <span>${completedSecondaryTasks} ACCOMPLI(S) (${percentDone}%)</span>
-                            <span style="color: var(--cp-red);">${pendingSecondary} NON FAIT (${percentLeft}%)</span>
+                            <span>${actualCompletedSec} ACCOMPLI(S)</span>
+                            <span style="color: var(--cp-red);">${pendingSecondary} EN ATTENTE</span>
                         </div>
                     </div>
                 `;
@@ -1014,7 +1005,7 @@
             }
 
             if(!hasMissions) {
-                container.innerHTML = '<div style="color:var(--cp-text); font-family:var(--font-mono); opacity:0.7;">> AUCUNE MISSION ACTIVE. PLANIFIEZ DES ACTIONS POUR GAGNER DE L\'XP.</div>';
+                container.innerHTML = '<div style="color:var(--cp-text); font-family:var(--font-mono); opacity:0.7;">> AUCUNE MISSION ACTIVE. PLANIFIEZ DES ACTIONS.</div>';
             }
         }
 
@@ -1093,7 +1084,11 @@
             if(!currentProtocolId) return; const p = protocols.find(x => x.id === currentProtocolId); if(!p) return;
             let oldTitle = p.data.step1;
             for(let i=1; i<=14; i++) { const el = document.getElementById('step-'+i); if(el) p.data['step'+i] = el.value; }
-            if(oldTitle !== p.data.step1 && oldTitle !== "") { agendaTasks.forEach(t => { if(t.source === oldTitle) t.source = p.data.step1; }); renderAgenda(); }
+            if(oldTitle !== p.data.step1 && oldTitle !== "") { 
+                agendaTasks.forEach(t => { if(t.source === oldTitle) t.source = p.data.step1; }); 
+                completedTasksList.forEach(t => { if(t.source === oldTitle) t.source = p.data.step1; }); 
+                renderAgenda(); 
+            }
             p.lastModified = Date.now();
             document.getElementById('detail-title').innerText = p.data.step1 || 'Sans Titre'; document.getElementById('detail-last-mod').innerText = formatDateFull(p.lastModified);
             renderProtocolAgenda(p.data.step1); showToast("DONNÉES SAUVEGARDÉES", "var(--cp-green)"); stateChanged();
@@ -1105,7 +1100,7 @@
         }
         function deleteCurrentProtocol() {
             if(!currentProtocolId) return;
-            if(confirm("Confirmer la suppression de ce protocole ?")) {
+            if(confirm("Confirmer la suppression de ce protocole ? (Les actions associées perdront leur source)")) {
                 protocols = protocols.filter(p => p.id !== currentProtocolId); stateChanged(); showToast("PROTOCOLE SUPPRIMÉ", "var(--cp-red)"); closeProtocolDetail(); 
             }
         }
@@ -1148,66 +1143,114 @@
         }
         function deleteNote(id) { if(confirm("Confirmer la suppression de cette note ?")) { notes = notes.filter(n => n.id !== id); stateChanged(); renderNotes(); if(mindmapAnimId) buildMindmapData(); showToast("NOTE SUPPRIMÉE", "var(--cp-red)"); } }
 
-        // --- AGENDA ---
+        // --- AGENDA & ARCHIVES ---
+        function setAgendaTab(tab) {
+            currentAgendaTab = tab;
+            document.getElementById('btn-agenda-pending').className = `cp-btn-outline chamfer ${tab === 'pending' ? 'active' : ''}`;
+            document.getElementById('btn-agenda-completed').className = `cp-btn-outline chamfer ${tab === 'completed' ? 'active' : ''}`;
+            renderAgenda();
+        }
+
         function renderAgenda() {
+            const targetList = currentAgendaTab === 'pending' ? agendaTasks : completedTasksList;
+
             const filtersContainer = document.getElementById('agenda-filters');
             if(filtersContainer) {
-                let allTags = new Set(); agendaTasks.forEach(t => { if(t.tags) t.tags.forEach(tg => allTags.add(tg)); });
+                let allTags = new Set(); targetList.forEach(t => { if(t.tags) t.tags.forEach(tg => allTags.add(tg)); });
                 filtersContainer.innerHTML = `<button class="filter-btn ${currentAgendaFilter === 'ALL' ? 'active' : ''}" onclick="setAgendaFilter('ALL')">TOUT</button>`;
                 Array.from(allTags).sort().forEach(tag => { filtersContainer.innerHTML += `<button class="filter-btn ${currentAgendaFilter === tag ? 'active' : ''}" onclick="setAgendaFilter('${tag}')">${tag}</button>`; });
             }
             const list = document.getElementById('agenda-list'); if(!list) return; list.innerHTML = '';
-            let filteredTasks = currentAgendaFilter === 'ALL' ? agendaTasks : agendaTasks.filter(t => t.tags && t.tags.includes(currentAgendaFilter));
+            
+            let filteredTasks = currentAgendaFilter === 'ALL' ? targetList : targetList.filter(t => t.tags && t.tags.includes(currentAgendaFilter));
+            
+            if(filteredTasks.length === 0) {
+                list.innerHTML = `<div style="color:#888; font-family:var(--font-mono); padding: 20px;">> AUCUNE ACTION DANS CETTE SECTION.</div>`;
+                return;
+            }
+
             filteredTasks.sort((a,b) => new Date(a.date) - new Date(b.date)).forEach(t => {
                 let tagsHtml = t.tags ? t.tags.map(tg => `<span class="tag-badge cyan">${tg}</span>`).join('') : '';
                 const d = new Date(t.date); const dateStr = `${d.getDate().toString().padStart(2,'0')}/${(d.getMonth()+1).toString().padStart(2,'0')} à ${d.getHours().toString().padStart(2,'0')}:${d.getMinutes().toString().padStart(2,'0')}`;
-                const card = document.createElement('div'); card.className = 'task-card glass-panel chamfer-reverse';
-                card.innerHTML = `<div><div class="task-date cyber-number">${dateStr}</div><div class="task-title">${t.title}</div>${t.source ? `<div style="color: var(--cp-cyan); font-family: var(--font-mono); font-size: 0.85rem; margin-top:5px;">> ${t.source}</div>` : ''}<div style="margin-top:5px;">${tagsHtml}</div></div><div style="display:flex; gap:10px;"><button class="cp-btn cyan chamfer" style="padding: 10px 15px;" onclick="completeAgendaTask(${t.id})">TERMINER</button><button class="cp-btn-outline chamfer" onclick="editAgendaTask(${t.id})">MODIFIER</button></div>`;
+                const card = document.createElement('div'); 
+                
+                card.className = `task-card glass-panel chamfer-reverse ${currentAgendaTab === 'completed' ? 'completed-task' : ''}`;
+                
+                let buttonsHtml = '';
+                if(currentAgendaTab === 'pending') {
+                    buttonsHtml = `<button class="cp-btn cyan chamfer" style="padding: 10px 15px;" onclick="completeAgendaTask(${t.id})">TERMINER</button><button class="cp-btn-outline chamfer" onclick="editAgendaTask(${t.id}, 'pending')">MODIFIER</button>`;
+                } else {
+                    buttonsHtml = `<button class="cp-btn orange chamfer" style="padding: 10px 15px;" onclick="restoreAgendaTask(${t.id})">RÉCUPÉRER</button><button class="cp-btn-outline danger chamfer" onclick="deleteCompletedTask(${t.id})">X</button><button class="cp-btn-outline chamfer" onclick="editAgendaTask(${t.id}, 'completed')">MODIFIER</button>`;
+                }
+
+                card.innerHTML = `<div><div class="task-date cyber-number" style="color: ${currentAgendaTab === 'completed' ? 'var(--cp-green)' : 'var(--cp-yellow)'};">${currentAgendaTab === 'completed' ? '[ACCOMPLI] ' : ''}${dateStr}</div><div class="task-title" style="${currentAgendaTab === 'completed' ? 'text-decoration: line-through; color: #888;' : ''}">${t.title}</div>${t.source ? `<div style="color: var(--cp-cyan); font-family: var(--font-mono); font-size: 0.85rem; margin-top:5px;">> ${t.source}</div>` : ''}<div style="margin-top:5px;">${tagsHtml}</div></div><div style="display:flex; gap:10px;">${buttonsHtml}</div>`;
                 list.appendChild(card);
             });
         }
+
         function submitAgendaTask() {
             const title = document.getElementById('ag-title').value; const date = document.getElementById('ag-date').value; const tagsInput = document.getElementById('ag-tags').value; const source = document.getElementById('ag-source').value; const tags = extractTags(tagsInput);
             if(!title || !date) return showToast("Requis", "var(--cp-red)");
-            if(currentEditTaskId) { const t = agendaTasks.find(x => x.id === currentEditTaskId); if(t){ t.title = title; t.date = date; t.tags = tags; t.source = source; showToast("ACTION MODIFIÉE");} } 
-            else { agendaTasks.push({ id: Date.now(), title, date, tags, source }); showToast("ACTION AJOUTÉE"); }
+            
+            if(currentEditTaskId) { 
+                const list = currentEditTaskType === 'pending' ? agendaTasks : completedTasksList;
+                const t = list.find(x => x.id === currentEditTaskId); 
+                if(t){ t.title = title; t.date = date; t.tags = tags; t.source = source; showToast("ACTION MODIFIÉE");} 
+            } else { 
+                agendaTasks.push({ id: Date.now(), title, date, tags, source }); showToast("ACTION AJOUTÉE"); 
+                // Assure qu'on affiche bien la liste "En attente" quand on ajoute un nouveau
+                currentAgendaTab = 'pending'; 
+            }
+            
             stateChanged(); resetAgendaForm(); renderAgenda();
             if(currentProtocolId) { const p = protocols.find(x => x.id === currentProtocolId); if(p) renderProtocolAgenda(p.data.step1); }
             if(mindmapAnimId) buildMindmapData();
         }
-        function editAgendaTask(id) {
-            currentEditTaskId = id; const t = agendaTasks.find(x => x.id === id); if(!t) return;
+
+        function editAgendaTask(id, type) {
+            currentEditTaskId = id;
+            currentEditTaskType = type;
+            const list = type === 'pending' ? agendaTasks : completedTasksList;
+            const t = list.find(x => x.id === id); 
+            if(!t) return;
+            
             document.getElementById('ag-title').value = t.title; document.getElementById('ag-date').value = t.date; document.getElementById('ag-tags').value = (t.tags || []).join(', '); document.getElementById('ag-source').value = t.source || '';
             document.getElementById('agenda-form-title').innerText = "MODIFIER L'ACTION"; document.getElementById('ag-btn-submit').innerText = "METTRE À JOUR"; document.getElementById('ag-btn-cancel').style.display = "block";
+            
+            // Scroll vers le formulaire sur mobile
+            if(window.innerWidth <= 768) document.getElementById('agenda-form-title').scrollIntoView({behavior: 'smooth', block:'start'});
         }
         
-        // FONCTION MODIFIÉE : Quand une tâche est terminée, on ajoute de l'XP
         function completeAgendaTask(id) { 
             const t = agendaTasks.find(x => x.id === id);
             
             if(t) {
-                if (t.source) {
-                    const p = protocols.find(x => x.data.step1 === t.source);
-                    if(p) {
-                        if(!p.stats) p.stats = { done: 0 };
-                        p.stats.done += 1;
-                    } else {
-                        // Si le protocole lié a été supprimé ou n'existe pas, on compte en secondaire
-                        completedSecondaryTasks += 1;
-                    }
-                } else {
-                    // Si aucune source n'est définie, c'est une mission secondaire
-                    completedSecondaryTasks += 1;
-                }
+                agendaTasks = agendaTasks.filter(x => x.id !== id); 
+                completedTasksList.push(t); // On déplace dans l'archive
             }
 
-            agendaTasks = agendaTasks.filter(x => x.id !== id); 
             stateChanged(); 
             renderAgenda(); 
             showToast("ACTION TERMINÉE"); 
             
             if(currentProtocolId) { const p = protocols.find(x => x.id === currentProtocolId); if(p) renderProtocolAgenda(p.data.step1); }
             if(mindmapAnimId) buildMindmapData();
+        }
+
+        function restoreAgendaTask(id) {
+            const t = completedTasksList.find(x => x.id === id);
+            if(t) {
+                completedTasksList = completedTasksList.filter(x => x.id !== id);
+                agendaTasks.push(t);
+            }
+            stateChanged(); renderAgenda(); showToast("ACTION RESTAURÉE", "var(--cp-yellow)");
+        }
+
+        function deleteCompletedTask(id) {
+            if(confirm("Supprimer DÉFINITIVEMENT cette action ? (L'XP associée sera perdue)")) {
+                completedTasksList = completedTasksList.filter(x => x.id !== id);
+                stateChanged(); renderAgenda(); showToast("ACTION ARCHIVÉE SUPPRIMÉE", "var(--cp-red)");
+            }
         }
         
         function resetAgendaForm() {
@@ -1268,7 +1311,6 @@
             mmNodes = []; mmLinks = []; 
             let root = { id: 'root', label: 'MATRICE', type: 'root', x: 0, y: 0, vx: 0, vy: 0, color: '#fcee0a', text: "Cœur de la base de données.", editable: false }; mmNodes.push(root);
             
-            // On ajoute les protocoles et leurs phases
             protocols.forEach(p => {
                 let pNode = { id: 'p_'+p.id, label: p.data.step1 || 'Anomalie', type: 'protocol', x: Math.random()*200-100, y: Math.random()*200-100, vx: 0, vy: 0, color: '#00e5ff', text: "Dossier source Protocole. Pour modifier le titre, allez dans l'onglet PROTOCOLES.", editable: false };
                 mmNodes.push(pNode); mmLinks.push({ source: root, target: pNode });
@@ -1288,7 +1330,6 @@
                 });
             });
 
-            // On ajoute l'agenda lié aux protocoles
             agendaTasks.forEach(t => {
                 let targetParent = root; let pMatch = protocols.find(p => p.data.step1 === t.source);
                 if (pMatch) {
@@ -1354,7 +1395,6 @@
             canvasEl.addEventListener('mouseup', () => { draggedNode = null; isDraggingMap = false; }); 
             canvasEl.addEventListener('mouseleave', () => { draggedNode = null; isDraggingMap = false; });
 
-            // GESTION TACTILE MINDMAP : DRAG (1 DOIGT) ET PINCH ZOOM (2 DOIGTS)
             canvasEl.addEventListener('touchstart', e => {
                 if(e.touches.length === 1) {
                     let rect = mmCanvas.getBoundingClientRect(); let mx = e.touches[0].clientX - rect.left; let my = e.touches[0].clientY - rect.top;
@@ -1367,10 +1407,8 @@
                     if(!clickedNode) { isDraggingMap = true; startMapDrag.x = mx - camera.x; startMapDrag.y = my - camera.y; }
                 } else if(e.touches.length === 2) {
                     e.preventDefault();
-                    let dx = e.touches[0].clientX - e.touches[1].clientX;
-                    let dy = e.touches[0].clientY - e.touches[1].clientY;
-                    initialPinchDist = Math.sqrt(dx*dx + dy*dy);
-                    initialPinchZoom = camera.zoom;
+                    let dx = e.touches[0].clientX - e.touches[1].clientX; let dy = e.touches[0].clientY - e.touches[1].clientY;
+                    initialPinchDist = Math.sqrt(dx*dx + dy*dy); initialPinchZoom = camera.zoom;
                 }
             }, {passive: false});
 
@@ -1383,8 +1421,7 @@
                 } else if(e.touches.length === 2) {
                     e.preventDefault();
                     if (initialPinchDist) {
-                        let dx = e.touches[0].clientX - e.touches[1].clientX;
-                        let dy = e.touches[0].clientY - e.touches[1].clientY;
+                        let dx = e.touches[0].clientX - e.touches[1].clientX; let dy = e.touches[0].clientY - e.touches[1].clientY;
                         let newDist = Math.sqrt(dx*dx + dy*dy);
                         camera.zoom = initialPinchZoom * (newDist / initialPinchDist);
                         camera.zoom = Math.max(0.3, Math.min(camera.zoom, 3)); 
@@ -1409,9 +1446,7 @@
             document.getElementById('mindmap-detail-panel').classList.add('open');
             
             if (window.innerWidth <= 768) {
-                setTimeout(() => {
-                    document.getElementById('mindmap-detail-panel').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-                }, 100);
+                setTimeout(() => { document.getElementById('mindmap-detail-panel').scrollIntoView({ behavior: 'smooth', block: 'nearest' }); }, 100);
             }
         }
         
@@ -1426,6 +1461,7 @@
         function closeMindmapDetail() { 
             document.getElementById('mindmap-detail-panel').classList.remove('open'); 
             currentEditNode = null; 
+            document.getElementById('mindmap-container').style.display = 'block';
         }
 
         window.onload = () => { loadData(); };
