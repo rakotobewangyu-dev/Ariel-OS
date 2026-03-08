@@ -14,6 +14,7 @@
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700;800&family=Orbitron:wght@400;700;900&family=Rajdhani:wght@500;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
     <style>
         :root {
+            /* COULEURS ORIGINALES RESTAURÉES */
             --cp-yellow: #fcee0a;
             --cp-cyan: #00e5ff;
             --cp-red: #ff0055;
@@ -54,6 +55,7 @@
             flex-direction: column;
             margin: 0;
             position: relative;
+            touch-action: pan-y; /* Permet le scroll vertical, mais bloque certains comportements horizontaux natifs */
         }
 
         /* Scanlines Effect */
@@ -97,16 +99,16 @@
         @keyframes glitch-anim-fade { 0% { opacity: 0; transform: translateY(15px); } 100% { opacity: 1; transform: translateY(0); } }
 
         /* Swipe Animations */
-        @keyframes slideInRightCyber {
+        @keyframes slideInNext {
             0% { opacity: 0; transform: translateX(50px) scale(0.98); filter: hue-rotate(90deg); }
             100% { opacity: 1; transform: translateX(0) scale(1); filter: hue-rotate(0deg); }
         }
-        @keyframes slideInLeftCyber {
+        @keyframes slideInPrev {
             0% { opacity: 0; transform: translateX(-50px) scale(0.98); filter: hue-rotate(-90deg); }
             100% { opacity: 1; transform: translateX(0) scale(1); filter: hue-rotate(0deg); }
         }
-        .panel.active.slide-right { animation: slideInRightCyber 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards; }
-        .panel.active.slide-left { animation: slideInLeftCyber 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards; }
+        .panel.active.slide-next { animation: slideInNext 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards; }
+        .panel.active.slide-prev { animation: slideInPrev 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards; }
 
         /* Nombres Cyber avec Zéro Barré */
         .cyber-number, .dash-card-value, .stat-value, .sys-status, .task-date, .trans-amount, .trans-date, input[type="number"] {
@@ -467,7 +469,7 @@
             if(!timestamp) return '--';
             const pad = n => n.toString().padStart(2, '0'); 
             const d = new Date(timestamp);
-            if(isNaN(d.getTime())) return '--'; // Sécurité supplémentaire
+            if(isNaN(d.getTime())) return '--'; 
             return `${pad(d.getDate())}/${pad(d.getMonth()+1)}/${d.getFullYear()} à ${pad(d.getHours())}:${pad(d.getMinutes())}`;
         };
     </script>
@@ -923,63 +925,175 @@
     <!-- SCRIPT PRINCIPAL DU SITE -->
     <script>
         // ==========================================
-        // SYNTHÉTISEUR AUDIO CYBERPUNK (WEB AUDIO API)
+        // SYNTHÉTISEUR AUDIO CYBERPUNK "HACKING"
         // ==========================================
         const AudioContext = window.AudioContext || window.webkitAudioContext;
         let audioCtx = new AudioContext();
+        let noiseBuffer = null;
 
         const CyberSFX = {
-            init: () => { if(audioCtx.state === 'suspended') audioCtx.resume(); },
-            beep: (freq = 800, type = 'square', duration = 0.05, vol = 0.05) => {
+            init: () => { 
+                if(audioCtx.state === 'suspended') audioCtx.resume(); 
+                if(!noiseBuffer) {
+                    const bufferSize = audioCtx.sampleRate * 1.0; // 1 seconde de bruit
+                    noiseBuffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+                    const output = noiseBuffer.getChannelData(0);
+                    for (let i = 0; i < bufferSize; i++) output[i] = Math.random() * 2 - 1;
+                }
+            },
+            
+            // Bruit de frappe terminal (Clic standard)
+            click: () => {
                 try {
-                    if(audioCtx.state === 'suspended') audioCtx.resume();
-                    const osc = audioCtx.createOscillator();
-                    const gain = audioCtx.createGain();
-                    osc.type = type;
-                    osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
-                    gain.gain.setValueAtTime(vol, audioCtx.currentTime);
-                    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
-                    osc.connect(gain);
-                    gain.connect(audioCtx.destination);
-                    osc.start();
-                    osc.stop(audioCtx.currentTime + duration);
-                } catch(e) {}
+                    CyberSFX.init();
+                    let osc = audioCtx.createOscillator();
+                    let gain = audioCtx.createGain();
+                    osc.type = 'square';
+                    osc.frequency.setValueAtTime(800, audioCtx.currentTime);
+                    osc.frequency.exponentialRampToValueAtTime(100, audioCtx.currentTime + 0.03);
+                    gain.gain.setValueAtTime(0.04, audioCtx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.03);
+                    osc.connect(gain); gain.connect(audioCtx.destination);
+                    osc.start(); osc.stop(audioCtx.currentTime + 0.03);
+                } catch(e){}
             },
-            click: () => CyberSFX.beep(1200, 'sine', 0.03, 0.03),     // Clic standard / Navigation
-            action: () => CyberSFX.beep(800, 'square', 0.06, 0.04),   // Action secondaire
-            success: () => {                                          // Création / Sauvegarde
-                CyberSFX.beep(600, 'square', 0.05, 0.05);
-                setTimeout(() => CyberSFX.beep(1200, 'square', 0.1, 0.05), 60);
+
+            // Upload de données (Succès/Sauvegarde)
+            success: () => {
+                try {
+                    CyberSFX.init();
+                    let osc = audioCtx.createOscillator(); 
+                    let gain = audioCtx.createGain();
+                    osc.type = 'square';
+                    // Arpège rapide ascendante
+                    osc.frequency.setValueAtTime(800, audioCtx.currentTime);
+                    osc.frequency.setValueAtTime(1200, audioCtx.currentTime + 0.04);
+                    osc.frequency.setValueAtTime(2400, audioCtx.currentTime + 0.08);
+                    gain.gain.setValueAtTime(0.05, audioCtx.currentTime);
+                    gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.15);
+                    osc.connect(gain); gain.connect(audioCtx.destination);
+                    osc.start(); osc.stop(audioCtx.currentTime + 0.15);
+                } catch(e){}
             },
-            error: () => {                                            // Suppression / Annulation
-                CyberSFX.beep(150, 'sawtooth', 0.15, 0.1);
+
+            // Accès refusé (Erreur/Suppression)
+            error: () => {
+                try {
+                    CyberSFX.init();
+                    let osc = audioCtx.createOscillator(); 
+                    let gain = audioCtx.createGain();
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(100, audioCtx.currentTime);
+                    osc.frequency.exponentialRampToValueAtTime(40, audioCtx.currentTime + 0.2);
+                    gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.2);
+                    osc.connect(gain); gain.connect(audioCtx.destination);
+                    osc.start(); osc.stop(audioCtx.currentTime + 0.2);
+                } catch(e){}
+            },
+
+            // Glissement des données (Swipe page)
+            swipe: () => {
+                try {
+                    CyberSFX.init();
+                    let noise = audioCtx.createBufferSource();
+                    noise.buffer = noiseBuffer;
+                    let filter = audioCtx.createBiquadFilter();
+                    filter.type = 'bandpass';
+                    filter.frequency.setValueAtTime(3000, audioCtx.currentTime);
+                    filter.frequency.exponentialRampToValueAtTime(300, audioCtx.currentTime + 0.15);
+                    filter.Q.value = 5;
+                    let gain = audioCtx.createGain();
+                    gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.15);
+                    noise.connect(filter); filter.connect(gain); gain.connect(audioCtx.destination);
+                    noise.start(); noise.stop(audioCtx.currentTime + 0.15);
+                    triggerDataRain(); // Ajoute un glitch visuel au balayage
+                } catch(e){}
+            },
+
+            // Traitement des crédits (Changement de devise)
+            currency: () => {
+                try {
+                    CyberSFX.init();
+                    let osc = audioCtx.createOscillator(); 
+                    let gain = audioCtx.createGain();
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(2000, audioCtx.currentTime);
+                    osc.frequency.setValueAtTime(3500, audioCtx.currentTime + 0.05);
+                    gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.15);
+                    osc.connect(gain); gain.connect(audioCtx.destination);
+                    osc.start(); osc.stop(audioCtx.currentTime + 0.15);
+                } catch(e){}
             }
         };
 
-        // GESTIONNAIRE D'ÉVÉNEMENTS CLIC GLOBAL (Automatique)
+        // ECOUTEUR AUTOMATIQUE DES CLICS POUR LE SON
         document.addEventListener('click', (e) => {
-            CyberSFX.init(); // Débloque l'audio navigateur au premier clic
-            // Vérifie si on a cliqué sur un élément interactif
+            CyberSFX.init(); 
             const target = e.target.closest('button, .nav-btn, .protocol-card, .note-card, .contact-card, .task-card, .trans-card, .soc-car-btn, .soc-car-dot, .phase-header, .filter-btn');
-            
-            if (target) {
+            if (target && !e.target.closest('select')) { // Exclure le selecteur de devise car il a son propre son
                 const text = target.innerText ? target.innerText.toUpperCase() : '';
-                const isDanger = target.classList.contains('danger') || text === 'X';
+                const isDanger = target.classList.contains('danger') || text === 'X' || text === 'SUPPRIMER';
                 const isSuccess = text.includes('SAUVEGARDER') || text.includes('CRÉER') || text.includes('GÉNÉRER') || text.includes('ENREGISTRER') || text.includes('TERMINER');
                 
-                if (isDanger) {
-                    CyberSFX.error();
-                } else if (isSuccess) {
-                    CyberSFX.success();
-                } else {
-                    CyberSFX.click();
-                }
+                if (isDanger) CyberSFX.error();
+                else if (isSuccess) CyberSFX.success();
+                else CyberSFX.click();
             }
         });
 
+        // ==========================================
+        // GESTION DU SWIPE (MOBILES ET TABLETTES)
+        // ==========================================
+        let touchStartX = 0;
+        let touchStartY = 0;
+        const tabOrder = ['view-nexus', 'view-protocols', 'view-database', 'view-social', 'view-mindmap', 'view-agenda', 'view-finance'];
+
+        const mainView = document.getElementById('main-view');
+        mainView.addEventListener('touchstart', e => {
+            // Ignorer le swipe si on est sur la carte (mindmap) ou une galerie photo
+            if(e.target.closest('#mindmap-canvas, nav, .soc-carousel')) return;
+            touchStartX = e.changedTouches[0].screenX;
+            touchStartY = e.changedTouches[0].screenY;
+        }, {passive: true});
+
+        mainView.addEventListener('touchend', e => {
+            if(e.target.closest('#mindmap-canvas, nav, .soc-carousel')) return;
+            let touchEndX = e.changedTouches[0].screenX;
+            let touchEndY = e.changedTouches[0].screenY;
+            
+            let diffX = touchEndX - touchStartX;
+            let diffY = touchEndY - touchStartY;
+            
+            // Si le mouvement horizontal est assez grand, et le mouvement vertical petit (pour éviter les faux positifs en scrollant vers le bas)
+            if (Math.abs(diffX) > 70 && Math.abs(diffY) < 50) {
+                let currentActive = document.querySelector('.nav-btn.active');
+                if(!currentActive) return;
+                
+                let onclickAttr = currentActive.getAttribute('onclick');
+                let currentView = onclickAttr.match(/'([^']+)'/)[1];
+                let currentIndex = tabOrder.indexOf(currentView);
+
+                if (diffX < 0) {
+                    // Balayage vers la GAUCHE = Onglet SUIVANT
+                    if(currentIndex < tabOrder.length - 1) {
+                        CyberSFX.swipe();
+                        switchTab(tabOrder[currentIndex + 1], 'next');
+                    }
+                } else {
+                    // Balayage vers la DROITE = Onglet PRÉCÉDENT
+                    if(currentIndex > 0) {
+                        CyberSFX.swipe();
+                        switchTab(tabOrder[currentIndex - 1], 'prev');
+                    }
+                }
+            }
+        }, {passive: true});
 
         // ==========================================
-        // VARIABLES ET LOGIQUE DE L'APPLICATION
+        // LOGIQUE APPLICATION
         // ==========================================
         let mmCanvas = null; let mmCtx = null; let mmNodes = []; let mmLinks = [];
         let mindmapAnimId = null; let camera = { x: 0, y: 0, zoom: 1 };
@@ -1025,7 +1139,6 @@
         const exchangeRates = { 'EUR': 1, 'MGA': 4950, 'USD': 1.08, 'CNY': 7.8 };
         const currencySymbols = { 'EUR': '€', 'MGA': 'Ar', 'USD': '$', 'CNY': '¥' };
 
-        // --- FONCTION GLOBALE DE RENDU ---
         function renderAll() {
             updateDashboardSummary();
             renderProtocols();
@@ -1042,7 +1155,6 @@
             let clockEl = document.getElementById('sys-clock');
             if(clockEl) clockEl.innerHTML = `<span class="blink">▶</span> CHARGEMENT DE LA MATRICE...`; 
             
-            // 1. Essayer de charger les données stockées localement en premier !
             try {
                 const local = localStorage.getItem('ariel_os_data');
                 if(local) {
@@ -1059,17 +1171,12 @@
                         if(currSelect) currSelect.value = currentCurrency;
                     }
                 }
-            } catch(e) {
-                console.error("Erreur de lecture LocalStorage", e);
-            }
-
+            } catch(e) { console.error("Erreur de lecture LocalStorage", e); }
             renderAll(); 
         };
 
         window.parseDataCloud = function(data) {
             if (!data || Object.keys(data).length === 0) {
-                // Si le Cloud est complètement vide (1ère connexion ou document effacé),
-                // Mais qu'on a des données locales, on pousse nos données locales vers le cloud !
                 if (protocols.length > 0 || notes.length > 0 || agendaTasks.length > 0 || socialContacts.length > 0 || transactions.length > 0) {
                      if (window.saveDataToCloud) {
                          window.saveDataToCloud({ protocols, notes, agendaTasks, completedTasksList, transactions, socialContacts, currentCurrency });
@@ -1077,36 +1184,20 @@
                 }
                 return;
             }
-            
-            // Sinon on remplace nos données par celles du cloud
-            protocols = data.protocols || [];
-            notes = data.notes || [];
-            agendaTasks = data.agendaTasks || [];
-            transactions = data.transactions || [];
-            completedTasksList = data.completedTasksList || [];
-            socialContacts = data.socialContacts || [];
-            
+            protocols = data.protocols || []; notes = data.notes || []; agendaTasks = data.agendaTasks || [];
+            transactions = data.transactions || []; completedTasksList = data.completedTasksList || []; socialContacts = data.socialContacts || [];
             if (data.currentCurrency) {
                 currentCurrency = data.currentCurrency;
                 const currSelect = document.getElementById('fin-currency');
                 if(currSelect) currSelect.value = currentCurrency;
             }
-
             renderAll();
         };
 
         function saveData() {
             const dataToSave = { protocols, notes, agendaTasks, completedTasksList, transactions, socialContacts, currentCurrency };
-            
-            // Sauvegarde systématique dans le navigateur
-            try {
-                localStorage.setItem('ariel_os_data', JSON.stringify(dataToSave));
-            } catch(e) { console.error("Erreur LocalStorage:", e); }
-
-            // Sauvegarde Cloud si dispo
-            if(window.isCloudReady && window.saveDataToCloud) {
-                window.saveDataToCloud(dataToSave);
-            }
+            try { localStorage.setItem('ariel_os_data', JSON.stringify(dataToSave)); } catch(e) {}
+            if(window.isCloudReady && window.saveDataToCloud) { window.saveDataToCloud(dataToSave); }
             triggerDataRain(); 
         }
 
@@ -1261,7 +1352,7 @@
             });
             
             document.querySelectorAll('.panel').forEach(panel => {
-                panel.classList.remove('active', 'slide-right', 'slide-left');
+                panel.classList.remove('active', 'slide-next', 'slide-prev');
             });
             
             let finalViewId = viewId;
@@ -1271,8 +1362,8 @@
             let targetView = document.getElementById(finalViewId);
             if(targetView) {
                 targetView.classList.add('active');
-                if(direction === 'right') targetView.classList.add('slide-right');
-                else if(direction === 'left') targetView.classList.add('slide-left');
+                if(direction === 'next') targetView.classList.add('slide-next');
+                else if(direction === 'prev') targetView.classList.add('slide-prev');
             }
             
             if(finalViewId === 'view-mindmap') { setTimeout(initMindmap, 100); }
@@ -1288,12 +1379,10 @@
 
         function renderProtocols() {
             const grid = document.getElementById('protocol-grid'); if(!grid) return; grid.innerHTML = '';
-            
             if(protocols.length === 0) {
                 grid.innerHTML = '<div style="color:var(--cp-text); font-family:var(--font-mono); opacity:0.7;">> AUCUN PROTOCOLE ENREGISTRÉ DANS LA MATRICE.</div>';
                 return;
             }
-
             protocols.sort((a,b) => (b.lastModified || 0) - (a.lastModified || 0)).forEach(p => {
                 const card = document.createElement('div'); card.className = 'protocol-card glass-panel chamfer-reverse'; card.onclick = () => openProtocolDetail(p.id);
                 card.innerHTML = `<div class="cyber-number" style="color:var(--text-muted); font-size:0.8rem;">${window.formatDateFull(p.lastModified)}</div><div class="protocol-title">${p.data.step1 || 'Sans Titre'}</div>`;
@@ -1359,11 +1448,7 @@
             const grid = document.getElementById('note-list-container'); if(!grid) return; grid.innerHTML = '';
             
             let filteredNotes = currentNoteFilter === 'ALL' ? notes : notes.filter(n => n.tags && n.tags.includes(currentNoteFilter));
-            
-            if(filteredNotes.length === 0) {
-                grid.innerHTML = '<div style="color:var(--cp-text); font-family:var(--font-mono); opacity:0.7;">> AUCUNE ENTRÉE DANS LA BASE DE DONNÉES.</div>';
-                return;
-            }
+            if(filteredNotes.length === 0) { grid.innerHTML = '<div style="color:var(--cp-text); font-family:var(--font-mono); opacity:0.7;">> AUCUNE ENTRÉE DANS LA BASE DE DONNÉES.</div>'; return; }
 
             filteredNotes.forEach(n => {
                 let tagsHtml = n.tags ? n.tags.map(t => `<span class="tag-badge">${t}</span>`).join('') : '';
@@ -1671,7 +1756,7 @@
             if(!t) return;
             
             document.getElementById('ag-title').value = t.title; document.getElementById('ag-date').value = t.date; document.getElementById('ag-tags').value = (t.tags || []).join(', '); document.getElementById('ag-source').value = t.source || '';
-            document.getElementById('agenda-form-title').innerText = "MODIFIER L'ACTION"; document.getElementById('ag-btn-submit').innerText = "METTRE À JOUR"; document.getElementById('ag-btn-cancel').style.display = "block";
+            document.getElementById('agenda-form-title').innerText = "MODIFIER L'ACTION"; document.getElementById('ag-btn-submit').innerText = "METTRE À MATRICE"; document.getElementById('ag-btn-cancel').style.display = "block";
             
             if(window.innerWidth <= 768) document.getElementById('agenda-form-title').scrollIntoView({behavior: 'smooth', block:'start'});
         }
@@ -1709,10 +1794,13 @@
         }
 
         function formatCurrency(baseAmount) { return new Intl.NumberFormat('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(baseAmount * exchangeRates[currentCurrency]) + ' ' + currencySymbols[currentCurrency]; }
+        
         function changeCurrency() { 
+            CyberSFX.currency(); // Son spécifique de monnaie
             currentCurrency = document.getElementById('fin-currency').value; 
             stateChanged(); renderFinance(); 
         }
+
         function renderFinance() {
             let inT = 0, outT = 0; const list = document.getElementById('fin-list'); if(!list) return; list.innerHTML = '';
             
