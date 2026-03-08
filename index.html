@@ -552,7 +552,7 @@
         <div id="view-agenda" class="panel">
             <h2 class="section-title">Planificateur Opérationnel</h2>
             
-            <!-- NOUVEAU : Toggle entre Tâches en attente et Archives -->
+            <!-- Toggle entre Tâches en attente et Archives -->
             <div style="display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 1px solid var(--glass-border); padding-bottom: 15px;">
                 <button class="cp-btn-outline active chamfer" id="btn-agenda-pending" onclick="setAgendaTab('pending')">EN ATTENTE</button>
                 <button class="cp-btn-outline chamfer" id="btn-agenda-completed" onclick="setAgendaTab('completed')">ARCHIVES (ACCOMPLIES)</button>
@@ -688,21 +688,28 @@
             });
         };
 
-        onSnapshot(stateDocRef, (docSnap) => {
-            if (docSnap.exists()) {
-                const data = docSnap.data();
-                if (window.parseDataCloud) window.parseDataCloud(data);
-            }
-            if (!window.isCloudReady) {
-                window.isCloudReady = true;
-                if (window.showToast) window.showToast("CONNECTÉ AU SERVEUR CLOUD", "var(--cp-cyan)");
-                document.getElementById('sys-clock').innerHTML = `<span class="blink">▶</span> SYSTÈME EN LIGNE`;
-            }
-        }, (error) => {
-            console.error("Erreur Firebase:", error);
-            if (window.showToast) window.showToast("ACCÈS REFUSÉ BDD (Voir Console)", "var(--cp-red)");
-            document.getElementById('sys-clock').innerHTML = `<span class="blink" style="color:var(--cp-red)">▶</span> ERREUR CONNEXION`;
-        });
+        try {
+            onSnapshot(stateDocRef, (docSnap) => {
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    if (window.parseDataCloud) window.parseDataCloud(data);
+                } else {
+                    if (window.parseDataCloud) window.parseDataCloud({});
+                }
+                
+                if (!window.isCloudReady) {
+                    window.isCloudReady = true;
+                    if (window.showToast) window.showToast("CONNECTÉ AU SERVEUR CLOUD", "var(--cp-cyan)");
+                    document.getElementById('sys-clock').innerHTML = `<span class="blink">▶</span> SYSTÈME EN LIGNE`;
+                }
+            }, (error) => {
+                console.error("Erreur Firebase:", error);
+                if (window.showToast) window.showToast("ACCÈS REFUSÉ BDD (Voir Console)", "var(--cp-red)");
+                document.getElementById('sys-clock').innerHTML = `<span class="blink" style="color:var(--cp-red)">▶</span> ERREUR CONNEXION`;
+            });
+        } catch(e) {
+            console.error("Initialisation Firebase échouée", e);
+        }
     </script>
 
     <!-- ========================================== -->
@@ -712,16 +719,19 @@
         // --- NOUVEAU SYNTHÉTISEUR AUDIO CYBERPUNK (Cliquetis secs) ---
         const CyberSFX = (() => {
             let actx = null;
+            
             const init = () => {
                 if(!actx) actx = new (window.AudioContext || window.webkitAudioContext)();
                 if(actx.state === 'suspended') actx.resume();
             };
+
             const playCyberClick = (startFreq, endFreq, duration, type, vol = 0.05) => {
                 try {
                     init();
                     const osc = actx.createOscillator();
                     const gain = actx.createGain();
                     osc.type = type;
+                    
                     osc.frequency.setValueAtTime(startFreq, actx.currentTime);
                     osc.frequency.exponentialRampToValueAtTime(endFreq, actx.currentTime + duration);
                     gain.gain.setValueAtTime(vol, actx.currentTime);
@@ -750,7 +760,7 @@
             if (!btn) return;
             const text = btn.innerText.toUpperCase();
             const isDanger = btn.classList.contains('danger') || text.includes('SUPPRIMER') || text === 'X' || text.includes('ANNULER');
-            const isSuccess = text.includes('SAUVEGARDER') || text.includes('CRÉER') || text.includes('GÉNÉRER') || text.includes('TERMINER') || text.includes('ENREGISTRER');
+            const isSuccess = text.includes('SAUVEGARDER') || text.includes('CRÉER') || text.includes('GÉNÉRER') || text.includes('TERMINER') || text.includes('ENREGISTRER') || text.includes('RÉCUPÉRER');
             if (isDanger) CyberSFX.error();
             else if (isSuccess) CyberSFX.success();
             else CyberSFX.click();
@@ -803,31 +813,29 @@
                 let currentActive = document.querySelector('.panel.active').id;
                 let currentIndex = viewOrder.indexOf(currentActive);
                 if (dx < 0 && currentIndex < viewOrder.length - 1) { switchTab(viewOrder[currentIndex + 1], 'right'); CyberSFX.swipe(); } 
-        // --- GESTION DU CLAVIER MOBILE MINDMAP ---
+                else if (dx > 0 && currentIndex > 0) { switchTab(viewOrder[currentIndex - 1], 'left'); CyberSFX.swipe(); }
+            }
+        }
+
         const mmEditInput = document.getElementById('mm-edit-content');
         if(mmEditInput) {
             mmEditInput.addEventListener('focus', function() {
-                if(window.innerWidth <= 768) {
-                    document.getElementById('mindmap-container').style.display = 'none';
-                    setTimeout(() => { this.scrollIntoView({ behavior: 'smooth', block: 'center' }); }, 300);
-                }
+                if(window.innerWidth <= 768) { document.getElementById('mindmap-container').style.display = 'none'; setTimeout(() => { this.scrollIntoView({ behavior: 'smooth', block: 'center' }); }, 300); }
             });
             mmEditInput.addEventListener('blur', function() {
-                if(window.innerWidth <= 768) {
-                    document.getElementById('mindmap-container').style.display = 'block';
-                }
+                if(window.innerWidth <= 768) { document.getElementById('mindmap-container').style.display = 'block'; }
             });
         }
 
 
         // --- DATA STATE ---
         let protocols = []; let notes = []; let agendaTasks = []; let transactions = []; let currentCurrency = 'CNY';
-        let completedTasksList = []; // NOUVEAU: Stockage des tâches accomplies
+        let completedTasksList = []; // Stockage des tâches accomplies
         
         let currentProtocolId = null; let currentEditNoteId = null; let currentEditTaskId = null; let currentEditTransId = null;
         let currentNoteFilter = 'ALL'; let currentAgendaFilter = 'ALL';
-        let currentAgendaTab = 'pending'; // NOUVEAU: Onglet actif dans l'agenda
-        let currentEditTaskType = 'pending'; // NOUVEAU: Pour savoir si on modifie une tâche archivée ou en attente
+        let currentAgendaTab = 'pending'; // Onglet actif dans l'agenda
+        let currentEditTaskType = 'pending'; // Pour savoir si on modifie une tâche archivée ou en attente
 
         const exchangeRates = { 'EUR': 1, 'MGA': 4950, 'USD': 1.08, 'CNY': 7.8 };
         const currencySymbols = { 'EUR': '€', 'MGA': 'Ar', 'USD': '$', 'CNY': '¥' };
@@ -877,6 +885,18 @@
             rainTimer = setTimeout(() => { rainCanvas.style.opacity = '0'; setTimeout(() => { rainActive = false; }, 500); }, 1200);
         }
 
+        // --- NOUVELLE FONCTION: showToast ---
+        function showToast(message, color = 'var(--cp-green)') {
+            const container = document.getElementById('toast-container');
+            if(container) {
+                const toast = document.createElement('div'); toast.className = 'toast glass-panel chamfer-reverse';
+                toast.style.borderColor = color; toast.style.borderLeftColor = color; toast.innerText = message;
+                container.appendChild(toast);
+                setTimeout(() => { toast.style.opacity = '0'; setTimeout(() => toast.remove(), 400); }, 3000);
+            }
+        }
+        window.showToast = showToast; 
+
         // --- TAGS SYSTEM ---
         function extractTags(str) { return !str ? [] : str.split(',').map(s => s.trim().toUpperCase()).filter(s => s !== '').map(s => s.startsWith('#') ? s : '#' + s); }
         function setNoteFilter(tag) { currentNoteFilter = tag; renderNotes(); }
@@ -887,8 +907,10 @@
 
         window.parseDataCloud = function(parsed) {
             if(parsed) {
-                protocols = parsed.protocols || []; notes = parsed.notes || [];
-                agendaTasks = parsed.agendaTasks || []; transactions = parsed.transactions || [];
+                protocols = parsed.protocols || []; 
+                notes = parsed.notes || [];
+                agendaTasks = parsed.agendaTasks || []; 
+                transactions = parsed.transactions || [];
                 completedTasksList = parsed.completedTasksList || [];
                 currentCurrency = parsed.currentCurrency || 'CNY';
             }
@@ -926,16 +948,6 @@
             renderXP();
         }
 
-        function renderXP() {
-            const container = document.getElementById('xp-bars-container');
-            if(!container) return;
-            container.innerHTML = '';
-
-            let hasMissions = false;
-
-            // 1. Pourcentages des Protocoles Principaux
-            protocols.forEach(p => {
-        // --- FONCTION RENDU DES BARRES D'XP ---
         function renderXP() {
             const container = document.getElementById('xp-bars-container');
             if(!container) return;
@@ -1198,7 +1210,6 @@
                 if(t){ t.title = title; t.date = date; t.tags = tags; t.source = source; showToast("ACTION MODIFIÉE");} 
             } else { 
                 agendaTasks.push({ id: Date.now(), title, date, tags, source }); showToast("ACTION AJOUTÉE"); 
-                // Assure qu'on affiche bien la liste "En attente" quand on ajoute un nouveau
                 currentAgendaTab = 'pending'; 
             }
             
@@ -1217,22 +1228,16 @@
             document.getElementById('ag-title').value = t.title; document.getElementById('ag-date').value = t.date; document.getElementById('ag-tags').value = (t.tags || []).join(', '); document.getElementById('ag-source').value = t.source || '';
             document.getElementById('agenda-form-title').innerText = "MODIFIER L'ACTION"; document.getElementById('ag-btn-submit').innerText = "METTRE À JOUR"; document.getElementById('ag-btn-cancel').style.display = "block";
             
-            // Scroll vers le formulaire sur mobile
             if(window.innerWidth <= 768) document.getElementById('agenda-form-title').scrollIntoView({behavior: 'smooth', block:'start'});
         }
         
         function completeAgendaTask(id) { 
             const t = agendaTasks.find(x => x.id === id);
-            
             if(t) {
                 agendaTasks = agendaTasks.filter(x => x.id !== id); 
-                completedTasksList.push(t); // On déplace dans l'archive
+                completedTasksList.push(t); 
             }
-
-            stateChanged(); 
-            renderAgenda(); 
-            showToast("ACTION TERMINÉE"); 
-            
+            stateChanged(); renderAgenda(); showToast("ACTION TERMINÉE", "var(--cp-green)"); 
             if(currentProtocolId) { const p = protocols.find(x => x.id === currentProtocolId); if(p) renderProtocolAgenda(p.data.step1); }
             if(mindmapAnimId) buildMindmapData();
         }
@@ -1263,8 +1268,7 @@
         function changeCurrency() { 
             if(CyberSFX) CyberSFX.click(); 
             currentCurrency = document.getElementById('fin-currency').value; 
-            stateChanged(); 
-            renderFinance(); 
+            stateChanged(); renderFinance(); 
         }
         function renderFinance() {
             let inT = 0, outT = 0; const list = document.getElementById('fin-list'); if(!list) return; list.innerHTML = '';
@@ -1336,12 +1340,12 @@
                     let phaseFId = `p_${pMatch.id}_Op`; let phaseFNode = mmNodes.find(n => n.id === phaseFId);
                     if (!phaseFNode) {
                         let pNode = mmNodes.find(n => n.id === 'p_'+pMatch.id);
-                        phaseFNode = { id: phaseFId, label: "Opérations", type: 'phase', x: pNode.x+Math.random()*50-25, y: pNode.y+Math.random()*50-25, vx:0, vy:0, color: 'var(--cp-orange)', text: "Actions planifiées", editable: false };
+                        phaseFNode = { id: phaseFId, label: "Opérations", type: 'phase', x: pNode.x+Math.random()*50-25, y: pNode.y+Math.random()*50-25, vx:0, vy:0, color: '#b000ff', text: "Actions planifiées", editable: false };
                         mmNodes.push(phaseFNode); mmLinks.push({ source: pNode, target: phaseFNode });
                     }
                     targetParent = phaseFNode;
                 }
-                let tNode = { id: 't_'+t.id, label: "Action", type: 'task', x: targetParent.x+Math.random()*40-20, y: targetParent.y+Math.random()*40-20, vx:0, vy:0, color: 'var(--cp-orange)', text: t.title, editable: true, refData: t, refKey: 'title', callback: () => { renderAgenda(); if(pMatch && currentProtocolId===pMatch.id) renderProtocolAgenda(pMatch.data.step1); } };
+                let tNode = { id: 't_'+t.id, label: "Action", type: 'task', x: targetParent.x+Math.random()*40-20, y: targetParent.y+Math.random()*40-20, vx:0, vy:0, color: '#ffffff', text: t.title, editable: true, refData: t, refKey: 'title', callback: () => { renderAgenda(); if(pMatch && currentProtocolId===pMatch.id) renderProtocolAgenda(pMatch.data.step1); } };
                 mmNodes.push(tNode); mmLinks.push({ source: targetParent, target: tNode });
             });
         }
