@@ -935,8 +935,8 @@
                 if(audioCtx.state === 'suspended') audioCtx.resume(); 
             },
             
-            // Le son satisfaisant (Terminal Clack) appliqué PARTOUT
-            click: () => {
+            // Le son unique et satisfaisant (Terminal Clack/Action) appliqué PARTOUT
+            playUnifiedSound: () => {
                 try {
                     CyberSFX.init();
                     let osc = audioCtx.createOscillator();
@@ -968,11 +968,17 @@
             }
         };
 
+        // Redirection de tous les effets vers le son unique
+        CyberSFX.click = CyberSFX.playUnifiedSound;
+        CyberSFX.success = CyberSFX.playUnifiedSound;
+        CyberSFX.error = CyberSFX.playUnifiedSound;
+        CyberSFX.swipe = CyberSFX.playUnifiedSound;
+
         // ECOUTEUR AUTOMATIQUE DES CLICS POUR LE SON
         document.addEventListener('click', (e) => {
             CyberSFX.init(); 
             const target = e.target.closest('button, .nav-btn, .protocol-card, .note-card, .contact-card, .task-card, .trans-card, .soc-car-btn, .soc-car-dot, .phase-header, .filter-btn');
-            // Si on clique sur un élément d'interface, ET que ce n'est pas le sélecteur de devise
+            // On joue le son pour tout élément interactif SAUF le select de devise
             if (target && !e.target.closest('select')) { 
                 CyberSFX.click();
             }
@@ -1013,13 +1019,13 @@
                 if (diffX < 0) {
                     // Balayage vers la GAUCHE = Onglet SUIVANT
                     if(currentIndex < tabOrder.length - 1) {
-                        CyberSFX.click(); // Utilise le son satisfaisant
+                        CyberSFX.click();
                         switchTab(tabOrder[currentIndex + 1], 'next');
                     }
                 } else {
                     // Balayage vers la DROITE = Onglet PRÉCÉDENT
                     if(currentIndex > 0) {
-                        CyberSFX.click(); // Utilise le son satisfaisant
+                        CyberSFX.click();
                         switchTab(tabOrder[currentIndex - 1], 'prev');
                     }
                 }
