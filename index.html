@@ -2,7 +2,8 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <!-- AJOUT: viewport-fit=cover force l'affichage jusqu'au bord physique (ignore le notch sur mobile) -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     
     <!-- Balises pour transformer le site en Application Web Native (PWA) -->
     <meta name="mobile-web-app-capable" content="yes">
@@ -55,13 +56,13 @@
             color: var(--cp-text);
             font-family: var(--font-ui);
             height: 100vh; 
-            height: 100dvh;
+            height: 100dvh; /* dvh garantit la taille exacte sur mobile */
             overflow: hidden; 
             display: flex;
             flex-direction: column;
             margin: 0;
             position: relative;
-            touch-action: pan-y; /* Permet le scroll vertical, bloque certains comportements horizontaux natifs */
+            touch-action: pan-y;
         }
 
         /* Scanlines Effect */
@@ -392,45 +393,52 @@
         @keyframes fadeIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
 
         /* ==========================================
-           CADRE FUTURISTE HUD CSS (BORDURES À 0px)
+           CADRE FUTURISTE HUD CSS (REMPLISSAGE TOTAL)
            ========================================== */
         .hud-overlay {
             position: fixed;
-            top: 0; left: 0; right: 0; bottom: 0;
+            top: 0; left: 0; 
+            width: 100vw; height: 100vh; height: 100dvh; /* Utilise toute la taille de l'écran */
             pointer-events: none; /* Laisse passer les clics vers l'interface */
-            z-index: 900;
+            z-index: 9999; /* Par-dessus TOUT (même les scrollbars si possible) */
         }
         
-        /* Lignes collées aux bords absolus de l'écran */
-        .hud-line { position: absolute; background: rgba(0, 229, 255, 0.4); box-shadow: 0 0 8px rgba(0, 229, 255, 0.3); }
-        .hud-top { top: 0; left: 0; right: 150px; height: 4px; }
-        .hud-top-flat { top: 20px; right: 0; width: 130px; height: 4px; }
-        .hud-right { top: 20px; bottom: 0; right: 0; width: 4px; }
+        /* Les 4 lignes principales touchent le bord absolu (0px) */
+        .hud-line { position: absolute; background: rgba(0, 229, 255, 0.5); box-shadow: 0 0 10px rgba(0, 229, 255, 0.4); }
+        .hud-top { top: 0; left: 0; right: 0; height: 4px; }
         .hud-bottom { bottom: 0; left: 0; right: 0; height: 4px; }
         .hud-left { top: 0; bottom: 0; left: 0; width: 4px; }
+        .hud-right { top: 0; bottom: 0; right: 0; width: 4px; }
 
-        /* Décroché asymétrique calculé mathématiquement pour coller parfaitement */
-        .hud-corner { position: absolute; width: 28.3px; height: 4px; background: rgba(0, 229, 255, 0.4); box-shadow: 0 0 8px rgba(0, 229, 255, 0.3); }
-        .hud-tr-step { top: 8.5px; right: 125.86px; transform: rotate(45deg); }
+        /* Ligne technique intérieure (ajoute du réalisme) */
+        .hud-inner { position: absolute; top: 12px; left: 12px; right: 12px; bottom: 12px; border: 1px solid rgba(0, 229, 255, 0.15); border-radius: 8px; }
+
+        /* Coins de renfort type "cockpit" */
+        .hud-corner-box { position: absolute; width: 40px; height: 40px; border: 4px solid rgba(0, 229, 255, 0.7); box-shadow: 0 0 12px rgba(0, 229, 255, 0.4); }
+        .hud-ctl { top: 0; left: 0; border-right: none; border-bottom: none; }
+        .hud-ctr { top: 0; right: 0; border-left: none; border-bottom: none; }
+        .hud-cbl { bottom: 0; left: 0; border-right: none; border-top: none; }
+        .hud-cbr { bottom: 0; right: 0; border-left: none; border-top: none; }
 
         /* Pulsation plus subtile */
-        @keyframes hudPulse { 0%, 100% { opacity: 0.7; } 50% { opacity: 0.3; } }
+        @keyframes hudPulse { 0%, 100% { opacity: 0.8; } 50% { opacity: 0.3; } }
 
-        .hud-stripes { position: absolute; top: 0; right: 160px; width: 120px; height: 12px; background: repeating-linear-gradient(45deg, rgba(0, 229, 255, 0.4), rgba(0, 229, 255, 0.4) 4px, transparent 4px, transparent 8px); animation: hudPulse 3s infinite; }
+        /* Décorations */
+        .hud-stripes { position: absolute; top: 4px; right: 80px; width: 150px; height: 6px; background: repeating-linear-gradient(45deg, rgba(0, 229, 255, 0.5), rgba(0, 229, 255, 0.5) 4px, transparent 4px, transparent 8px); animation: hudPulse 3s infinite; }
         
-        .hud-deco-right { position: absolute; top: 40%; right: 0; width: 12px; height: 90px; background: rgba(0, 229, 255, 0.3); box-shadow: 0 0 5px rgba(0, 229, 255, 0.2); display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 6px; animation: hudPulse 4s infinite; }
+        .hud-deco-right { position: absolute; top: 40%; right: 4px; width: 8px; height: 80px; background: rgba(0, 229, 255, 0.3); box-shadow: 0 0 5px rgba(0, 229, 255, 0.2); display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 6px; animation: hudPulse 4s infinite; }
         .hud-deco-right span { width: 0; height: 0; border-top: 4px solid transparent; border-bottom: 4px solid transparent; border-left: 6px solid var(--cp-dark); }
         
-        .hud-deco-bottom { position: absolute; bottom: 0; right: 60px; display: flex; gap: 6px; animation: hudPulse 3.5s infinite;}
-        .hud-deco-bottom span { width: 12px; height: 8px; background: rgba(0, 229, 255, 0.4); box-shadow: 0 0 5px rgba(0, 229, 255, 0.2); }
+        .hud-deco-bottom { position: absolute; bottom: 4px; left: 50%; transform: translateX(-50%); display: flex; gap: 10px; animation: hudPulse 3.5s infinite;}
+        .hud-deco-bottom span { width: 30px; height: 4px; background: rgba(0, 229, 255, 0.5); box-shadow: 0 0 8px rgba(0, 229, 255, 0.3); }
         
-        .hud-deco-left { position: absolute; top: 50%; left: 0; display: flex; flex-direction: column; gap: 6px; animation: hudPulse 4.5s infinite;}
-        .hud-deco-left span { width: 8px; height: 12px; background: rgba(0, 229, 255, 0.4); box-shadow: 0 0 5px rgba(0, 229, 255, 0.2); }
+        .hud-deco-left { position: absolute; top: 50%; left: 4px; display: flex; flex-direction: column; gap: 8px; transform: translateY(-50%); animation: hudPulse 4.5s infinite;}
+        .hud-deco-left span { width: 4px; height: 20px; background: rgba(0, 229, 255, 0.4); box-shadow: 0 0 5px rgba(0, 229, 255, 0.2); }
 
-        .hud-deco-top-left { position: absolute; top: 0; left: 40px; width: 50px; height: 8px; background: rgba(0, 229, 255, 0.4); box-shadow: 0 0 5px rgba(0, 229, 255, 0.2); }
+        .hud-deco-top-left { position: absolute; top: 4px; left: 80px; width: 60px; height: 6px; background: rgba(0, 229, 255, 0.4); box-shadow: 0 0 5px rgba(0, 229, 255, 0.2); }
 
-        /* Le Halo lumineux */
-        .hud-glow { position: absolute; top: 0; left: 0; right: 0; bottom: 0; box-shadow: inset 0 0 60px rgba(0, 229, 255, 0.1); pointer-events: none; }
+        /* Halo lumineux écran */
+        .hud-glow { position: absolute; top: 0; left: 0; right: 0; bottom: 0; box-shadow: inset 0 0 100px rgba(0, 229, 255, 0.15); pointer-events: none; }
         
 
         /* RESPONSIVE DESIGN & ADAPTATION MOBILE */
@@ -492,19 +500,16 @@
             .modal-content button { width: 100%; margin-top: 10px;}
 
             /* ADAPTATION DU CADRE HUD POUR LE MOBILE */
-            .hud-top { right: 80px; height: 3px; }
-            .hud-top-flat { width: 60px; height: 3px; top: 20px; }
-            .hud-right { top: 20px; width: 3px; }
-            .hud-bottom { height: 3px; }
-            .hud-left { width: 3px; }
-            .hud-corner { height: 3px; }
-            .hud-tr-step { right: 55.86px; top: 8.5px; }
-            .hud-stripes { right: 90px; width: 60px; height: 6px; top: 0; }
-            .hud-deco-right { display: none; } /* Caché sur mobile pour ne pas gêner */
-            .hud-deco-left span { width: 4px; height: 8px; }
-            .hud-deco-bottom { right: 20px; }
-            .hud-deco-bottom span { width: 8px; height: 4px; }
-            .hud-deco-top-left { left: 10px; height: 4px; width: 30px; }
+            .hud-line { box-shadow: 0 0 5px rgba(0, 229, 255, 0.2); }
+            .hud-top, .hud-bottom { height: 3px; }
+            .hud-left, .hud-right { width: 3px; }
+            .hud-inner { top: 8px; left: 8px; right: 8px; bottom: 8px; border-width: 1px; }
+            .hud-corner-box { width: 20px; height: 20px; border-width: 3px; }
+            .hud-stripes { right: 40px; width: 80px; height: 4px; }
+            .hud-deco-right { display: none; } /* Caché sur mobile pour la lisibilité */
+            .hud-deco-left { display: none; } /* Caché sur mobile pour la lisibilité */
+            .hud-deco-top-left { left: 40px; width: 40px; height: 4px; }
+            .hud-deco-bottom span { width: 15px; height: 3px; }
         }
     </style>
 </head>
@@ -544,15 +549,20 @@
     <div class="hud-overlay" id="cyber-hud">
         <div class="hud-glow"></div>
         
-        <!-- Lignes Principales (Collées aux bords) -->
+        <!-- Lignes Principales (Collées aux bords absolus) -->
         <div class="hud-line hud-top"></div>
-        <div class="hud-line hud-top-flat"></div>
-        <div class="hud-line hud-right"></div>
         <div class="hud-line hud-bottom"></div>
         <div class="hud-line hud-left"></div>
+        <div class="hud-line hud-right"></div>
         
-        <!-- Coins Biseautés (Chamfers) -->
-        <div class="hud-corner hud-tr-step"></div>
+        <!-- Ligne technique intérieure subtile -->
+        <div class="hud-inner"></div>
+
+        <!-- Coins de renfort -->
+        <div class="hud-corner-box hud-ctl"></div>
+        <div class="hud-corner-box hud-ctr"></div>
+        <div class="hud-corner-box hud-cbl"></div>
+        <div class="hud-corner-box hud-cbr"></div>
         
         <!-- Décorations et Greebles -->
         <div class="hud-stripes"></div>
@@ -1111,7 +1121,7 @@
             if (window.innerWidth <= 768 && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA')) {
                 setTimeout(() => {
                     e.target.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                }, 300); // Délai pour permettre à l'animation du clavier natif de se terminer
+                }, 300);
             }
         });
 
@@ -1825,7 +1835,7 @@
             if(!t) return;
             
             document.getElementById('ag-title').value = t.title; document.getElementById('ag-date').value = t.date; document.getElementById('ag-tags').value = (t.tags || []).join(', '); document.getElementById('ag-source').value = t.source || '';
-            document.getElementById('agenda-form-title').innerText = "MODIFIER L'ACTION"; document.getElementById('ag-btn-submit').innerText = "METTRE À JOUR"; document.getElementById('ag-btn-cancel').style.display = "block";
+            document.getElementById('agenda-form-title').innerText = "MODIFIER L'ACTION"; document.getElementById('ag-btn-submit').innerText = "METTRE À À JOUR"; document.getElementById('ag-btn-cancel').style.display = "block";
             
             if(window.innerWidth <= 768) document.getElementById('agenda-form-title').scrollIntoView({behavior: 'smooth', block:'start'});
         }
