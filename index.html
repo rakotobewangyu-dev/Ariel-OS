@@ -268,7 +268,7 @@
         .note-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; }
         .note-card { border-left: 4px solid var(--cp-red); padding: 25px; display: flex; flex-direction: column; position: relative; transition: all 0.3s; min-height: 200px; }
         .note-card::before { content: ''; position: absolute; top: 0; right: 0; border-style: solid; border-width: 0 20px 20px 0; border-color: transparent rgba(0,0,0,0.8) transparent transparent; }
-        .note-card:hover { background-color: rgba(30, 20, 20, 0.8); border-left-color: var(--cp-yellow); box-shadow: 0 10px 25px rgba(255,0,85,0.2); transform: translateY(-4px); }
+        .note-card:hover { background: rgba(30, 20, 20, 0.8); border-left-color: var(--cp-yellow); box-shadow: 0 10px 25px rgba(255,0,85,0.2); transform: translateY(-4px); }
         .note-title { color: var(--cp-red); font-family: var(--font-title); font-size: 1.3rem; margin-bottom: 15px; }
         .note-preview { font-family: var(--font-mono); font-size: 1rem; color: #ccc; display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; flex-grow: 1; margin-bottom: 10px; line-height: 1.5; }
 
@@ -285,7 +285,7 @@
         .social-list-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; }
         .contact-card { display: flex; align-items: center; gap: 15px; padding: 15px; border-left: 4px solid var(--cp-cyan); cursor: pointer; transition: all 0.3s; }
         .contact-card:hover { transform: translateY(-3px); background: rgba(30, 30, 35, 0.8); box-shadow: 0 5px 15px rgba(0, 229, 255, 0.2); }
-        .contact-card-img-wrapper { width: 60px; height: 60px; border-radius: 8px; border: 1px solid var(--cp-cyan); overflow: hidden; background: rgba(0, 229, 255, 0.1); display: flex; align-items: center; justify-content: center;}
+        .contact-card-img-wrapper { width: 60px; height: 60px; border-radius: 8px; border: 1px solid var(--cp-cyan); overflow: hidden; background: rgba(0, 229, 255, 0.1); display: flex; align-items: center; justify-content: center; flex-shrink: 0;}
         .contact-card-img { width: 100%; height: 100%; object-fit: cover; }
         .contact-card-name { font-family: var(--font-title); font-size: 1.2rem; color: white; }
 
@@ -1011,46 +1011,6 @@
         const exchangeRates = { 'EUR': 1, 'MGA': 4950, 'USD': 1.08, 'CNY': 7.8 };
         const currencySymbols = { 'EUR': '€', 'MGA': 'Ar', 'USD': '$', 'CNY': '¥' };
 
-        // --- SAVE/LOAD SYSTEM ---
-        function loadData() { 
-            let clockEl = document.getElementById('sys-clock');
-            if(clockEl) clockEl.innerHTML = `<span class="blink">▶</span> CONNEXION CLOUD...`; 
-        }
-
-        window.parseDataCloud = function(parsed) {
-            if(parsed) {
-                protocols = parsed.protocols || []; 
-                notes = parsed.notes || [];
-                agendaTasks = parsed.agendaTasks || []; 
-                transactions = parsed.transactions || [];
-                completedTasksList = parsed.completedTasksList || [];
-                socialContacts = parsed.socialContacts || []; 
-                currentCurrency = parsed.currentCurrency || 'CNY';
-            }
-            let currencySelect = document.getElementById('fin-currency');
-            if(currencySelect) currencySelect.value = currentCurrency;
-
-            renderProtocols(); renderAgenda(); renderFinance(); renderNotes(); renderSocialContacts(); updateDashboardSummary();
-            
-            if(currentProtocolId) {
-                 const p = protocols.find(x => x.id === currentProtocolId);
-                 if(p) { renderProtocolAgenda(p.data.step1); } else { closeProtocolDetail(); }
-            }
-            if(currentContactId) {
-                 const c = socialContacts.find(x => x.id === currentContactId);
-                 if(!c) { closeContactDetail(); }
-            }
-            if(mindmapAnimId) buildMindmapData();
-        };
-
-        function saveData() {
-            if(!window.isCloudReady) return; 
-            if (window.saveDataToCloud) window.saveDataToCloud({ protocols, notes, agendaTasks, completedTasksList, transactions, socialContacts, currentCurrency });
-            triggerDataRain(); 
-        }
-
-        function stateChanged() { saveData(); updateDashboardSummary(); }
-
         // --- DATA RAIN ---
         const rainCanvas = document.getElementById('data-rain-canvas');
         const rainCtx = rainCanvas ? rainCanvas.getContext('2d') : null;
@@ -1100,6 +1060,46 @@
         function extractTags(str) { return !str ? [] : str.split(',').map(s => s.trim().toUpperCase()).filter(s => s !== '').map(s => s.startsWith('#') ? s : '#' + s); }
         function setNoteFilter(tag) { currentNoteFilter = tag; renderNotes(); }
         function setAgendaFilter(tag) { currentAgendaFilter = tag; renderAgenda(); }
+
+        // --- SAVE/LOAD SYSTEM ---
+        function loadData() { 
+            let clockEl = document.getElementById('sys-clock');
+            if(clockEl) clockEl.innerHTML = `<span class="blink">▶</span> CONNEXION CLOUD...`; 
+        }
+
+        window.parseDataCloud = function(parsed) {
+            if(parsed) {
+                protocols = parsed.protocols || []; 
+                notes = parsed.notes || [];
+                agendaTasks = parsed.agendaTasks || []; 
+                transactions = parsed.transactions || [];
+                completedTasksList = parsed.completedTasksList || [];
+                socialContacts = parsed.socialContacts || []; 
+                currentCurrency = parsed.currentCurrency || 'CNY';
+            }
+            let currencySelect = document.getElementById('fin-currency');
+            if(currencySelect) currencySelect.value = currentCurrency;
+
+            renderProtocols(); renderAgenda(); renderFinance(); renderNotes(); renderSocialContacts(); updateDashboardSummary();
+            
+            if(currentProtocolId) {
+                 const p = protocols.find(x => x.id === currentProtocolId);
+                 if(p) { renderProtocolAgenda(p.data.step1); } else { closeProtocolDetail(); }
+            }
+            if(currentContactId) {
+                 const c = socialContacts.find(x => x.id === currentContactId);
+                 if(!c) { closeContactDetail(); }
+            }
+            if(mindmapAnimId) buildMindmapData();
+        };
+
+        function saveData() {
+            if(!window.isCloudReady) return; 
+            if (window.saveDataToCloud) window.saveDataToCloud({ protocols, notes, agendaTasks, completedTasksList, transactions, socialContacts, currentCurrency });
+            triggerDataRain(); 
+        }
+
+        function stateChanged() { saveData(); updateDashboardSummary(); }
 
         // --- DASHBOARD SUMMARY ET SYSTÈME XP ---
         function updateDashboardSummary() {
@@ -1344,7 +1344,9 @@
                 const imgTag = imgUrl ? `<img src="${imgUrl}" class="contact-card-img" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';"><div class="contact-card-img-wrapper" style="display:none; font-size:24px; color:var(--cp-cyan);">?</div>` : `<div class="contact-card-img-wrapper" style="font-size:24px; color:var(--cp-cyan);">?</div>`;
                 
                 card.innerHTML = `
-                    ${imgTag}
+                    <div class="contact-card-img-wrapper">
+                        ${imgTag}
+                    </div>
                     <div>
                         <div class="contact-card-name">${(c.lastName || '') + ' ' + (c.firstName || 'Inconnu')}</div>
                         <div style="font-family: var(--font-mono); font-size: 0.85rem; color: var(--cp-cyan);">${c.socialProfile || 'Profil non défini'}</div>
