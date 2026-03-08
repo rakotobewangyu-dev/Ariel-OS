@@ -925,24 +925,17 @@
     <!-- SCRIPT PRINCIPAL DU SITE -->
     <script>
         // ==========================================
-        // SYNTHÉTISEUR AUDIO CYBERPUNK "HACKING"
+        // SYNTHÉTISEUR AUDIO CYBERPUNK UNIFIÉ
         // ==========================================
         const AudioContext = window.AudioContext || window.webkitAudioContext;
         let audioCtx = new AudioContext();
-        let noiseBuffer = null;
 
         const CyberSFX = {
             init: () => { 
                 if(audioCtx.state === 'suspended') audioCtx.resume(); 
-                if(!noiseBuffer) {
-                    const bufferSize = audioCtx.sampleRate * 1.0; // 1 seconde de bruit
-                    noiseBuffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
-                    const output = noiseBuffer.getChannelData(0);
-                    for (let i = 0; i < bufferSize; i++) output[i] = Math.random() * 2 - 1;
-                }
             },
             
-            // Bruit de frappe terminal (Clic standard)
+            // Le son satisfaisant (Terminal Clack) appliqué PARTOUT
             click: () => {
                 try {
                     CyberSFX.init();
@@ -958,61 +951,7 @@
                 } catch(e){}
             },
 
-            // Upload de données (Succès/Sauvegarde)
-            success: () => {
-                try {
-                    CyberSFX.init();
-                    let osc = audioCtx.createOscillator(); 
-                    let gain = audioCtx.createGain();
-                    osc.type = 'square';
-                    // Arpège rapide ascendante
-                    osc.frequency.setValueAtTime(800, audioCtx.currentTime);
-                    osc.frequency.setValueAtTime(1200, audioCtx.currentTime + 0.04);
-                    osc.frequency.setValueAtTime(2400, audioCtx.currentTime + 0.08);
-                    gain.gain.setValueAtTime(0.05, audioCtx.currentTime);
-                    gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.15);
-                    osc.connect(gain); gain.connect(audioCtx.destination);
-                    osc.start(); osc.stop(audioCtx.currentTime + 0.15);
-                } catch(e){}
-            },
-
-            // Accès refusé (Erreur/Suppression)
-            error: () => {
-                try {
-                    CyberSFX.init();
-                    let osc = audioCtx.createOscillator(); 
-                    let gain = audioCtx.createGain();
-                    osc.type = 'sawtooth';
-                    osc.frequency.setValueAtTime(100, audioCtx.currentTime);
-                    osc.frequency.exponentialRampToValueAtTime(40, audioCtx.currentTime + 0.2);
-                    gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
-                    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.2);
-                    osc.connect(gain); gain.connect(audioCtx.destination);
-                    osc.start(); osc.stop(audioCtx.currentTime + 0.2);
-                } catch(e){}
-            },
-
-            // Glissement des données (Swipe page)
-            swipe: () => {
-                try {
-                    CyberSFX.init();
-                    let noise = audioCtx.createBufferSource();
-                    noise.buffer = noiseBuffer;
-                    let filter = audioCtx.createBiquadFilter();
-                    filter.type = 'bandpass';
-                    filter.frequency.setValueAtTime(3000, audioCtx.currentTime);
-                    filter.frequency.exponentialRampToValueAtTime(300, audioCtx.currentTime + 0.15);
-                    filter.Q.value = 5;
-                    let gain = audioCtx.createGain();
-                    gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
-                    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.15);
-                    noise.connect(filter); filter.connect(gain); gain.connect(audioCtx.destination);
-                    noise.start(); noise.stop(audioCtx.currentTime + 0.15);
-                    triggerDataRain(); // Ajoute un glitch visuel au balayage
-                } catch(e){}
-            },
-
-            // Traitement des crédits (Changement de devise)
+            // Traitement des crédits (Changement de devise - Conservé)
             currency: () => {
                 try {
                     CyberSFX.init();
@@ -1033,14 +972,9 @@
         document.addEventListener('click', (e) => {
             CyberSFX.init(); 
             const target = e.target.closest('button, .nav-btn, .protocol-card, .note-card, .contact-card, .task-card, .trans-card, .soc-car-btn, .soc-car-dot, .phase-header, .filter-btn');
-            if (target && !e.target.closest('select')) { // Exclure le selecteur de devise car il a son propre son
-                const text = target.innerText ? target.innerText.toUpperCase() : '';
-                const isDanger = target.classList.contains('danger') || text === 'X' || text === 'SUPPRIMER';
-                const isSuccess = text.includes('SAUVEGARDER') || text.includes('CRÉER') || text.includes('GÉNÉRER') || text.includes('ENREGISTRER') || text.includes('TERMINER');
-                
-                if (isDanger) CyberSFX.error();
-                else if (isSuccess) CyberSFX.success();
-                else CyberSFX.click();
+            // Si on clique sur un élément d'interface, ET que ce n'est pas le sélecteur de devise
+            if (target && !e.target.closest('select')) { 
+                CyberSFX.click();
             }
         });
 
@@ -1067,7 +1001,7 @@
             let diffX = touchEndX - touchStartX;
             let diffY = touchEndY - touchStartY;
             
-            // Si le mouvement horizontal est assez grand, et le mouvement vertical petit (pour éviter les faux positifs en scrollant vers le bas)
+            // Si le mouvement horizontal est assez grand, et le mouvement vertical petit
             if (Math.abs(diffX) > 70 && Math.abs(diffY) < 50) {
                 let currentActive = document.querySelector('.nav-btn.active');
                 if(!currentActive) return;
@@ -1079,13 +1013,13 @@
                 if (diffX < 0) {
                     // Balayage vers la GAUCHE = Onglet SUIVANT
                     if(currentIndex < tabOrder.length - 1) {
-                        CyberSFX.swipe();
+                        CyberSFX.click(); // Utilise le son satisfaisant
                         switchTab(tabOrder[currentIndex + 1], 'next');
                     }
                 } else {
                     // Balayage vers la DROITE = Onglet PRÉCÉDENT
                     if(currentIndex > 0) {
-                        CyberSFX.swipe();
+                        CyberSFX.click(); // Utilise le son satisfaisant
                         switchTab(tabOrder[currentIndex - 1], 'prev');
                     }
                 }
@@ -1756,7 +1690,7 @@
             if(!t) return;
             
             document.getElementById('ag-title').value = t.title; document.getElementById('ag-date').value = t.date; document.getElementById('ag-tags').value = (t.tags || []).join(', '); document.getElementById('ag-source').value = t.source || '';
-            document.getElementById('agenda-form-title').innerText = "MODIFIER L'ACTION"; document.getElementById('ag-btn-submit').innerText = "METTRE À MATRICE"; document.getElementById('ag-btn-cancel').style.display = "block";
+            document.getElementById('agenda-form-title').innerText = "MODIFIER L'ACTION"; document.getElementById('ag-btn-submit').innerText = "METTRE À JOUR"; document.getElementById('ag-btn-cancel').style.display = "block";
             
             if(window.innerWidth <= 768) document.getElementById('agenda-form-title').scrollIntoView({behavior: 'smooth', block:'start'});
         }
@@ -1796,7 +1730,7 @@
         function formatCurrency(baseAmount) { return new Intl.NumberFormat('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(baseAmount * exchangeRates[currentCurrency]) + ' ' + currencySymbols[currentCurrency]; }
         
         function changeCurrency() { 
-            CyberSFX.currency(); // Son spécifique de monnaie
+            CyberSFX.currency();
             currentCurrency = document.getElementById('fin-currency').value; 
             stateChanged(); renderFinance(); 
         }
