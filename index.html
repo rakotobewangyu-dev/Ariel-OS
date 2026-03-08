@@ -44,7 +44,7 @@
         ::-webkit-calendar-picker-indicator:hover { filter: invert(1) drop-shadow(0 0 5px var(--cp-cyan)); }
 
         body {
-            /* AJOUT: Image de fond futuriste avec un overlay sombre pour garantir la lisibilité */
+            /* Image de fond futuriste avec un overlay sombre pour garantir la lisibilité */
             background-color: #050505;
             background-image: 
                 linear-gradient(180deg, rgba(74, 0, 8, 0.85) 0%, rgba(5, 5, 5, 0.92) 60%, rgba(0, 0, 0, 0.98) 100%),
@@ -400,42 +400,40 @@
             pointer-events: none; /* Laisse passer les clics vers l'interface */
             z-index: 900;
         }
-        /* Lignes avec opacité réduite pour un effet reflet vitre */
-        .hud-line { position: absolute; background: rgba(0, 229, 255, 0.35); box-shadow: 0 0 5px rgba(0, 229, 255, 0.2); }
-        .hud-top { top: 0; left: 20px; right: 150px; height: 3px; }
-        .hud-top-flat { top: 20px; right: 20px; width: 110px; height: 3px; }
-        .hud-right { top: 40px; bottom: 20px; right: 0; width: 3px; }
-        .hud-bottom { bottom: 0; left: 20px; right: 20px; height: 3px; }
-        .hud-left { top: 20px; bottom: 20px; left: 0; width: 3px; }
+        
+        /* Lignes collées aux bords absolus de l'écran */
+        .hud-line { position: absolute; background: rgba(0, 229, 255, 0.4); box-shadow: 0 0 8px rgba(0, 229, 255, 0.3); }
+        .hud-top { top: 0; left: 0; right: 150px; height: 4px; }
+        .hud-top-flat { top: 20px; right: 0; width: 130px; height: 4px; }
+        .hud-right { top: 20px; bottom: 0; right: 0; width: 4px; }
+        .hud-bottom { bottom: 0; left: 0; right: 0; height: 4px; }
+        .hud-left { top: 0; bottom: 0; left: 0; width: 4px; }
 
-        .hud-corner { position: absolute; width: 28.3px; height: 3px; background: rgba(0, 229, 255, 0.35); box-shadow: 0 0 5px rgba(0, 229, 255, 0.2); }
-        .hud-tl { top: 8.5px; left: -4.14px; transform: rotate(-45deg); }
+        /* Décroché asymétrique calculé mathématiquement pour coller parfaitement */
+        .hud-corner { position: absolute; width: 28.3px; height: 4px; background: rgba(0, 229, 255, 0.4); box-shadow: 0 0 8px rgba(0, 229, 255, 0.3); }
         .hud-tr-step { top: 8.5px; right: 125.86px; transform: rotate(45deg); }
-        .hud-tr { top: 28.5px; right: -4.14px; transform: rotate(45deg); }
-        .hud-bl { bottom: 8.5px; left: -4.14px; transform: rotate(45deg); }
-        .hud-br { bottom: 8.5px; right: -4.14px; transform: rotate(-45deg); }
 
         /* Pulsation plus subtile */
-        @keyframes hudPulse { 0%, 100% { opacity: 0.6; } 50% { opacity: 0.2; } }
+        @keyframes hudPulse { 0%, 100% { opacity: 0.7; } 50% { opacity: 0.3; } }
 
-        .hud-stripes { position: absolute; top: 6px; right: 20px; width: 100px; height: 8px; background: repeating-linear-gradient(45deg, rgba(0, 229, 255, 0.3), rgba(0, 229, 255, 0.3) 4px, transparent 4px, transparent 8px); animation: hudPulse 3s infinite; }
+        .hud-stripes { position: absolute; top: 0; right: 160px; width: 120px; height: 12px; background: repeating-linear-gradient(45deg, rgba(0, 229, 255, 0.4), rgba(0, 229, 255, 0.4) 4px, transparent 4px, transparent 8px); animation: hudPulse 3s infinite; }
         
-        .hud-deco-right { position: absolute; top: 40%; right: -3px; width: 15px; height: 90px; background: rgba(0, 229, 255, 0.2); box-shadow: 0 0 5px rgba(0, 229, 255, 0.1); display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 6px; animation: hudPulse 4s infinite; }
+        .hud-deco-right { position: absolute; top: 40%; right: 0; width: 12px; height: 90px; background: rgba(0, 229, 255, 0.3); box-shadow: 0 0 5px rgba(0, 229, 255, 0.2); display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 6px; animation: hudPulse 4s infinite; }
         .hud-deco-right span { width: 0; height: 0; border-top: 4px solid transparent; border-bottom: 4px solid transparent; border-left: 6px solid var(--cp-dark); }
         
-        .hud-deco-bottom { position: absolute; bottom: -3px; right: 60px; display: flex; gap: 6px; animation: hudPulse 3.5s infinite;}
-        .hud-deco-bottom span { width: 12px; height: 9px; background: rgba(0, 229, 255, 0.3); box-shadow: 0 0 5px rgba(0, 229, 255, 0.2); }
+        .hud-deco-bottom { position: absolute; bottom: 0; right: 60px; display: flex; gap: 6px; animation: hudPulse 3.5s infinite;}
+        .hud-deco-bottom span { width: 12px; height: 8px; background: rgba(0, 229, 255, 0.4); box-shadow: 0 0 5px rgba(0, 229, 255, 0.2); }
         
-        .hud-deco-left { position: absolute; top: 50%; left: -3px; display: flex; flex-direction: column; gap: 6px; animation: hudPulse 4.5s infinite;}
-        .hud-deco-left span { width: 9px; height: 9px; background: rgba(0, 229, 255, 0.3); box-shadow: 0 0 5px rgba(0, 229, 255, 0.2); }
+        .hud-deco-left { position: absolute; top: 50%; left: 0; display: flex; flex-direction: column; gap: 6px; animation: hudPulse 4.5s infinite;}
+        .hud-deco-left span { width: 8px; height: 12px; background: rgba(0, 229, 255, 0.4); box-shadow: 0 0 5px rgba(0, 229, 255, 0.2); }
 
-        .hud-deco-top-left { position: absolute; top: -3px; left: 40px; width: 40px; height: 9px; background: rgba(0, 229, 255, 0.3); box-shadow: 0 0 5px rgba(0, 229, 255, 0.2); }
+        .hud-deco-top-left { position: absolute; top: 0; left: 40px; width: 50px; height: 8px; background: rgba(0, 229, 255, 0.4); box-shadow: 0 0 5px rgba(0, 229, 255, 0.2); }
 
-        /* Le Halo lumineux est très réduit pour ne pas fatiguer les yeux */
-        .hud-glow { position: absolute; top: 0; left: 0; right: 0; bottom: 0; box-shadow: inset 0 0 80px rgba(0, 229, 255, 0.08); pointer-events: none; }
+        /* Le Halo lumineux */
+        .hud-glow { position: absolute; top: 0; left: 0; right: 0; bottom: 0; box-shadow: inset 0 0 60px rgba(0, 229, 255, 0.1); pointer-events: none; }
         
 
-        /* RESPONSIVE DESIGN */
+        /* RESPONSIVE DESIGN & ADAPTATION MOBILE */
         @media (max-width: 1024px) {
             .agenda-grid { grid-template-columns: 1fr 300px; }
             .finance-grid { grid-template-columns: 300px 1fr; }
@@ -492,6 +490,21 @@
             .modal-content { padding: 15px; width: 95%; max-height: 90vh; overflow-y: auto; }
             .modal-content > div:last-child { flex-direction: column-reverse; }
             .modal-content button { width: 100%; margin-top: 10px;}
+
+            /* ADAPTATION DU CADRE HUD POUR LE MOBILE */
+            .hud-top { right: 80px; height: 3px; }
+            .hud-top-flat { width: 60px; height: 3px; top: 20px; }
+            .hud-right { top: 20px; width: 3px; }
+            .hud-bottom { height: 3px; }
+            .hud-left { width: 3px; }
+            .hud-corner { height: 3px; }
+            .hud-tr-step { right: 55.86px; top: 8.5px; }
+            .hud-stripes { right: 90px; width: 60px; height: 6px; top: 0; }
+            .hud-deco-right { display: none; } /* Caché sur mobile pour ne pas gêner */
+            .hud-deco-left span { width: 4px; height: 8px; }
+            .hud-deco-bottom { right: 20px; }
+            .hud-deco-bottom span { width: 8px; height: 4px; }
+            .hud-deco-top-left { left: 10px; height: 4px; width: 30px; }
         }
     </style>
 </head>
@@ -531,7 +544,7 @@
     <div class="hud-overlay" id="cyber-hud">
         <div class="hud-glow"></div>
         
-        <!-- Lignes Principales -->
+        <!-- Lignes Principales (Collées aux bords) -->
         <div class="hud-line hud-top"></div>
         <div class="hud-line hud-top-flat"></div>
         <div class="hud-line hud-right"></div>
@@ -539,11 +552,7 @@
         <div class="hud-line hud-left"></div>
         
         <!-- Coins Biseautés (Chamfers) -->
-        <div class="hud-corner hud-tl"></div>
         <div class="hud-corner hud-tr-step"></div>
-        <div class="hud-corner hud-tr"></div>
-        <div class="hud-corner hud-bl"></div>
-        <div class="hud-corner hud-br"></div>
         
         <!-- Décorations et Greebles -->
         <div class="hud-stripes"></div>
