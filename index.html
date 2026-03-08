@@ -482,6 +482,7 @@
             if(!timestamp) return '--';
             const pad = n => n.toString().padStart(2, '0'); 
             const d = new Date(timestamp);
+            if(isNaN(d.getTime())) return '--'; // Sécurité supplémentaire
             return `${pad(d.getDate())}/${pad(d.getMonth()+1)}/${d.getFullYear()} à ${pad(d.getHours())}:${pad(d.getMinutes())}`;
         };
     </script>
@@ -925,9 +926,9 @@
                 }
             }, (error) => {
                 console.error("Erreur Firebase:", error);
-                if (window.showToast) window.showToast("ACCÈS REFUSÉ BDD (Voir Console)", "var(--cp-red)");
+                if (window.showToast) window.showToast("ACCÈS REFUSÉ BDD (Mode Hors-ligne)", "var(--cp-orange)");
                 let clockEl = document.getElementById('sys-clock');
-                if(clockEl) clockEl.innerHTML = `<span class="blink" style="color:var(--cp-red)">▶</span> ERREUR CONNEXION`;
+                if(clockEl) clockEl.innerHTML = `<span class="blink" style="color:var(--cp-orange)">▶</span> MODE LOCAL ACTIF`;
             });
         } catch(e) {
             console.error("Initialisation Firebase échouée", e);
@@ -936,29 +937,13 @@
 
     <!-- SCRIPT PRINCIPAL DU SITE -->
     <script>
-        // FIX 1 : Ajouter CyberSFX manquant pour éviter les erreurs "ReferenceError"
-        const CyberSFX = {
-            click: () => {
-                // Optionnel: ajouter la logique audio ici plus tard
-            }
-        };
+        const CyberSFX = { click: () => {} };
 
-        // FIX 2 : Déclarer les variables globales manquantes pour le Mindmap et la Galerie Sociale
-        let mmCanvas = null;
-        let mmCtx = null;
-        let mmNodes = [];
-        let mmLinks = [];
-        let mindmapAnimId = null;
-        let camera = { x: 0, y: 0, zoom: 1 };
-        let draggedNode = null;
-        let isDraggingMap = false;
-        let startMapDrag = { x: 0, y: 0 };
-        let initialPinchDist = null;
-        let initialPinchZoom = null;
-        let currentEditNode = null;
-
-        let currentSocialGalleryUrls = [];
-        let currentSocialGalleryIndex = 0;
+        let mmCanvas = null; let mmCtx = null; let mmNodes = []; let mmLinks = [];
+        let mindmapAnimId = null; let camera = { x: 0, y: 0, zoom: 1 };
+        let draggedNode = null; let isDraggingMap = false; let startMapDrag = { x: 0, y: 0 };
+        let initialPinchDist = null; let initialPinchZoom = null; let currentEditNode = null;
+        let currentSocialGalleryUrls = []; let currentSocialGalleryIndex = 0;
 
         function toggleFullScreen() {
             CyberSFX.click();
@@ -985,53 +970,74 @@
             });
         }
 
-        function openImageViewerFromCarousel() {
-            const src = document.getElementById('soc-carousel-img').src;
-            openImageViewer(src);
-        }
+        function openImageViewerFromCarousel() { const src = document.getElementById('soc-carousel-img').src; openImageViewer(src); }
+        function openImageViewer(src) { if(!src) return; CyberSFX.click(); const modal = document.getElementById('image-viewer-modal'); const img = document.getElementById('image-viewer-img'); img.src = src; modal.classList.add('active'); }
+        function closeImageViewer() { CyberSFX.click(); document.getElementById('image-viewer-modal').classList.remove('active'); }
 
-        function openImageViewer(src) {
-            if(!src) return;
-            CyberSFX.click();
-            const modal = document.getElementById('image-viewer-modal');
-            const img = document.getElementById('image-viewer-img');
-            img.src = src;
-            modal.classList.add('active');
-        }
-
-        function closeImageViewer() {
-            CyberSFX.click();
-            const modal = document.getElementById('image-viewer-modal');
-            modal.classList.remove('active');
-        }
-
-        let protocols = []; 
-        let notes = []; 
-        let agendaTasks = []; 
-        let transactions = []; 
-        let completedTasksList = []; 
-        let socialContacts = []; 
-        
-        let currentCurrency = 'CNY';
-        let currentProtocolId = null; let currentEditNoteId = null; let currentEditTaskId = null; let currentEditTransId = null;
-        let currentContactId = null; 
-        
+        let protocols = []; let notes = []; let agendaTasks = []; let transactions = []; 
+        let completedTasksList = []; let socialContacts = []; let currentCurrency = 'CNY';
+        let currentProtocolId = null; let currentEditNoteId = null; let currentEditTaskId = null; 
+        let currentEditTransId = null; let currentContactId = null; 
         let currentNoteFilter = 'ALL'; let currentAgendaFilter = 'ALL';
-        let currentAgendaTab = 'pending'; 
-        let currentEditTaskType = 'pending'; 
+        let currentAgendaTab = 'pending'; let currentEditTaskType = 'pending'; 
 
         const exchangeRates = { 'EUR': 1, 'MGA': 4950, 'USD': 1.08, 'CNY': 7.8 };
         const currencySymbols = { 'EUR': '€', 'MGA': 'Ar', 'USD': '$', 'CNY': '¥' };
 
-        function loadData() { 
-            let clockEl = document.getElementById('sys-clock');
-            if(clockEl) clockEl.innerHTML = `<span class="blink">▶</span> CONNEXION CLOUD...`; 
+        // --- FONCTION GLOBALE DE RENDU ---
+        function renderAll() {
+            updateDashboardSummary();
+            renderProtocols();
+            renderNotes();
+            renderSocialContacts();
+            renderAgenda();
+            renderFinance();
+            if(document.getElementById('view-mindmap').classList.contains('active')) {
+                buildMindmapData();
+            }
         }
 
-        // FIX 3 : Ajouter la fonction parseDataCloud pour récuperer les données du script Firebase
-        window.parseDataCloud = function(data) {
-            if (!data) return;
+        window.loadData = function() { 
+            let clockEl = document.getElementById('sys-clock');
+            if(clockEl) clockEl.innerHTML = `<span class="blink">▶</span> CHARGEMENT DE LA MATRICE...`; 
             
+            // 1. Essayer de charger les données stockées localement en premier !
+            try {
+                const local = localStorage.getItem('ariel_os_data');
+                if(local) {
+                    const data = JSON.parse(local);
+                    protocols = data.protocols || [];
+                    notes = data.notes || [];
+                    agendaTasks = data.agendaTasks || [];
+                    transactions = data.transactions || [];
+                    completedTasksList = data.completedTasksList || [];
+                    socialContacts = data.socialContacts || [];
+                    if (data.currentCurrency) {
+                        currentCurrency = data.currentCurrency;
+                        const currSelect = document.getElementById('fin-currency');
+                        if(currSelect) currSelect.value = currentCurrency;
+                    }
+                }
+            } catch(e) {
+                console.error("Erreur de lecture LocalStorage", e);
+            }
+
+            renderAll(); 
+        };
+
+        window.parseDataCloud = function(data) {
+            if (!data || Object.keys(data).length === 0) {
+                // Si le Cloud est complètement vide (1ère connexion ou document effacé),
+                // Mais qu'on a des données locales, on pousse nos données locales vers le cloud !
+                if (protocols.length > 0 || notes.length > 0 || agendaTasks.length > 0 || socialContacts.length > 0 || transactions.length > 0) {
+                     if (window.saveDataToCloud) {
+                         window.saveDataToCloud({ protocols, notes, agendaTasks, completedTasksList, transactions, socialContacts, currentCurrency });
+                     }
+                }
+                return;
+            }
+            
+            // Sinon on remplace nos données par celles du cloud
             protocols = data.protocols || [];
             notes = data.notes || [];
             agendaTasks = data.agendaTasks || [];
@@ -1045,22 +1051,21 @@
                 if(currSelect) currSelect.value = currentCurrency;
             }
 
-            // Rafraîchir l'interface avec les données récupérées
-            updateDashboardSummary();
-            renderProtocols();
-            renderNotes();
-            renderSocialContacts();
-            renderAgenda();
-            renderFinance();
-
-            if(document.getElementById('view-mindmap').classList.contains('active')) {
-                buildMindmapData();
-            }
+            renderAll();
         };
 
         function saveData() {
-            if(!window.isCloudReady) return; 
-            if (window.saveDataToCloud) window.saveDataToCloud({ protocols, notes, agendaTasks, completedTasksList, transactions, socialContacts, currentCurrency });
+            const dataToSave = { protocols, notes, agendaTasks, completedTasksList, transactions, socialContacts, currentCurrency };
+            
+            // Sauvegarde systématique dans le navigateur
+            try {
+                localStorage.setItem('ariel_os_data', JSON.stringify(dataToSave));
+            } catch(e) { console.error("Erreur LocalStorage:", e); }
+
+            // Sauvegarde Cloud si dispo
+            if(window.isCloudReady && window.saveDataToCloud) {
+                window.saveDataToCloud(dataToSave);
+            }
             triggerDataRain(); 
         }
 
@@ -1098,8 +1103,7 @@
             initRain();
             if (mmCanvas && document.getElementById('view-mindmap').classList.contains('active')) {
                 const container = document.getElementById('mindmap-container');
-                mmCanvas.width = container.clientWidth;
-                mmCanvas.height = container.clientHeight;
+                mmCanvas.width = container.clientWidth; mmCanvas.height = container.clientHeight;
             }
         });
 
@@ -1130,9 +1134,7 @@
 
         function renderXP() {
             const container = document.getElementById('xp-bars-container');
-            if(!container) return;
-            container.innerHTML = '';
-
+            if(!container) return; container.innerHTML = '';
             let hasMissions = false;
 
             protocols.forEach(p => {
@@ -1141,7 +1143,6 @@
 
                 const pendingTasks = agendaTasks.filter(t => t.source === sourceName).length;
                 let actualCompleted = completedTasksList.filter(t => t.source === sourceName).length;
-                
                 const totalTasks = pendingTasks + actualCompleted;
 
                 if(totalTasks > 0) {
@@ -1169,7 +1170,6 @@
 
             const pendingSecondary = agendaTasks.filter(t => !t.source || !protocols.some(p => p.data.step1 === t.source)).length;
             let actualCompletedSec = completedTasksList.filter(t => !t.source || !protocols.some(p => p.data.step1 === t.source)).length;
-            
             const totalSecondary = pendingSecondary + actualCompletedSec;
 
             if (totalSecondary > 0) {
@@ -1200,12 +1200,11 @@
         }
 
         function updateClock() {
-            if (!window.isCloudReady) return;
             const days = ['Dimanche', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi'];
             const months = ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'];
             const pad = n => n.toString().padStart(2, '0'); const d = new Date();
             let clockEl = document.getElementById('sys-clock');
-            if (clockEl) clockEl.innerHTML = `<span class="blink">▶</span> ${days[d.getDay()]} ${pad(d.getDate())} ${months[d.getMonth()]} ${d.getFullYear()} [${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}]`;
+            if (clockEl && window.isCloudReady) clockEl.innerHTML = `<span class="blink">▶</span> ${days[d.getDay()]} ${pad(d.getDate())} ${months[d.getMonth()]} ${d.getFullYear()} [${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}]`;
         }
         setInterval(updateClock, 1000);
 
@@ -1248,7 +1247,13 @@
 
         function renderProtocols() {
             const grid = document.getElementById('protocol-grid'); if(!grid) return; grid.innerHTML = '';
-            protocols.sort((a,b) => b.lastModified - a.lastModified).forEach(p => {
+            
+            if(protocols.length === 0) {
+                grid.innerHTML = '<div style="color:var(--cp-text); font-family:var(--font-mono); opacity:0.7;">> AUCUN PROTOCOLE ENREGISTRÉ DANS LA MATRICE.</div>';
+                return;
+            }
+
+            protocols.sort((a,b) => (b.lastModified || 0) - (a.lastModified || 0)).forEach(p => {
                 const card = document.createElement('div'); card.className = 'protocol-card glass-panel chamfer-reverse'; card.onclick = () => openProtocolDetail(p.id);
                 card.innerHTML = `<div class="cyber-number" style="color:var(--text-muted); font-size:0.8rem;">${window.formatDateFull(p.lastModified)}</div><div class="protocol-title">${p.data.step1 || 'Sans Titre'}</div>`;
                 grid.appendChild(card);
@@ -1293,7 +1298,7 @@
         function renderProtocolAgenda(sourceName) {
             const container = document.getElementById('protocol-agenda-list'); if(!container) return; container.innerHTML = '';
             const tasks = agendaTasks.filter(t => t.source === sourceName);
-            if(tasks.length === 0) { container.innerHTML = '<div style="color:var(--cp-text); font-family:var(--font-mono); opacity:0.7;">Aucune action planifiée pour le moment.</div>'; return; }
+            if(tasks.length === 0) { container.innerHTML = '<div style="color:var(--cp-text); font-family:var(--font-mono); opacity:0.7;">> Aucune action planifiée pour le moment.</div>'; return; }
             tasks.forEach(t => { container.innerHTML += `<div style="background:rgba(10,10,12,0.8); border-left:3px solid var(--cp-orange); padding:15px; font-family:var(--font-mono); color:white; display:flex; justify-content:space-between; align-items:center;"><div><div class="cyber-number" style="color:var(--cp-orange); font-size:0.85rem; margin-bottom:5px;">${t.date.replace('T', ' à ')}</div><div style="font-size: 1.1rem; font-weight:bold;">${t.title}</div></div></div>`; });
         }
         function goToAgendaWithSource() {
@@ -1311,7 +1316,14 @@
                 Array.from(allTags).sort().forEach(tag => { filtersContainer.innerHTML += `<button class="filter-btn ${currentNoteFilter === tag ? 'active' : ''}" onclick="setNoteFilter('${tag}')">${tag}</button>`; });
             }
             const grid = document.getElementById('note-list-container'); if(!grid) return; grid.innerHTML = '';
+            
             let filteredNotes = currentNoteFilter === 'ALL' ? notes : notes.filter(n => n.tags && n.tags.includes(currentNoteFilter));
+            
+            if(filteredNotes.length === 0) {
+                grid.innerHTML = '<div style="color:var(--cp-text); font-family:var(--font-mono); opacity:0.7;">> AUCUNE ENTRÉE DANS LA BASE DE DONNÉES.</div>';
+                return;
+            }
+
             filteredNotes.forEach(n => {
                 let tagsHtml = n.tags ? n.tags.map(t => `<span class="tag-badge">${t}</span>`).join('') : '';
                 const card = document.createElement('div'); card.className = 'note-card glass-panel chamfer-reverse';
@@ -1332,11 +1344,11 @@
             const grid = document.getElementById('social-list-container'); if(!grid) return; grid.innerHTML = '';
             
             if(socialContacts.length === 0) {
-                grid.innerHTML = '<div style="color:var(--cp-text); font-family:var(--font-mono); opacity:0.7;">> AUCUN CONTACT ENREGISTRÉ.</div>';
+                grid.innerHTML = '<div style="color:var(--cp-text); font-family:var(--font-mono); opacity:0.7;">> AUCUN CONTACT RÉSEAU.</div>';
                 return;
             }
 
-            socialContacts.sort((a,b) => (a.lastName || '').localeCompare(b.lastName || '')).forEach(c => {
+            socialContacts.sort((a,b) => (a?.lastName || '').localeCompare(b?.lastName || '')).forEach(c => {
                 const card = document.createElement('div'); card.className = 'contact-card glass-panel chamfer-reverse';
                 card.onclick = () => openContactDetail(c.id);
                 
@@ -1665,7 +1677,12 @@
         }
         function renderFinance() {
             let inT = 0, outT = 0; const list = document.getElementById('fin-list'); if(!list) return; list.innerHTML = '';
-            transactions.sort((a,b) => b.date - a.date).forEach(t => {
+            
+            if(transactions.length === 0) {
+                 list.innerHTML = '<div style="color:var(--cp-text); font-family:var(--font-mono); opacity:0.7;">> AUCUN FLUX FINANCIER.</div>';
+            }
+
+            transactions.sort((a,b) => (b.date || 0) - (a.date || 0)).forEach(t => {
                 if(t.type === 'in') inT += t.baseAmount; else outT += t.baseAmount;
                 const card = document.createElement('div'); card.className = `trans-card glass-panel chamfer-reverse ${t.type}`;
                 card.innerHTML = `<div><div style="font-size: 1.2rem; color: white; font-weight: bold;">${t.label}</div><div class="trans-date cyber-number" style="font-size: 0.8rem; color: #888;">${window.formatDateFull(t.date)}</div></div><div style="display: flex; align-items: center; gap: 15px;"><div class="trans-amount cyber-number" style="font-size: 1.3rem; font-weight: bold; color: ${t.type === 'in' ? 'var(--cp-green)' : 'var(--cp-red)'}">${t.type === 'in' ? '+' : '-'}${formatCurrency(t.baseAmount)}</div><button class="cp-btn-outline warning chamfer" style="padding: 5px 10px;" onclick="editTransaction(${t.id})">MODIFIER</button><button class="cp-btn-outline danger chamfer" style="padding: 5px 10px;" onclick="deleteTransaction(${t.id})">X</button></div>`;
@@ -1856,8 +1873,6 @@
             document.getElementById('mindmap-container').style.display = 'block';
         }
 
-        // --- ATTACHEMENT GLOBAL DES FONCTIONS ---
-        // FIX 4: "updateContactGallery" retiré car non défini (remplacé par renderSocialCarousel)
         Object.assign(window, {
             toggleFullScreen, switchTab, togglePhase, openModal, closeModal,
             renderProtocols, openProtocolDetail, closeProtocolDetail, saveCurrentProtocol,
