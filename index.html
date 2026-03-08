@@ -268,11 +268,11 @@
         .note-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; }
         .note-card { border-left: 4px solid var(--cp-red); padding: 25px; display: flex; flex-direction: column; position: relative; transition: all 0.3s; min-height: 200px; }
         .note-card::before { content: ''; position: absolute; top: 0; right: 0; border-style: solid; border-width: 0 20px 20px 0; border-color: transparent rgba(0,0,0,0.8) transparent transparent; }
-        .note-card:hover { background-color: rgba(30, 20, 20, 0.8); border-left-color: var(--cp-yellow); box-shadow: 0 10px 25px rgba(255,0,85,0.2); transform: translateY(-4px); }
+        .note-card:hover { background: rgba(30, 20, 20, 0.8); border-left-color: var(--cp-yellow); box-shadow: 0 10px 25px rgba(255,0,85,0.2); transform: translateY(-4px); }
         .note-title { color: var(--cp-red); font-family: var(--font-title); font-size: 1.3rem; margin-bottom: 15px; }
         .note-preview { font-family: var(--font-mono); font-size: 1rem; color: #ccc; display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; flex-grow: 1; margin-bottom: 10px; line-height: 1.5; }
 
-        /* VIEW: SOCIAL (NOUVEAU) */
+        /* VIEW: SOCIAL */
         .social-layout { display: grid; grid-template-columns: 2fr 1fr; gap: 25px; margin-top: 20px; }
         .social-col-left { display: flex; flex-direction: column; gap: 25px; }
         .social-col-right { display: flex; flex-direction: column; gap: 20px; }
@@ -289,7 +289,7 @@
         .contact-card-name { font-family: var(--font-title); font-size: 1.2rem; color: white; }
 
         .photo-stack-container { position: relative; width: 100%; height: 220px; margin-top: 10px; }
-        .photo-stacked { position: absolute; width: 80%; height: 160px; border: 2px solid; border-radius: 8px; background: var(--cp-dark); top: 20px; left: 10%; object-fit: cover; transition: 0.3s; }
+        .photo-stacked { position: absolute; width: 80%; height: 160px; border: 2px solid; border-radius: 8px; background: var(--cp-dark); top: 20px; left: 10%; object-fit: cover; transition: 0.3s; cursor: pointer; }
         .photo-stacked.p1 { transform: rotate(-5deg); z-index: 1; border-color: var(--cp-red); }
         .photo-stacked.p2 { transform: rotate(3deg); z-index: 2; border-color: var(--cp-yellow); }
         .photo-stacked.p3 { transform: rotate(-2deg); z-index: 3; border-color: var(--cp-cyan); }
@@ -331,7 +331,6 @@
         .task-date { color: var(--cp-yellow); font-size: 0.95rem; margin-bottom: 8px; }
         .task-title { font-size: 1.3rem; font-weight: bold; color: white; }
         
-        /* Modificateur pour les tâches accomplies */
         .task-card.completed-task { opacity: 0.6; border-left-color: var(--cp-green); }
         .task-card.completed-task:hover { opacity: 1; border-color: var(--cp-green); box-shadow: -5px 5px 20px rgba(0,255,102,0.15); }
 
@@ -574,8 +573,8 @@
                     <div class="glass-panel chamfer-reverse" style="padding: 25px; border-color: var(--cp-red);">
                         <div class="social-profile-header">
                             <div class="social-avatar-container">
-                                <span class="social-avatar-placeholder">Photo de<br>Profil</span>
-                                <img id="soc-avatar-img" src="" alt="" style="display: none;">
+                                <span class="social-avatar-placeholder" id="soc-avatar-placeholder">Photo de<br>Profil</span>
+                                <img id="soc-avatar-img" src="" alt="" style="display: none; cursor: zoom-in;" onclick="openImageViewer(this.src)">
                             </div>
                             <div class="social-basic-info">
                                 <div class="step-group"><label class="step-label" style="font-size:1rem;">Nom:</label><input type="text" id="soc-lastName" class="cp-input"></div>
@@ -620,9 +619,9 @@
                     <input type="text" id="soc-photo3" class="cp-input" style="margin-bottom: 5px; font-size: 0.8rem;" placeholder="URL Photo 3..." onchange="updateContactGallery()">
 
                     <div class="photo-stack-container" id="soc-gallery-container" style="display: none;">
-                        <img id="soc-img3" class="photo-stacked p3" src="" style="display: none;">
-                        <img id="soc-img2" class="photo-stacked p2" src="" style="display: none;">
-                        <img id="soc-img1" class="photo-stacked p1" src="" style="display: none;">
+                        <img id="soc-img3" class="photo-stacked p3" src="" style="display: none; cursor: zoom-in;" onclick="openImageViewer(this.src)">
+                        <img id="soc-img2" class="photo-stacked p2" src="" style="display: none; cursor: zoom-in;" onclick="openImageViewer(this.src)">
+                        <img id="soc-img1" class="photo-stacked p1" src="" style="display: none; cursor: zoom-in;" onclick="openImageViewer(this.src)">
                     </div>
                 </div>
             </div>
@@ -767,6 +766,14 @@
                 <button class="cp-btn-outline danger chamfer" onclick="closeModal('modal-new-note')">ANNULER</button>
             </div>
         </div>
+    </div>
+
+    <!-- IMAGE VIEWER MODAL -->
+    <div class="modal" id="image-viewer-modal" style="z-index: 2000; flex-direction: column;">
+        <div style="width: 100%; display: flex; justify-content: flex-end; padding: 20px; position: absolute; top: 0;">
+            <button class="cp-btn-outline danger chamfer" onclick="closeImageViewer()">FERMER [X]</button>
+        </div>
+        <img id="image-viewer-img" src="" style="max-width: 90vw; max-height: 80vh; object-fit: contain; border: 2px solid var(--cp-cyan); box-shadow: 0 0 30px rgba(0, 229, 255, 0.3);">
     </div>
 
     <!-- ========================================== -->
@@ -1012,6 +1019,22 @@
         function extractTags(str) { return !str ? [] : str.split(',').map(s => s.trim().toUpperCase()).filter(s => s !== '').map(s => s.startsWith('#') ? s : '#' + s); }
         function setNoteFilter(tag) { currentNoteFilter = tag; renderNotes(); }
         function setAgendaFilter(tag) { currentAgendaFilter = tag; renderAgenda(); }
+
+        // --- IMAGE VIEWER POPUP ---
+        function openImageViewer(src) {
+            if(!src) return;
+            CyberSFX.click();
+            const modal = document.getElementById('image-viewer-modal');
+            const img = document.getElementById('image-viewer-img');
+            img.src = src;
+            modal.classList.add('active');
+        }
+
+        function closeImageViewer() {
+            CyberSFX.click();
+            const modal = document.getElementById('image-viewer-modal');
+            modal.classList.remove('active');
+        }
 
         // --- SAVE/LOAD SYSTEM (FIREBASE CLOUD) ---
         function loadData() { document.getElementById('sys-clock').innerHTML = `<span class="blink">▶</span> CONNEXION CLOUD...`; }
@@ -1357,8 +1380,16 @@
         function updateContactAvatarPreview() {
             const url = document.getElementById('soc-avatar-url').value;
             const img = document.getElementById('soc-avatar-img');
-            if(url) { img.src = url; img.style.display = 'block'; } 
-            else { img.style.display = 'none'; }
+            const placeholder = document.getElementById('soc-avatar-placeholder');
+            
+            if(url) { 
+                img.src = url; 
+                img.style.display = 'block'; 
+                if(placeholder) placeholder.style.display = 'none';
+            } else { 
+                img.style.display = 'none'; 
+                if(placeholder) placeholder.style.display = 'block';
+            }
         }
 
         function updateContactGallery() {
