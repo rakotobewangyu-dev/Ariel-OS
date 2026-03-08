@@ -55,7 +55,7 @@
             flex-direction: column;
             margin: 0;
             position: relative;
-            touch-action: pan-y; /* Permet le scroll vertical, mais bloque certains comportements horizontaux natifs */
+            touch-action: pan-y; /* Permet le scroll vertical, bloque certains comportements horizontaux natifs */
         }
 
         /* Scanlines Effect */
@@ -925,34 +925,19 @@
     <!-- SCRIPT PRINCIPAL DU SITE -->
     <script>
         // ==========================================
-        // SYNTHÉTISEUR AUDIO CYBERPUNK UNIFIÉ
+        // SYNTHÉTISEUR AUDIO UNIFIÉ (LE SON DE DEVISE PARTOUT)
         // ==========================================
         const AudioContext = window.AudioContext || window.webkitAudioContext;
-        let audioCtx = new AudioContext();
+        let audioCtx = null;
 
         const CyberSFX = {
             init: () => { 
+                if(!audioCtx) audioCtx = new AudioContext();
                 if(audioCtx.state === 'suspended') audioCtx.resume(); 
             },
             
-            // Le son unique et satisfaisant (Terminal Clack/Action) appliqué PARTOUT
-            playUnifiedSound: () => {
-                try {
-                    CyberSFX.init();
-                    let osc = audioCtx.createOscillator();
-                    let gain = audioCtx.createGain();
-                    osc.type = 'square';
-                    osc.frequency.setValueAtTime(800, audioCtx.currentTime);
-                    osc.frequency.exponentialRampToValueAtTime(100, audioCtx.currentTime + 0.03);
-                    gain.gain.setValueAtTime(0.04, audioCtx.currentTime);
-                    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.03);
-                    osc.connect(gain); gain.connect(audioCtx.destination);
-                    osc.start(); osc.stop(audioCtx.currentTime + 0.03);
-                } catch(e){}
-            },
-
-            // Traitement des crédits (Changement de devise - Conservé)
-            currency: () => {
+            // Le son unique (celui du changement de devise, très aigu et "rapide")
+            play: () => {
                 try {
                     CyberSFX.init();
                     let osc = audioCtx.createOscillator(); 
@@ -968,19 +953,12 @@
             }
         };
 
-        // Redirection de tous les effets vers le son unique
-        CyberSFX.click = CyberSFX.playUnifiedSound;
-        CyberSFX.success = CyberSFX.playUnifiedSound;
-        CyberSFX.error = CyberSFX.playUnifiedSound;
-        CyberSFX.swipe = CyberSFX.playUnifiedSound;
-
-        // ECOUTEUR AUTOMATIQUE DES CLICS POUR LE SON
+        // ÉCOUTEUR AUTOMATIQUE DES CLICS POUR TOUTE L'INTERFACE
         document.addEventListener('click', (e) => {
-            CyberSFX.init(); 
-            const target = e.target.closest('button, .nav-btn, .protocol-card, .note-card, .contact-card, .task-card, .trans-card, .soc-car-btn, .soc-car-dot, .phase-header, .filter-btn');
-            // On joue le son pour tout élément interactif SAUF le select de devise
-            if (target && !e.target.closest('select')) { 
-                CyberSFX.click();
+            // Déclenche le son si on clique sur un bouton, une carte, un onglet, une image de galerie, etc.
+            const target = e.target.closest('button, .nav-btn, .protocol-card, .note-card, .contact-card, .task-card, .trans-card, .soc-car-btn, .soc-car-dot, .phase-header, .filter-btn, select');
+            if (target) {
+                CyberSFX.play();
             }
         });
 
@@ -992,22 +970,23 @@
         const tabOrder = ['view-nexus', 'view-protocols', 'view-database', 'view-social', 'view-mindmap', 'view-agenda', 'view-finance'];
 
         const mainView = document.getElementById('main-view');
+        
         mainView.addEventListener('touchstart', e => {
-            // Ignorer le swipe si on est sur la carte (mindmap) ou une galerie photo
-            if(e.target.closest('#mindmap-canvas, nav, .soc-carousel')) return;
+            // Ne pas déclencher le swipe si on manipule le Mindmap, les inputs, ou le carrousel
+            if(e.target.closest('#mindmap-canvas, nav, .soc-carousel, input, textarea')) return;
             touchStartX = e.changedTouches[0].screenX;
             touchStartY = e.changedTouches[0].screenY;
         }, {passive: true});
 
         mainView.addEventListener('touchend', e => {
-            if(e.target.closest('#mindmap-canvas, nav, .soc-carousel')) return;
+            if(e.target.closest('#mindmap-canvas, nav, .soc-carousel, input, textarea')) return;
             let touchEndX = e.changedTouches[0].screenX;
             let touchEndY = e.changedTouches[0].screenY;
             
             let diffX = touchEndX - touchStartX;
             let diffY = touchEndY - touchStartY;
             
-            // Si le mouvement horizontal est assez grand, et le mouvement vertical petit
+            // Validation du geste (mouvement horizontal clair, sans trop glisser verticalement)
             if (Math.abs(diffX) > 70 && Math.abs(diffY) < 50) {
                 let currentActive = document.querySelector('.nav-btn.active');
                 if(!currentActive) return;
@@ -1017,23 +996,24 @@
                 let currentIndex = tabOrder.indexOf(currentView);
 
                 if (diffX < 0) {
-                    // Balayage vers la GAUCHE = Onglet SUIVANT
+                    // Swipe GAUCHE = Avancer
                     if(currentIndex < tabOrder.length - 1) {
-                        CyberSFX.click();
+                        CyberSFX.play(); // Joue le même son
                         switchTab(tabOrder[currentIndex + 1], 'next');
                     }
                 } else {
-                    // Balayage vers la DROITE = Onglet PRÉCÉDENT
+                    // Swipe DROITE = Reculer
                     if(currentIndex > 0) {
-                        CyberSFX.click();
+                        CyberSFX.play(); // Joue le même son
                         switchTab(tabOrder[currentIndex - 1], 'prev');
                     }
                 }
             }
         }, {passive: true});
 
+
         // ==========================================
-        // LOGIQUE APPLICATION
+        // LOGIQUE GLOBALE DE L'APPLICATION
         // ==========================================
         let mmCanvas = null; let mmCtx = null; let mmNodes = []; let mmLinks = [];
         let mindmapAnimId = null; let camera = { x: 0, y: 0, zoom: 1 };
@@ -1111,7 +1091,7 @@
                         if(currSelect) currSelect.value = currentCurrency;
                     }
                 }
-            } catch(e) { console.error("Erreur de lecture LocalStorage", e); }
+            } catch(e) { console.error("Erreur LocalStorage", e); }
             renderAll(); 
         };
 
@@ -1292,7 +1272,8 @@
             });
             
             document.querySelectorAll('.panel').forEach(panel => {
-                panel.classList.remove('active', 'slide-next', 'slide-prev');
+                // On nettoie toutes les classes d'animation possibles
+                panel.classList.remove('active', 'slide-next', 'slide-prev', 'slide-right', 'slide-left');
             });
             
             let finalViewId = viewId;
@@ -1302,6 +1283,7 @@
             let targetView = document.getElementById(finalViewId);
             if(targetView) {
                 targetView.classList.add('active');
+                // Active l'animation holographique spécifique selon la direction (Clic vs Swipe)
                 if(direction === 'next') targetView.classList.add('slide-next');
                 else if(direction === 'prev') targetView.classList.add('slide-prev');
             }
@@ -1736,7 +1718,6 @@
         function formatCurrency(baseAmount) { return new Intl.NumberFormat('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(baseAmount * exchangeRates[currentCurrency]) + ' ' + currencySymbols[currentCurrency]; }
         
         function changeCurrency() { 
-            CyberSFX.currency();
             currentCurrency = document.getElementById('fin-currency').value; 
             stateChanged(); renderFinance(); 
         }
@@ -1858,7 +1839,7 @@
                 let clickedNode = false;
                 for(let n of mmNodes) { 
                     let r = n.type === 'root' ? 18 : n.type === 'protocol' ? 14 : n.type === 'phase' ? 10 : 8;
-                    if(Math.hypot(n.x - worldX, n.y - worldY) < r + 10) { draggedNode = n; clickedNode = true; CyberSFX.click(); openMindmapPanel(n); break; } 
+                    if(Math.hypot(n.x - worldX, n.y - worldY) < r + 10) { draggedNode = n; clickedNode = true; CyberSFX.play(); openMindmapPanel(n); break; } 
                 }
                 if(!clickedNode) { isDraggingMap = true; startMapDrag.x = mx - camera.x; startMapDrag.y = my - camera.y; }
             });
@@ -1877,7 +1858,7 @@
                     let clickedNode = false;
                     for(let n of mmNodes) { 
                         let r = n.type === 'root' ? 18 : n.type === 'protocol' ? 14 : n.type === 'phase' ? 10 : 8;
-                        if(Math.hypot(n.x - worldX, n.y - worldY) < r + 15) { draggedNode = n; clickedNode = true; CyberSFX.click(); openMindmapPanel(n); break; } 
+                        if(Math.hypot(n.x - worldX, n.y - worldY) < r + 15) { draggedNode = n; clickedNode = true; CyberSFX.play(); openMindmapPanel(n); break; } 
                     }
                     if(!clickedNode) { isDraggingMap = true; startMapDrag.x = mx - camera.x; startMapDrag.y = my - camera.y; }
                 } else if(e.touches.length === 2) {
