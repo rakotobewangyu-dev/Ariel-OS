@@ -268,9 +268,32 @@
         .note-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; }
         .note-card { border-left: 4px solid var(--cp-red); padding: 25px; display: flex; flex-direction: column; position: relative; transition: all 0.3s; min-height: 200px; }
         .note-card::before { content: ''; position: absolute; top: 0; right: 0; border-style: solid; border-width: 0 20px 20px 0; border-color: transparent rgba(0,0,0,0.8) transparent transparent; }
-        .note-card:hover { background: rgba(30, 20, 20, 0.8); border-left-color: var(--cp-yellow); box-shadow: 0 10px 25px rgba(255,0,85,0.2); transform: translateY(-4px); }
+        .note-card:hover { background-color: rgba(30, 20, 20, 0.8); border-left-color: var(--cp-yellow); box-shadow: 0 10px 25px rgba(255,0,85,0.2); transform: translateY(-4px); }
         .note-title { color: var(--cp-red); font-family: var(--font-title); font-size: 1.3rem; margin-bottom: 15px; }
         .note-preview { font-family: var(--font-mono); font-size: 1rem; color: #ccc; display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; flex-grow: 1; margin-bottom: 10px; line-height: 1.5; }
+
+        /* VIEW: SOCIAL (NOUVEAU) */
+        .social-layout { display: grid; grid-template-columns: 2fr 1fr; gap: 25px; margin-top: 20px; }
+        .social-col-left { display: flex; flex-direction: column; gap: 25px; }
+        .social-col-right { display: flex; flex-direction: column; gap: 20px; }
+        .social-profile-header { display: flex; gap: 25px; align-items: flex-start; }
+        .social-avatar-container { width: 160px; height: 160px; border: 2px solid var(--cp-red); border-radius: 12px; display: flex; align-items: center; justify-content: center; overflow: hidden; background: rgba(255,0,85,0.1); flex-shrink: 0; position: relative; }
+        .social-avatar-container img { width: 100%; height: 100%; object-fit: cover; }
+        .social-avatar-placeholder { position: absolute; font-family: var(--font-mono); color: var(--cp-red); text-align: center; font-size: 0.9rem; padding: 10px; }
+        .social-basic-info { flex-grow: 1; display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        
+        .social-list-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; }
+        .contact-card { display: flex; align-items: center; gap: 15px; padding: 15px; border-left: 4px solid var(--cp-cyan); cursor: pointer; transition: all 0.3s; }
+        .contact-card:hover { transform: translateY(-3px); background: rgba(30, 30, 35, 0.8); box-shadow: 0 5px 15px rgba(0, 229, 255, 0.2); }
+        .contact-card-img { width: 60px; height: 60px; border-radius: 8px; border: 1px solid var(--cp-cyan); object-fit: cover; }
+        .contact-card-name { font-family: var(--font-title); font-size: 1.2rem; color: white; }
+
+        .photo-stack-container { position: relative; width: 100%; height: 220px; margin-top: 10px; }
+        .photo-stacked { position: absolute; width: 80%; height: 160px; border: 2px solid; border-radius: 8px; background: var(--cp-dark); top: 20px; left: 10%; object-fit: cover; transition: 0.3s; }
+        .photo-stacked.p1 { transform: rotate(-5deg); z-index: 1; border-color: var(--cp-red); }
+        .photo-stacked.p2 { transform: rotate(3deg); z-index: 2; border-color: var(--cp-yellow); }
+        .photo-stacked.p3 { transform: rotate(-2deg); z-index: 3; border-color: var(--cp-cyan); }
+        .photo-stacked:hover { transform: scale(1.05) rotate(0deg); z-index: 10; box-shadow: 0 0 20px rgba(255,255,255,0.2); }
 
         /* VIEW: MINDMAP STRUCTURATION */
         .mm-overlay-text {
@@ -368,6 +391,11 @@
             .detail-header-panel button { width: 100%; }
             .phase-header { font-size: 1.1rem; padding: 10px 15px; }
             .phase-body { padding: 15px; gap: 15px; }
+
+            /* SOCIAL MOBILE */
+            .social-layout { grid-template-columns: 1fr; gap: 15px; }
+            .social-profile-header { flex-direction: column; align-items: center; text-align: center; }
+            .social-basic-info { grid-template-columns: 1fr; width: 100%; }
             
             .mindmap-wrapper { flex-direction: column; height: auto; min-height: auto; overflow: visible; border: none; }
             #mindmap-container { height: 45vh; min-height: 300px; flex-shrink: 0; border: 1px solid var(--glass-border); border-radius: 4px; }
@@ -419,6 +447,7 @@
         <button class="nav-btn chamfer active" onclick="switchTab('view-nexus')">CENTRE DE CONTRÔLE</button>
         <button class="nav-btn chamfer" onclick="switchTab('view-protocols')">PROTOCOLES</button>
         <button class="nav-btn chamfer" onclick="switchTab('view-database')">BASE DE DONNÉES</button>
+        <button class="nav-btn chamfer" onclick="switchTab('view-social')">SOCIAL</button>
         <button class="nav-btn chamfer" onclick="switchTab('view-mindmap')">MINDMAP</button>
         <button class="nav-btn chamfer" onclick="switchTab('view-agenda')">PLANIFICATEUR</button>
         <button class="nav-btn chamfer" onclick="switchTab('view-finance')">FINANCE</button>
@@ -441,9 +470,9 @@
                             <div class="dash-card-title">ACTIONS PLANIFIÉES</div>
                             <div class="dash-card-value cyber-number" id="sum-agenda">0</div>
                         </div>
-                        <div class="dash-card" style="border-left-color: var(--cp-purple);">
-                            <div class="dash-card-title">ENTRÉES BDD</div>
-                            <div class="dash-card-value cyber-number" id="sum-notes">0</div>
+                        <div class="dash-card" style="border-left-color: var(--cp-red);">
+                            <div class="dash-card-title">CONTACTS RÉSEAU</div>
+                            <div class="dash-card-value cyber-number" id="sum-contacts">0</div>
                         </div>
                         <div class="dash-card" style="border-left-color: var(--cp-green);">
                             <div class="dash-card-title">CAPITAL DISPONIBLE</div>
@@ -515,6 +544,88 @@
             </div>
             <div id="note-filters" class="filter-bar"></div>
             <div class="note-grid" id="note-list-container"></div>
+        </div>
+
+        <!-- VIEW: SOCIAL (NOUVEAU) -->
+        <div id="view-social" class="panel">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; flex-wrap: wrap; gap: 15px;">
+                <h2 class="section-title" style="margin: 0;">Réseau Social / Contacts</h2>
+                <button class="cp-btn chamfer" onclick="createNewContact()">+ NOUVEAU CONTACT</button>
+            </div>
+            <div class="social-list-grid" id="social-list-container"></div>
+        </div>
+
+        <!-- VIEW: SOCIAL DETAIL (NOUVEAU) -->
+        <div id="view-social-detail" class="panel">
+            <button class="cp-btn-outline chamfer" style="align-self: flex-start; margin-bottom: 20px;" onclick="closeContactDetail()">[ RETOUR AU RÉSEAU ]</button>
+            
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; flex-wrap: wrap; gap: 15px; border-bottom: 2px solid var(--cp-cyan); padding-bottom: 15px;">
+                <h2 style="font-family: var(--font-title); font-size: 2.2rem; color: white; text-shadow: 0 2px 5px rgba(0,0,0,0.8);" id="contact-detail-title">Nouveau Contact</h2>
+                <div style="display: flex; gap: 15px;">
+                    <button class="cp-btn cyan chamfer" onclick="saveContact()">SAUVEGARDER LE PROFIL</button>
+                    <button class="cp-btn danger chamfer" onclick="deleteContact()">SUPPRIMER</button>
+                </div>
+            </div>
+
+            <div class="social-layout">
+                <!-- Colonne Gauche -->
+                <div class="social-col-left">
+                    <!-- En-tête Profil (Card 1) -->
+                    <div class="glass-panel chamfer-reverse" style="padding: 25px; border-color: var(--cp-red);">
+                        <div class="social-profile-header">
+                            <div class="social-avatar-container">
+                                <span class="social-avatar-placeholder">Photo de<br>Profil</span>
+                                <img id="soc-avatar-img" src="" alt="" style="display: none;">
+                            </div>
+                            <div class="social-basic-info">
+                                <div class="step-group"><label class="step-label" style="font-size:1rem;">Nom:</label><input type="text" id="soc-lastName" class="cp-input"></div>
+                                <div class="step-group"><label class="step-label" style="font-size:1rem;">Prénom:</label><input type="text" id="soc-firstName" class="cp-input"></div>
+                                <div class="step-group"><label class="step-label" style="font-size:1rem;">Age:</label><input type="number" id="soc-age" class="cp-input"></div>
+                                <div class="step-group"><label class="step-label" style="font-size:1rem;">Sex:</label><input type="text" id="soc-sex" class="cp-input"></div>
+                                <div class="step-group" style="grid-column: span 2;"><label class="step-label" style="font-size:1rem;">Nationalité:</label><input type="text" id="soc-nationality" class="cp-input"></div>
+                                <div class="step-group" style="grid-column: span 2;"><label class="step-label" style="font-size:0.9rem; color: var(--cp-red);">> LIEN URL IMAGE PROFIL:</label><input type="text" id="soc-avatar-url" class="cp-input" placeholder="https://..." onchange="updateContactAvatarPreview()"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Choses à savoir (Card 2) -->
+                    <div class="glass-panel chamfer-reverse" style="padding: 25px;">
+                        <h3 style="color: white; font-family: var(--font-mono); margin-bottom: 20px;">Chose a savoir:</h3>
+                        <div style="padding-left: 20px; border-left: 2px solid var(--cp-light-gray); display: flex; flex-direction: column; gap: 15px;">
+                            <div class="step-group"><label class="step-label" style="font-size:1rem;">Ce qu'il/elle aime:</label><textarea id="soc-likes" class="cp-textarea" style="min-height: 60px;"></textarea></div>
+                            <div class="step-group"><label class="step-label" style="font-size:1rem;">Ce qu'il/elle n'aime pas:</label><textarea id="soc-dislikes" class="cp-textarea" style="min-height: 60px;"></textarea></div>
+                            <div class="step-group"><label class="step-label" style="font-size:1rem;">Valeur moraux et objectif de vie:</label><textarea id="soc-morals" class="cp-textarea" style="min-height: 80px;"></textarea></div>
+                            <div class="step-group"><label class="step-label" style="font-size:1rem;">Profil social (Etudiant/Employer/PDG):</label><input type="text" id="soc-socialProfile" class="cp-input"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Colonne Droite -->
+                <div class="social-col-right glass-panel chamfer-reverse" style="padding: 25px; border-color: var(--cp-cyan);">
+                    <h3 style="color: white; font-family: var(--font-mono); margin-bottom: 20px;">Autre info:</h3>
+                    
+                    <div style="display: flex; flex-direction: column; gap: 15px; margin-bottom: 30px;">
+                        <div class="step-group"><label class="step-label" style="font-size:1rem; color: var(--cp-cyan);">Date de naissance</label><input type="text" id="soc-birthDate" class="cp-input" style="border-left-color: var(--cp-cyan);"></div>
+                        <div class="step-group"><label class="step-label" style="font-size:1rem; color: var(--cp-cyan);">Langue de communication</label><input type="text" id="soc-language" class="cp-input" style="border-left-color: var(--cp-cyan);"></div>
+                        <div class="step-group"><label class="step-label" style="font-size:1rem; color: var(--cp-cyan);">Moyen de contact</label><input type="text" id="soc-contact" class="cp-input" style="border-left-color: var(--cp-cyan);"></div>
+                        <div class="step-group"><label class="step-label" style="font-size:1rem; color: var(--cp-cyan);">Taille</label><input type="text" id="soc-height" class="cp-input" style="border-left-color: var(--cp-cyan);"></div>
+                        <div class="step-group"><label class="step-label" style="font-size:1rem; color: var(--cp-cyan);">Etudie ou travaille dans Quoi?</label><input type="text" id="soc-job" class="cp-input" style="border-left-color: var(--cp-cyan);"></div>
+                        <div class="step-group"><label class="step-label" style="font-size:1rem; color: var(--cp-cyan);">Situation amoureuse</label><input type="text" id="soc-relationship" class="cp-input" style="border-left-color: var(--cp-cyan);"></div>
+                    </div>
+
+                    <h3 style="color: white; font-family: var(--font-mono);">Photos (Liens URL):</h3>
+                    <div class="step-subtext" style="margin-bottom: 10px;">> 3 liens max pour la galerie</div>
+                    <input type="text" id="soc-photo1" class="cp-input" style="margin-bottom: 5px; font-size: 0.8rem;" placeholder="URL Photo 1..." onchange="updateContactGallery()">
+                    <input type="text" id="soc-photo2" class="cp-input" style="margin-bottom: 5px; font-size: 0.8rem;" placeholder="URL Photo 2..." onchange="updateContactGallery()">
+                    <input type="text" id="soc-photo3" class="cp-input" style="margin-bottom: 5px; font-size: 0.8rem;" placeholder="URL Photo 3..." onchange="updateContactGallery()">
+
+                    <div class="photo-stack-container" id="soc-gallery-container" style="display: none;">
+                        <img id="soc-img3" class="photo-stacked p3" src="" style="display: none;">
+                        <img id="soc-img2" class="photo-stacked p2" src="" style="display: none;">
+                        <img id="soc-img1" class="photo-stacked p1" src="" style="display: none;">
+                    </div>
+                </div>
+            </div>
         </div>
 
         <!-- VIEW: MINDMAP -->
@@ -756,7 +867,7 @@
         })();
 
         document.addEventListener('mousedown', (e) => {
-            const btn = e.target.closest('button, .phase-header, .protocol-card, .task-card, .note-card, .filter-btn');
+            const btn = e.target.closest('button, .phase-header, .protocol-card, .task-card, .note-card, .contact-card, .filter-btn');
             if (!btn) return;
             const text = btn.innerText.toUpperCase();
             const isDanger = btn.classList.contains('danger') || text.includes('SUPPRIMER') || text === 'X' || text.includes('ANNULER');
@@ -768,7 +879,7 @@
 
         document.addEventListener('mouseover', (e) => {
             if(window.innerWidth < 768) return; 
-            const btn = e.target.closest('button, .phase-header, .protocol-card, .task-card, .note-card, .filter-btn');
+            const btn = e.target.closest('button, .phase-header, .protocol-card, .task-card, .note-card, .contact-card, .filter-btn');
             if (!btn || btn.dataset.hovered) return;
             btn.dataset.hovered = true;
             CyberSFX.hover();
@@ -792,7 +903,7 @@
 
         // --- SWIPE GESTURES ---
         let touchStartX = 0; let touchStartY = 0;
-        const viewOrder = ['view-nexus', 'view-protocols', 'view-database', 'view-mindmap', 'view-agenda', 'view-finance'];
+        const viewOrder = ['view-nexus', 'view-protocols', 'view-database', 'view-social', 'view-mindmap', 'view-agenda', 'view-finance'];
 
         document.addEventListener('touchstart', e => {
             if (e.target.closest('#mindmap-canvas') || e.target.closest('nav') || e.target.closest('.modal') || 
@@ -811,6 +922,11 @@
             let dx = endX - startX; let dy = endY - startY;
             if (Math.abs(dx) > 70 && Math.abs(dx) > Math.abs(dy)) {
                 let currentActive = document.querySelector('.panel.active').id;
+                
+                // Gérer les sous-panels
+                if(currentActive === 'view-protocol-detail') currentActive = 'view-protocols';
+                if(currentActive === 'view-social-detail') currentActive = 'view-social';
+
                 let currentIndex = viewOrder.indexOf(currentActive);
                 if (dx < 0 && currentIndex < viewOrder.length - 1) { switchTab(viewOrder[currentIndex + 1], 'right'); CyberSFX.swipe(); } 
                 else if (dx > 0 && currentIndex > 0) { switchTab(viewOrder[currentIndex - 1], 'left'); CyberSFX.swipe(); }
@@ -829,13 +945,20 @@
 
 
         // --- DATA STATE ---
-        let protocols = []; let notes = []; let agendaTasks = []; let transactions = []; let currentCurrency = 'CNY';
-        let completedTasksList = []; // Stockage des tâches accomplies
+        let protocols = []; 
+        let notes = []; 
+        let agendaTasks = []; 
+        let transactions = []; 
+        let completedTasksList = []; 
+        let socialContacts = []; // NOUVEAU: Réseau Social
         
+        let currentCurrency = 'CNY';
         let currentProtocolId = null; let currentEditNoteId = null; let currentEditTaskId = null; let currentEditTransId = null;
+        let currentContactId = null; // NOUVEAU
+        
         let currentNoteFilter = 'ALL'; let currentAgendaFilter = 'ALL';
-        let currentAgendaTab = 'pending'; // Onglet actif dans l'agenda
-        let currentEditTaskType = 'pending'; // Pour savoir si on modifie une tâche archivée ou en attente
+        let currentAgendaTab = 'pending'; 
+        let currentEditTaskType = 'pending'; 
 
         const exchangeRates = { 'EUR': 1, 'MGA': 4950, 'USD': 1.08, 'CNY': 7.8 };
         const currencySymbols = { 'EUR': '€', 'MGA': 'Ar', 'USD': '$', 'CNY': '¥' };
@@ -885,18 +1008,6 @@
             rainTimer = setTimeout(() => { rainCanvas.style.opacity = '0'; setTimeout(() => { rainActive = false; }, 500); }, 1200);
         }
 
-        // --- NOUVELLE FONCTION: showToast ---
-        function showToast(message, color = 'var(--cp-green)') {
-            const container = document.getElementById('toast-container');
-            if(container) {
-                const toast = document.createElement('div'); toast.className = 'toast glass-panel chamfer-reverse';
-                toast.style.borderColor = color; toast.style.borderLeftColor = color; toast.innerText = message;
-                container.appendChild(toast);
-                setTimeout(() => { toast.style.opacity = '0'; setTimeout(() => toast.remove(), 400); }, 3000);
-            }
-        }
-        window.showToast = showToast; 
-
         // --- TAGS SYSTEM ---
         function extractTags(str) { return !str ? [] : str.split(',').map(s => s.trim().toUpperCase()).filter(s => s !== '').map(s => s.startsWith('#') ? s : '#' + s); }
         function setNoteFilter(tag) { currentNoteFilter = tag; renderNotes(); }
@@ -912,23 +1023,28 @@
                 agendaTasks = parsed.agendaTasks || []; 
                 transactions = parsed.transactions || [];
                 completedTasksList = parsed.completedTasksList || [];
+                socialContacts = parsed.socialContacts || []; // NOUVEAU
                 currentCurrency = parsed.currentCurrency || 'CNY';
             }
             let currencySelect = document.getElementById('fin-currency');
             if(currencySelect) currencySelect.value = currentCurrency;
 
-            renderProtocols(); renderAgenda(); renderFinance(); renderNotes(); updateDashboardSummary();
+            renderProtocols(); renderAgenda(); renderFinance(); renderNotes(); renderSocialContacts(); updateDashboardSummary();
             
             if(currentProtocolId) {
                  const p = protocols.find(x => x.id === currentProtocolId);
                  if(p) { renderProtocolAgenda(p.data.step1); } else { closeProtocolDetail(); }
+            }
+            if(currentContactId) {
+                 const c = socialContacts.find(x => x.id === currentContactId);
+                 if(!c) { closeContactDetail(); }
             }
             if(mindmapAnimId) buildMindmapData();
         };
 
         function saveData() {
             if(!window.isCloudReady) return; 
-            if (window.saveDataToCloud) window.saveDataToCloud({ protocols, notes, agendaTasks, completedTasksList, transactions, currentCurrency });
+            if (window.saveDataToCloud) window.saveDataToCloud({ protocols, notes, agendaTasks, completedTasksList, transactions, socialContacts, currentCurrency });
             triggerDataRain(); 
         }
 
@@ -939,6 +1055,7 @@
             let sumProtocols = document.getElementById('sum-protocols'); if(sumProtocols) sumProtocols.innerText = protocols.length;
             let sumAgenda = document.getElementById('sum-agenda'); if(sumAgenda) sumAgenda.innerText = agendaTasks.length;
             let sumNotes = document.getElementById('sum-notes'); if(sumNotes) sumNotes.innerText = notes.length;
+            let sumContacts = document.getElementById('sum-contacts'); if(sumContacts) sumContacts.innerText = socialContacts.length;
             let sumFinance = document.getElementById('sum-finance');
             if(sumFinance) {
                 let inT = 0, outT = 0;
@@ -1053,14 +1170,19 @@
                 panel.classList.remove('active', 'slide-right', 'slide-left');
             });
             
-            let targetView = document.getElementById(viewId);
+            // Re-routages si on était dans un détail
+            let finalViewId = viewId;
+            if(viewId === 'view-protocol-detail' && !currentProtocolId) finalViewId = 'view-protocols';
+            if(viewId === 'view-social-detail' && !currentContactId) finalViewId = 'view-social';
+
+            let targetView = document.getElementById(finalViewId);
             if(targetView) {
                 targetView.classList.add('active');
                 if(direction === 'right') targetView.classList.add('slide-right');
                 else if(direction === 'left') targetView.classList.add('slide-left');
             }
             
-            if(viewId === 'view-mindmap') { setTimeout(initMindmap, 100); }
+            if(finalViewId === 'view-mindmap') { setTimeout(initMindmap, 100); }
         }
 
         function togglePhase(element) { if(element && element.parentElement) element.parentElement.classList.toggle('active'); }
@@ -1154,6 +1276,151 @@
             stateChanged(); closeModal('modal-new-note'); renderNotes(); if(mindmapAnimId) buildMindmapData();
         }
         function deleteNote(id) { if(confirm("Confirmer la suppression de cette note ?")) { notes = notes.filter(n => n.id !== id); stateChanged(); renderNotes(); if(mindmapAnimId) buildMindmapData(); showToast("NOTE SUPPRIMÉE", "var(--cp-red)"); } }
+
+        // --- NOUVEAU : RÉSEAU SOCIAL ---
+        function renderSocialContacts() {
+            const grid = document.getElementById('social-list-container'); if(!grid) return; grid.innerHTML = '';
+            
+            if(socialContacts.length === 0) {
+                grid.innerHTML = '<div style="color:var(--cp-text); font-family:var(--font-mono); opacity:0.7;">> AUCUN CONTACT ENREGISTRÉ.</div>';
+                return;
+            }
+
+            socialContacts.sort((a,b) => (a.lastName || '').localeCompare(b.lastName || '')).forEach(c => {
+                const card = document.createElement('div'); card.className = 'contact-card glass-panel chamfer-reverse';
+                card.onclick = () => openContactDetail(c.id);
+                
+                const imgUrl = c.avatarUrl ? c.avatarUrl : 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23ff0055"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>';
+                
+                card.innerHTML = `
+                    <img src="${imgUrl}" class="contact-card-img" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\\'http://www.w3.org/2000/svg\\' viewBox=\\'0 0 24 24\\' fill=\\'%23ff0055\\'><path d=\\'M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z\\'/></svg>'">
+                    <div>
+                        <div class="contact-card-name">${(c.lastName || '') + ' ' + (c.firstName || 'Inconnu')}</div>
+                        <div style="font-family: var(--font-mono); font-size: 0.85rem; color: var(--cp-cyan);">${c.socialProfile || 'Profil non défini'}</div>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        function createNewContact() {
+            const newId = Date.now();
+            const newContact = {
+                id: newId, lastName: 'Nouveau', firstName: 'Contact', age: '', sex: '', nationality: '', avatarUrl: '',
+                likes: '', dislikes: '', morals: '', socialProfile: '',
+                birthDate: '', language: '', contact: '', height: '', job: '', relationship: '',
+                photos: ['', '', '']
+            };
+            socialContacts.push(newContact);
+            stateChanged(); 
+            openContactDetail(newId);
+        }
+
+        function openContactDetail(id) {
+            currentContactId = id; const c = socialContacts.find(x => x.id === id); if(!c) return;
+            
+            // Remplir les champs
+            document.getElementById('soc-lastName').value = c.lastName || '';
+            document.getElementById('soc-firstName').value = c.firstName || '';
+            document.getElementById('soc-age').value = c.age || '';
+            document.getElementById('soc-sex').value = c.sex || '';
+            document.getElementById('soc-nationality').value = c.nationality || '';
+            document.getElementById('soc-avatar-url').value = c.avatarUrl || '';
+            
+            document.getElementById('soc-likes').value = c.likes || '';
+            document.getElementById('soc-dislikes').value = c.dislikes || '';
+            document.getElementById('soc-morals').value = c.morals || '';
+            document.getElementById('soc-socialProfile').value = c.socialProfile || '';
+            
+            document.getElementById('soc-birthDate').value = c.birthDate || '';
+            document.getElementById('soc-language').value = c.language || '';
+            document.getElementById('soc-contact').value = c.contact || '';
+            document.getElementById('soc-height').value = c.height || '';
+            document.getElementById('soc-job').value = c.job || '';
+            document.getElementById('soc-relationship').value = c.relationship || '';
+            
+            if(c.photos && c.photos.length === 3) {
+                document.getElementById('soc-photo1').value = c.photos[0] || '';
+                document.getElementById('soc-photo2').value = c.photos[1] || '';
+                document.getElementById('soc-photo3').value = c.photos[2] || '';
+            }
+
+            document.getElementById('contact-detail-title').innerText = `Profil: ${(c.lastName || '') + ' ' + (c.firstName || 'Inconnu')}`;
+            
+            updateContactAvatarPreview();
+            updateContactGallery();
+
+            document.querySelectorAll('.panel').forEach(el => el.classList.remove('active'));
+            document.getElementById('view-social-detail').classList.add('active');
+        }
+
+        function updateContactAvatarPreview() {
+            const url = document.getElementById('soc-avatar-url').value;
+            const img = document.getElementById('soc-avatar-img');
+            if(url) { img.src = url; img.style.display = 'block'; } 
+            else { img.style.display = 'none'; }
+        }
+
+        function updateContactGallery() {
+            const urls = [
+                document.getElementById('soc-photo1').value,
+                document.getElementById('soc-photo2').value,
+                document.getElementById('soc-photo3').value
+            ];
+            const container = document.getElementById('soc-gallery-container');
+            let hasPhoto = false;
+            
+            for(let i=1; i<=3; i++) {
+                const img = document.getElementById('soc-img'+i);
+                if(urls[i-1]) { img.src = urls[i-1]; img.style.display = 'block'; hasPhoto = true; }
+                else { img.style.display = 'none'; }
+            }
+            container.style.display = hasPhoto ? 'block' : 'none';
+        }
+
+        function saveContact() {
+            if(!currentContactId) return; const c = socialContacts.find(x => x.id === currentContactId); if(!c) return;
+            
+            c.lastName = document.getElementById('soc-lastName').value;
+            c.firstName = document.getElementById('soc-firstName').value;
+            c.age = document.getElementById('soc-age').value;
+            c.sex = document.getElementById('soc-sex').value;
+            c.nationality = document.getElementById('soc-nationality').value;
+            c.avatarUrl = document.getElementById('soc-avatar-url').value;
+            
+            c.likes = document.getElementById('soc-likes').value;
+            c.dislikes = document.getElementById('soc-dislikes').value;
+            c.morals = document.getElementById('soc-morals').value;
+            c.socialProfile = document.getElementById('soc-socialProfile').value;
+            
+            c.birthDate = document.getElementById('soc-birthDate').value;
+            c.language = document.getElementById('soc-language').value;
+            c.contact = document.getElementById('soc-contact').value;
+            c.height = document.getElementById('soc-height').value;
+            c.job = document.getElementById('soc-job').value;
+            c.relationship = document.getElementById('soc-relationship').value;
+            
+            c.photos = [document.getElementById('soc-photo1').value, document.getElementById('soc-photo2').value, document.getElementById('soc-photo3').value];
+
+            document.getElementById('contact-detail-title').innerText = `Profil: ${(c.lastName || '') + ' ' + (c.firstName || 'Inconnu')}`;
+            showToast("PROFIL SAUVEGARDÉ", "var(--cp-cyan)");
+            stateChanged(); renderSocialContacts();
+        }
+
+        function deleteContact() {
+            if(!currentContactId) return;
+            if(confirm("Effacer ce contact de la base de données ?")) {
+                socialContacts = socialContacts.filter(c => c.id !== currentContactId);
+                stateChanged(); showToast("CONTACT EFFACÉ", "var(--cp-red)"); closeContactDetail();
+            }
+        }
+
+        function closeContactDetail() {
+            currentContactId = null;
+            document.querySelectorAll('.panel').forEach(el => el.classList.remove('active'));
+            document.getElementById('view-social').classList.add('active'); 
+            renderSocialContacts();
+        }
 
         // --- AGENDA & ARCHIVES ---
         function setAgendaTab(tab) {
