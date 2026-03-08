@@ -268,7 +268,7 @@
         .note-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; }
         .note-card { border-left: 4px solid var(--cp-red); padding: 25px; display: flex; flex-direction: column; position: relative; transition: all 0.3s; min-height: 200px; }
         .note-card::before { content: ''; position: absolute; top: 0; right: 0; border-style: solid; border-width: 0 20px 20px 0; border-color: transparent rgba(0,0,0,0.8) transparent transparent; }
-        .note-card:hover { background: rgba(30, 20, 20, 0.8); border-left-color: var(--cp-yellow); box-shadow: 0 10px 25px rgba(255,0,85,0.2); transform: translateY(-4px); }
+        .note-card:hover { background-color: rgba(30, 20, 20, 0.8); border-left-color: var(--cp-yellow); box-shadow: 0 10px 25px rgba(255,0,85,0.2); transform: translateY(-4px); }
         .note-title { color: var(--cp-red); font-family: var(--font-title); font-size: 1.3rem; margin-bottom: 15px; }
         .note-preview { font-family: var(--font-mono); font-size: 1rem; color: #ccc; display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; flex-grow: 1; margin-bottom: 10px; line-height: 1.5; }
 
@@ -278,18 +278,19 @@
         .social-col-right { display: flex; flex-direction: column; gap: 20px; }
         .social-profile-header { display: flex; gap: 25px; align-items: flex-start; }
         .social-avatar-container { width: 160px; height: 160px; border: 2px solid var(--cp-red); border-radius: 12px; display: flex; align-items: center; justify-content: center; overflow: hidden; background: rgba(255,0,85,0.1); flex-shrink: 0; position: relative; }
-        .social-avatar-container img { width: 100%; height: 100%; object-fit: cover; }
-        .social-avatar-placeholder { position: absolute; font-family: var(--font-mono); color: var(--cp-red); text-align: center; font-size: 0.9rem; padding: 10px; }
+        .social-avatar-container img { width: 100%; height: 100%; object-fit: cover; z-index: 2; cursor: zoom-in;}
+        .social-avatar-placeholder { position: absolute; font-family: var(--font-mono); color: var(--cp-red); text-align: center; font-size: 0.9rem; padding: 10px; z-index: 1;}
         .social-basic-info { flex-grow: 1; display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
         
         .social-list-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; }
         .contact-card { display: flex; align-items: center; gap: 15px; padding: 15px; border-left: 4px solid var(--cp-cyan); cursor: pointer; transition: all 0.3s; }
         .contact-card:hover { transform: translateY(-3px); background: rgba(30, 30, 35, 0.8); box-shadow: 0 5px 15px rgba(0, 229, 255, 0.2); }
-        .contact-card-img { width: 60px; height: 60px; border-radius: 8px; border: 1px solid var(--cp-cyan); object-fit: cover; }
+        .contact-card-img-wrapper { width: 60px; height: 60px; border-radius: 8px; border: 1px solid var(--cp-cyan); overflow: hidden; background: rgba(0, 229, 255, 0.1); display: flex; align-items: center; justify-content: center;}
+        .contact-card-img { width: 100%; height: 100%; object-fit: cover; }
         .contact-card-name { font-family: var(--font-title); font-size: 1.2rem; color: white; }
 
         .photo-stack-container { position: relative; width: 100%; height: 220px; margin-top: 10px; }
-        .photo-stacked { position: absolute; width: 80%; height: 160px; border: 2px solid; border-radius: 8px; background: var(--cp-dark); top: 20px; left: 10%; object-fit: cover; transition: 0.3s; cursor: pointer; }
+        .photo-stacked { position: absolute; width: 80%; height: 160px; border: 2px solid; border-radius: 8px; background: var(--cp-dark); top: 20px; left: 10%; object-fit: cover; transition: 0.3s; cursor: zoom-in; }
         .photo-stacked.p1 { transform: rotate(-5deg); z-index: 1; border-color: var(--cp-red); }
         .photo-stacked.p2 { transform: rotate(3deg); z-index: 2; border-color: var(--cp-yellow); }
         .photo-stacked.p3 { transform: rotate(-2deg); z-index: 3; border-color: var(--cp-cyan); }
@@ -469,6 +470,10 @@
                             <div class="dash-card-title">ACTIONS PLANIFIÉES</div>
                             <div class="dash-card-value cyber-number" id="sum-agenda">0</div>
                         </div>
+                        <div class="dash-card" style="border-left-color: var(--cp-purple);">
+                            <div class="dash-card-title">ENTRÉES BDD</div>
+                            <div class="dash-card-value cyber-number" id="sum-notes">0</div>
+                        </div>
                         <div class="dash-card" style="border-left-color: var(--cp-red);">
                             <div class="dash-card-title">CONTACTS RÉSEAU</div>
                             <div class="dash-card-value cyber-number" id="sum-contacts">0</div>
@@ -545,7 +550,7 @@
             <div class="note-grid" id="note-list-container"></div>
         </div>
 
-        <!-- VIEW: SOCIAL (NOUVEAU) -->
+        <!-- VIEW: SOCIAL -->
         <div id="view-social" class="panel">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; flex-wrap: wrap; gap: 15px;">
                 <h2 class="section-title" style="margin: 0;">Réseau Social / Contacts</h2>
@@ -554,7 +559,7 @@
             <div class="social-list-grid" id="social-list-container"></div>
         </div>
 
-        <!-- VIEW: SOCIAL DETAIL (NOUVEAU) -->
+        <!-- VIEW: SOCIAL DETAIL -->
         <div id="view-social-detail" class="panel">
             <button class="cp-btn-outline chamfer" style="align-self: flex-start; margin-bottom: 20px;" onclick="closeContactDetail()">[ RETOUR AU RÉSEAU ]</button>
             
@@ -777,6 +782,28 @@
     </div>
 
     <!-- ========================================== -->
+    <!-- SCRIPTS GLOBAUX INITIAUX                   -->
+    <!-- ========================================== -->
+    <script>
+        // Création sécurisée de la fonction showToast
+        window.showToast = function(message, color = 'var(--cp-green)') {
+            const container = document.getElementById('toast-container');
+            if(container) {
+                const toast = document.createElement('div'); 
+                toast.className = 'toast glass-panel chamfer-reverse';
+                toast.style.borderColor = color; 
+                toast.style.borderLeftColor = color; 
+                toast.innerText = message;
+                container.appendChild(toast);
+                setTimeout(() => { 
+                    toast.style.opacity = '0'; 
+                    setTimeout(() => toast.remove(), 400); 
+                }, 3000);
+            }
+        };
+    </script>
+
+    <!-- ========================================== -->
     <!-- SCRIPT FIREBASE (INTEGRATION CLOUD)        -->
     <!-- ========================================== -->
     <script type="module">
@@ -930,7 +957,6 @@
             if (Math.abs(dx) > 70 && Math.abs(dx) > Math.abs(dy)) {
                 let currentActive = document.querySelector('.panel.active').id;
                 
-                // Gérer les sous-panels
                 if(currentActive === 'view-protocol-detail') currentActive = 'view-protocols';
                 if(currentActive === 'view-social-detail') currentActive = 'view-social';
 
@@ -950,6 +976,21 @@
             });
         }
 
+        // --- IMAGE VIEWER POPUP ---
+        function openImageViewer(src) {
+            if(!src) return;
+            CyberSFX.click();
+            const modal = document.getElementById('image-viewer-modal');
+            const img = document.getElementById('image-viewer-img');
+            img.src = src;
+            modal.classList.add('active');
+        }
+
+        function closeImageViewer() {
+            CyberSFX.click();
+            const modal = document.getElementById('image-viewer-modal');
+            modal.classList.remove('active');
+        }
 
         // --- DATA STATE ---
         let protocols = []; 
@@ -957,11 +998,11 @@
         let agendaTasks = []; 
         let transactions = []; 
         let completedTasksList = []; 
-        let socialContacts = []; // NOUVEAU: Réseau Social
+        let socialContacts = []; 
         
         let currentCurrency = 'CNY';
         let currentProtocolId = null; let currentEditNoteId = null; let currentEditTaskId = null; let currentEditTransId = null;
-        let currentContactId = null; // NOUVEAU
+        let currentContactId = null; 
         
         let currentNoteFilter = 'ALL'; let currentAgendaFilter = 'ALL';
         let currentAgendaTab = 'pending'; 
@@ -969,6 +1010,46 @@
 
         const exchangeRates = { 'EUR': 1, 'MGA': 4950, 'USD': 1.08, 'CNY': 7.8 };
         const currencySymbols = { 'EUR': '€', 'MGA': 'Ar', 'USD': '$', 'CNY': '¥' };
+
+        // --- SAVE/LOAD SYSTEM ---
+        function loadData() { 
+            let clockEl = document.getElementById('sys-clock');
+            if(clockEl) clockEl.innerHTML = `<span class="blink">▶</span> CONNEXION CLOUD...`; 
+        }
+
+        window.parseDataCloud = function(parsed) {
+            if(parsed) {
+                protocols = parsed.protocols || []; 
+                notes = parsed.notes || [];
+                agendaTasks = parsed.agendaTasks || []; 
+                transactions = parsed.transactions || [];
+                completedTasksList = parsed.completedTasksList || [];
+                socialContacts = parsed.socialContacts || []; 
+                currentCurrency = parsed.currentCurrency || 'CNY';
+            }
+            let currencySelect = document.getElementById('fin-currency');
+            if(currencySelect) currencySelect.value = currentCurrency;
+
+            renderProtocols(); renderAgenda(); renderFinance(); renderNotes(); renderSocialContacts(); updateDashboardSummary();
+            
+            if(currentProtocolId) {
+                 const p = protocols.find(x => x.id === currentProtocolId);
+                 if(p) { renderProtocolAgenda(p.data.step1); } else { closeProtocolDetail(); }
+            }
+            if(currentContactId) {
+                 const c = socialContacts.find(x => x.id === currentContactId);
+                 if(!c) { closeContactDetail(); }
+            }
+            if(mindmapAnimId) buildMindmapData();
+        };
+
+        function saveData() {
+            if(!window.isCloudReady) return; 
+            if (window.saveDataToCloud) window.saveDataToCloud({ protocols, notes, agendaTasks, completedTasksList, transactions, socialContacts, currentCurrency });
+            triggerDataRain(); 
+        }
+
+        function stateChanged() { saveData(); updateDashboardSummary(); }
 
         // --- DATA RAIN ---
         const rainCanvas = document.getElementById('data-rain-canvas');
@@ -1019,59 +1100,6 @@
         function extractTags(str) { return !str ? [] : str.split(',').map(s => s.trim().toUpperCase()).filter(s => s !== '').map(s => s.startsWith('#') ? s : '#' + s); }
         function setNoteFilter(tag) { currentNoteFilter = tag; renderNotes(); }
         function setAgendaFilter(tag) { currentAgendaFilter = tag; renderAgenda(); }
-
-        // --- IMAGE VIEWER POPUP ---
-        function openImageViewer(src) {
-            if(!src) return;
-            CyberSFX.click();
-            const modal = document.getElementById('image-viewer-modal');
-            const img = document.getElementById('image-viewer-img');
-            img.src = src;
-            modal.classList.add('active');
-        }
-
-        function closeImageViewer() {
-            CyberSFX.click();
-            const modal = document.getElementById('image-viewer-modal');
-            modal.classList.remove('active');
-        }
-
-        // --- SAVE/LOAD SYSTEM (FIREBASE CLOUD) ---
-        function loadData() { document.getElementById('sys-clock').innerHTML = `<span class="blink">▶</span> CONNEXION CLOUD...`; }
-
-        window.parseDataCloud = function(parsed) {
-            if(parsed) {
-                protocols = parsed.protocols || []; 
-                notes = parsed.notes || [];
-                agendaTasks = parsed.agendaTasks || []; 
-                transactions = parsed.transactions || [];
-                completedTasksList = parsed.completedTasksList || [];
-                socialContacts = parsed.socialContacts || []; // NOUVEAU
-                currentCurrency = parsed.currentCurrency || 'CNY';
-            }
-            let currencySelect = document.getElementById('fin-currency');
-            if(currencySelect) currencySelect.value = currentCurrency;
-
-            renderProtocols(); renderAgenda(); renderFinance(); renderNotes(); renderSocialContacts(); updateDashboardSummary();
-            
-            if(currentProtocolId) {
-                 const p = protocols.find(x => x.id === currentProtocolId);
-                 if(p) { renderProtocolAgenda(p.data.step1); } else { closeProtocolDetail(); }
-            }
-            if(currentContactId) {
-                 const c = socialContacts.find(x => x.id === currentContactId);
-                 if(!c) { closeContactDetail(); }
-            }
-            if(mindmapAnimId) buildMindmapData();
-        };
-
-        function saveData() {
-            if(!window.isCloudReady) return; 
-            if (window.saveDataToCloud) window.saveDataToCloud({ protocols, notes, agendaTasks, completedTasksList, transactions, socialContacts, currentCurrency });
-            triggerDataRain(); 
-        }
-
-        function stateChanged() { saveData(); updateDashboardSummary(); }
 
         // --- DASHBOARD SUMMARY ET SYSTÈME XP ---
         function updateDashboardSummary() {
@@ -1193,7 +1221,6 @@
                 panel.classList.remove('active', 'slide-right', 'slide-left');
             });
             
-            // Re-routages si on était dans un détail
             let finalViewId = viewId;
             if(viewId === 'view-protocol-detail' && !currentProtocolId) finalViewId = 'view-protocols';
             if(viewId === 'view-social-detail' && !currentContactId) finalViewId = 'view-social';
@@ -1248,17 +1275,17 @@
             }
             p.lastModified = Date.now();
             document.getElementById('detail-title').innerText = p.data.step1 || 'Sans Titre'; document.getElementById('detail-last-mod').innerText = formatDateFull(p.lastModified);
-            renderProtocolAgenda(p.data.step1); showToast("DONNÉES SAUVEGARDÉES", "var(--cp-green)"); stateChanged();
+            renderProtocolAgenda(p.data.step1); window.showToast("DONNÉES SAUVEGARDÉES", "var(--cp-green)"); stateChanged();
         }
         function createProtocol() {
             let nameInput = document.getElementById('new-p-name'); if(!nameInput) return; const name = nameInput.value; if(!name) return;
             const newId = Date.now(); protocols.push({ id: newId, lastModified: Date.now(), data: { step1: name } });
-            stateChanged(); showToast("PROTOCOLE INITIALISÉ", "var(--cp-cyan)"); closeModal('modal-new-protocol'); renderProtocols(); openProtocolDetail(newId); 
+            stateChanged(); window.showToast("PROTOCOLE INITIALISÉ", "var(--cp-cyan)"); closeModal('modal-new-protocol'); renderProtocols(); openProtocolDetail(newId); 
         }
         function deleteCurrentProtocol() {
             if(!currentProtocolId) return;
             if(confirm("Confirmer la suppression de ce protocole ? (Les actions associées perdront leur source)")) {
-                protocols = protocols.filter(p => p.id !== currentProtocolId); stateChanged(); showToast("PROTOCOLE SUPPRIMÉ", "var(--cp-red)"); closeProtocolDetail(); 
+                protocols = protocols.filter(p => p.id !== currentProtocolId); stateChanged(); window.showToast("PROTOCOLE SUPPRIMÉ", "var(--cp-red)"); closeProtocolDetail(); 
             }
         }
         function renderProtocolAgenda(sourceName) {
@@ -1293,14 +1320,14 @@
         }
         function submitNote() {
             const title = document.getElementById('new-n-title').value; const tagsInput = document.getElementById('new-n-tags').value; const content = document.getElementById('new-n-content').value; const tags = extractTags(tagsInput);
-            if(!title) return showToast("Titre requis", "var(--cp-red)");
-            if(currentEditNoteId) { const n = notes.find(x => x.id === currentEditNoteId); if(n) { n.title = title; n.tags = tags; n.content = content; } showToast("NOTE MODIFIÉE"); } 
-            else { notes.push({ id: Date.now(), title, tags, content }); showToast("NOTE ENREGISTRÉE"); }
+            if(!title) return window.showToast("Titre requis", "var(--cp-red)");
+            if(currentEditNoteId) { const n = notes.find(x => x.id === currentEditNoteId); if(n) { n.title = title; n.tags = tags; n.content = content; } window.showToast("NOTE MODIFIÉE"); } 
+            else { notes.push({ id: Date.now(), title, tags, content }); window.showToast("NOTE ENREGISTRÉE"); }
             stateChanged(); closeModal('modal-new-note'); renderNotes(); if(mindmapAnimId) buildMindmapData();
         }
-        function deleteNote(id) { if(confirm("Confirmer la suppression de cette note ?")) { notes = notes.filter(n => n.id !== id); stateChanged(); renderNotes(); if(mindmapAnimId) buildMindmapData(); showToast("NOTE SUPPRIMÉE", "var(--cp-red)"); } }
+        function deleteNote(id) { if(confirm("Confirmer la suppression de cette note ?")) { notes = notes.filter(n => n.id !== id); stateChanged(); renderNotes(); if(mindmapAnimId) buildMindmapData(); window.showToast("NOTE SUPPRIMÉE", "var(--cp-red)"); } }
 
-        // --- NOUVEAU : RÉSEAU SOCIAL ---
+        // --- SOCIAL ---
         function renderSocialContacts() {
             const grid = document.getElementById('social-list-container'); if(!grid) return; grid.innerHTML = '';
             
@@ -1313,10 +1340,11 @@
                 const card = document.createElement('div'); card.className = 'contact-card glass-panel chamfer-reverse';
                 card.onclick = () => openContactDetail(c.id);
                 
-                const imgUrl = c.avatarUrl ? c.avatarUrl : 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23ff0055"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>';
+                const imgUrl = c.avatarUrl ? c.avatarUrl : '';
+                const imgTag = imgUrl ? `<img src="${imgUrl}" class="contact-card-img" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';"><div class="contact-card-img-wrapper" style="display:none; font-size:24px; color:var(--cp-cyan);">?</div>` : `<div class="contact-card-img-wrapper" style="font-size:24px; color:var(--cp-cyan);">?</div>`;
                 
                 card.innerHTML = `
-                    <img src="${imgUrl}" class="contact-card-img" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\\'http://www.w3.org/2000/svg\\' viewBox=\\'0 0 24 24\\' fill=\\'%23ff0055\\'><path d=\\'M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z\\'/></svg>'">
+                    ${imgTag}
                     <div>
                         <div class="contact-card-name">${(c.lastName || '') + ' ' + (c.firstName || 'Inconnu')}</div>
                         <div style="font-family: var(--font-mono); font-size: 0.85rem; color: var(--cp-cyan);">${c.socialProfile || 'Profil non défini'}</div>
@@ -1342,7 +1370,6 @@
         function openContactDetail(id) {
             currentContactId = id; const c = socialContacts.find(x => x.id === id); if(!c) return;
             
-            // Remplir les champs
             document.getElementById('soc-lastName').value = c.lastName || '';
             document.getElementById('soc-firstName').value = c.firstName || '';
             document.getElementById('soc-age').value = c.age || '';
@@ -1434,7 +1461,7 @@
             c.photos = [document.getElementById('soc-photo1').value, document.getElementById('soc-photo2').value, document.getElementById('soc-photo3').value];
 
             document.getElementById('contact-detail-title').innerText = `Profil: ${(c.lastName || '') + ' ' + (c.firstName || 'Inconnu')}`;
-            showToast("PROFIL SAUVEGARDÉ", "var(--cp-cyan)");
+            window.showToast("PROFIL SAUVEGARDÉ", "var(--cp-cyan)");
             stateChanged(); renderSocialContacts();
         }
 
@@ -1442,7 +1469,7 @@
             if(!currentContactId) return;
             if(confirm("Effacer ce contact de la base de données ?")) {
                 socialContacts = socialContacts.filter(c => c.id !== currentContactId);
-                stateChanged(); showToast("CONTACT EFFACÉ", "var(--cp-red)"); closeContactDetail();
+                stateChanged(); window.showToast("CONTACT EFFACÉ", "var(--cp-red)"); closeContactDetail();
             }
         }
 
@@ -1500,14 +1527,14 @@
 
         function submitAgendaTask() {
             const title = document.getElementById('ag-title').value; const date = document.getElementById('ag-date').value; const tagsInput = document.getElementById('ag-tags').value; const source = document.getElementById('ag-source').value; const tags = extractTags(tagsInput);
-            if(!title || !date) return showToast("Requis", "var(--cp-red)");
+            if(!title || !date) return window.showToast("Requis", "var(--cp-red)");
             
             if(currentEditTaskId) { 
                 const list = currentEditTaskType === 'pending' ? agendaTasks : completedTasksList;
                 const t = list.find(x => x.id === currentEditTaskId); 
-                if(t){ t.title = title; t.date = date; t.tags = tags; t.source = source; showToast("ACTION MODIFIÉE");} 
+                if(t){ t.title = title; t.date = date; t.tags = tags; t.source = source; window.showToast("ACTION MODIFIÉE");} 
             } else { 
-                agendaTasks.push({ id: Date.now(), title, date, tags, source }); showToast("ACTION AJOUTÉE"); 
+                agendaTasks.push({ id: Date.now(), title, date, tags, source }); window.showToast("ACTION AJOUTÉE"); 
                 currentAgendaTab = 'pending'; 
             }
             
@@ -1535,7 +1562,7 @@
                 agendaTasks = agendaTasks.filter(x => x.id !== id); 
                 completedTasksList.push(t); 
             }
-            stateChanged(); renderAgenda(); showToast("ACTION TERMINÉE", "var(--cp-green)"); 
+            stateChanged(); renderAgenda(); window.showToast("ACTION TERMINÉE", "var(--cp-green)"); 
             if(currentProtocolId) { const p = protocols.find(x => x.id === currentProtocolId); if(p) renderProtocolAgenda(p.data.step1); }
             if(mindmapAnimId) buildMindmapData();
         }
@@ -1546,13 +1573,13 @@
                 completedTasksList = completedTasksList.filter(x => x.id !== id);
                 agendaTasks.push(t);
             }
-            stateChanged(); renderAgenda(); showToast("ACTION RESTAURÉE", "var(--cp-yellow)");
+            stateChanged(); renderAgenda(); window.showToast("ACTION RESTAURÉE", "var(--cp-yellow)");
         }
 
         function deleteCompletedTask(id) {
             if(confirm("Supprimer DÉFINITIVEMENT cette action ? (L'XP associée sera perdue)")) {
                 completedTasksList = completedTasksList.filter(x => x.id !== id);
-                stateChanged(); renderAgenda(); showToast("ACTION ARCHIVÉE SUPPRIMÉE", "var(--cp-red)");
+                stateChanged(); renderAgenda(); window.showToast("ACTION ARCHIVÉE SUPPRIMÉE", "var(--cp-red)");
             }
         }
         
@@ -1581,9 +1608,9 @@
         }
         function submitTransaction() {
             const type = document.getElementById('fin-type').value; const label = document.getElementById('fin-label').value; const amt = parseFloat(document.getElementById('fin-amount').value);
-            if(!label || isNaN(amt) || amt <= 0) return showToast("Erreur: Données invalides", "var(--cp-red)");
-            if(currentEditTransId) { const t = transactions.find(x => x.id === currentEditTransId); if(t) { t.type = type; t.label = label; t.baseAmount = amt / exchangeRates[currentCurrency]; } showToast("FLUX MODIFIÉ", "var(--cp-cyan)"); } 
-            else { transactions.push({ id: Date.now(), type, label, baseAmount: amt / exchangeRates[currentCurrency], date: Date.now() }); showToast("FLUX ENREGISTRÉ"); }
+            if(!label || isNaN(amt) || amt <= 0) return window.showToast("Erreur: Données invalides", "var(--cp-red)");
+            if(currentEditTransId) { const t = transactions.find(x => x.id === currentEditTransId); if(t) { t.type = type; t.label = label; t.baseAmount = amt / exchangeRates[currentCurrency]; } window.showToast("FLUX MODIFIÉ", "var(--cp-cyan)"); } 
+            else { transactions.push({ id: Date.now(), type, label, baseAmount: amt / exchangeRates[currentCurrency], date: Date.now() }); window.showToast("FLUX ENREGISTRÉ"); }
             stateChanged(); resetFinanceForm(); renderFinance();
         }
         function editTransaction(id) {
@@ -1591,7 +1618,7 @@
             document.getElementById('fin-type').value = t.type; document.getElementById('fin-label').value = t.label; document.getElementById('fin-amount').value = (t.baseAmount * exchangeRates[currentCurrency]).toFixed(2);
             document.getElementById('fin-form-title').innerText = "MODIFIER LA TRANSACTION"; document.getElementById('fin-btn-submit').innerText = "METTRE À JOUR"; document.getElementById('fin-btn-cancel').style.display = "block";
         }
-        function deleteTransaction(id) { transactions = transactions.filter(t => t.id !== id); stateChanged(); renderFinance(); showToast("FLUX SUPPRIMÉ", "var(--cp-red)"); }
+        function deleteTransaction(id) { transactions = transactions.filter(t => t.id !== id); stateChanged(); renderFinance(); window.showToast("FLUX SUPPRIMÉ", "var(--cp-red)"); }
         function resetFinanceForm() {
             currentEditTransId = null; document.getElementById('fin-label').value = ''; document.getElementById('fin-amount').value = '';
             document.getElementById('fin-form-title').innerText = "NOUVELLE TRANSACTION"; document.getElementById('fin-btn-submit').innerText = "ENREGISTRER LE FLUX"; document.getElementById('fin-btn-cancel').style.display = "none";
@@ -1757,7 +1784,7 @@
             let newValue = document.getElementById('mm-edit-content').value;
             currentEditNode.refData[currentEditNode.refKey] = newValue; currentEditNode.text = newValue; 
             if(currentEditNode.parentId) { let p = protocols.find(x => x.id === currentEditNode.parentId); if(p) p.lastModified = Date.now(); }
-            stateChanged(); showToast("DONNÉES MISES À JOUR", "var(--cp-cyan)"); if(currentEditNode.callback) currentEditNode.callback();
+            stateChanged(); window.showToast("DONNÉES MISES À JOUR", "var(--cp-cyan)"); if(currentEditNode.callback) currentEditNode.callback();
         }
         
         function closeMindmapDetail() { 
