@@ -2,7 +2,6 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <!-- AJOUT: viewport-fit=cover force l'affichage jusqu'au bord physique (ignore le notch sur mobile) -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     
     <!-- Balises pour transformer le site en Application Web Native (PWA) -->
@@ -56,7 +55,7 @@
             color: var(--cp-text);
             font-family: var(--font-ui);
             height: 100vh; 
-            height: 100dvh; /* dvh garantit la taille exacte sur mobile */
+            height: 100dvh;
             overflow: hidden; 
             display: flex;
             flex-direction: column;
@@ -137,7 +136,7 @@
         .xp-bar-fill { background: linear-gradient(90deg, var(--cp-purple), var(--cp-cyan)); height: 100%; width: 0%; transition: width 0.5s ease-out; box-shadow: 0 0 10px var(--cp-cyan); }
         .xp-header { display: flex; justify-content: space-between; font-family: var(--font-mono); color: white; font-size: 0.95rem; align-items: flex-end;}
 
-        /* Header / HUD */
+        /* Header */
         header {
             display: flex; justify-content: space-between; align-items: center; padding: 20px 30px;
             background: rgba(10, 10, 12, 0.7); backdrop-filter: blur(15px);
@@ -392,55 +391,6 @@
         .toast { background: rgba(15,15,20,0.9); backdrop-filter: blur(10px); border: 1px solid var(--cp-green); color: white; padding: 18px 25px; font-family: var(--font-mono); border-left: 4px solid var(--cp-green); box-shadow: 0 5px 20px rgba(0,255,102,0.3); animation: slideInRight 0.4s; }
         @keyframes fadeIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
 
-        /* ==========================================
-           CADRE FUTURISTE HUD CSS (REMPLISSAGE TOTAL)
-           ========================================== */
-        .hud-overlay {
-            position: fixed;
-            top: 0; left: 0; 
-            width: 100vw; height: 100vh; height: 100dvh; /* Utilise toute la taille de l'écran */
-            pointer-events: none; /* Laisse passer les clics vers l'interface */
-            z-index: 9999; /* Par-dessus TOUT (même les scrollbars si possible) */
-        }
-        
-        /* Les 4 lignes principales touchent le bord absolu (0px) */
-        .hud-line { position: absolute; background: rgba(0, 229, 255, 0.5); box-shadow: 0 0 10px rgba(0, 229, 255, 0.4); }
-        .hud-top { top: 0; left: 0; right: 0; height: 4px; }
-        .hud-bottom { bottom: 0; left: 0; right: 0; height: 4px; }
-        .hud-left { top: 0; bottom: 0; left: 0; width: 4px; }
-        .hud-right { top: 0; bottom: 0; right: 0; width: 4px; }
-
-        /* Ligne technique intérieure (ajoute du réalisme) */
-        .hud-inner { position: absolute; top: 12px; left: 12px; right: 12px; bottom: 12px; border: 1px solid rgba(0, 229, 255, 0.15); border-radius: 8px; }
-
-        /* Coins de renfort type "cockpit" */
-        .hud-corner-box { position: absolute; width: 40px; height: 40px; border: 4px solid rgba(0, 229, 255, 0.7); box-shadow: 0 0 12px rgba(0, 229, 255, 0.4); }
-        .hud-ctl { top: 0; left: 0; border-right: none; border-bottom: none; }
-        .hud-ctr { top: 0; right: 0; border-left: none; border-bottom: none; }
-        .hud-cbl { bottom: 0; left: 0; border-right: none; border-top: none; }
-        .hud-cbr { bottom: 0; right: 0; border-left: none; border-top: none; }
-
-        /* Pulsation plus subtile */
-        @keyframes hudPulse { 0%, 100% { opacity: 0.8; } 50% { opacity: 0.3; } }
-
-        /* Décorations */
-        .hud-stripes { position: absolute; top: 4px; right: 80px; width: 150px; height: 6px; background: repeating-linear-gradient(45deg, rgba(0, 229, 255, 0.5), rgba(0, 229, 255, 0.5) 4px, transparent 4px, transparent 8px); animation: hudPulse 3s infinite; }
-        
-        .hud-deco-right { position: absolute; top: 40%; right: 4px; width: 8px; height: 80px; background: rgba(0, 229, 255, 0.3); box-shadow: 0 0 5px rgba(0, 229, 255, 0.2); display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 6px; animation: hudPulse 4s infinite; }
-        .hud-deco-right span { width: 0; height: 0; border-top: 4px solid transparent; border-bottom: 4px solid transparent; border-left: 6px solid var(--cp-dark); }
-        
-        .hud-deco-bottom { position: absolute; bottom: 4px; left: 50%; transform: translateX(-50%); display: flex; gap: 10px; animation: hudPulse 3.5s infinite;}
-        .hud-deco-bottom span { width: 30px; height: 4px; background: rgba(0, 229, 255, 0.5); box-shadow: 0 0 8px rgba(0, 229, 255, 0.3); }
-        
-        .hud-deco-left { position: absolute; top: 50%; left: 4px; display: flex; flex-direction: column; gap: 8px; transform: translateY(-50%); animation: hudPulse 4.5s infinite;}
-        .hud-deco-left span { width: 4px; height: 20px; background: rgba(0, 229, 255, 0.4); box-shadow: 0 0 5px rgba(0, 229, 255, 0.2); }
-
-        .hud-deco-top-left { position: absolute; top: 4px; left: 80px; width: 60px; height: 6px; background: rgba(0, 229, 255, 0.4); box-shadow: 0 0 5px rgba(0, 229, 255, 0.2); }
-
-        /* Halo lumineux écran */
-        .hud-glow { position: absolute; top: 0; left: 0; right: 0; bottom: 0; box-shadow: inset 0 0 100px rgba(0, 229, 255, 0.15); pointer-events: none; }
-        
-
         /* RESPONSIVE DESIGN & ADAPTATION MOBILE */
         @media (max-width: 1024px) {
             .agenda-grid { grid-template-columns: 1fr 300px; }
@@ -458,7 +408,7 @@
             nav { padding: 15px; } 
             .nav-btn { padding: 8px 12px; font-size: 0.95rem; }
             .section-title { font-size: 1.3rem; margin-bottom: 5px; }
-            .panel { padding-bottom: 50vh; gap: 15px; }
+            .panel { padding-bottom: 50vh; gap: 15px; } /* Marge généreuse en bas pour clavier mobile (gardé) */
             .overview-box { padding: 15px; }
             .dash-stats-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
             .dash-card { padding: 15px; }
@@ -498,18 +448,6 @@
             .modal-content { padding: 15px; width: 95%; max-height: 90vh; overflow-y: auto; }
             .modal-content > div:last-child { flex-direction: column-reverse; }
             .modal-content button { width: 100%; margin-top: 10px;}
-
-            /* ADAPTATION DU CADRE HUD POUR LE MOBILE */
-            .hud-line { box-shadow: 0 0 5px rgba(0, 229, 255, 0.2); }
-            .hud-top, .hud-bottom { height: 3px; }
-            .hud-left, .hud-right { width: 3px; }
-            .hud-inner { top: 8px; left: 8px; right: 8px; bottom: 8px; border-width: 1px; }
-            .hud-corner-box { width: 20px; height: 20px; border-width: 3px; }
-            .hud-stripes { right: 40px; width: 80px; height: 4px; }
-            .hud-deco-right { display: none; } /* Caché sur mobile pour la lisibilité */
-            .hud-deco-left { display: none; } /* Caché sur mobile pour la lisibilité */
-            .hud-deco-top-left { left: 40px; width: 40px; height: 4px; }
-            .hud-deco-bottom span { width: 15px; height: 3px; }
         }
     </style>
 </head>
@@ -544,42 +482,6 @@
 
     <div class="scanlines"></div>
     <canvas id="data-rain-canvas"></canvas>
-
-    <!-- CADRE FUTURISTE HUD OVERLAY -->
-    <div class="hud-overlay" id="cyber-hud">
-        <div class="hud-glow"></div>
-        
-        <!-- Lignes Principales (Collées aux bords absolus) -->
-        <div class="hud-line hud-top"></div>
-        <div class="hud-line hud-bottom"></div>
-        <div class="hud-line hud-left"></div>
-        <div class="hud-line hud-right"></div>
-        
-        <!-- Ligne technique intérieure subtile -->
-        <div class="hud-inner"></div>
-
-        <!-- Coins de renfort -->
-        <div class="hud-corner-box hud-ctl"></div>
-        <div class="hud-corner-box hud-ctr"></div>
-        <div class="hud-corner-box hud-cbl"></div>
-        <div class="hud-corner-box hud-cbr"></div>
-        
-        <!-- Décorations et Greebles -->
-        <div class="hud-stripes"></div>
-        <div class="hud-deco-top-left"></div>
-        
-        <div class="hud-deco-right">
-            <span></span><span></span><span></span><span></span>
-        </div>
-        
-        <div class="hud-deco-bottom">
-            <span></span><span></span><span></span>
-        </div>
-        
-        <div class="hud-deco-left">
-            <span></span><span></span><span></span>
-        </div>
-    </div>
 
     <header>
         <div style="display: flex; align-items: center; justify-content: center;">
@@ -724,7 +626,7 @@
             
             <div id="contact-view-mode" class="dossier-container chamfer-reverse">
                 <div class="dossier-header">
-                    <!-- IMAGE AVATAR RENDUE CLIQUABLE -->
+                    <!-- IMAGE AVATAR RENDUE CLIQUABLE (CONSERVÉ) -->
                     <img id="v-soc-avatar" src="" onerror="this.style.display='none'; document.getElementById('v-soc-avatar-placeholder').style.display='flex';" onclick="if(this.src) openImageViewer(this.src)">
                     <div id="v-soc-avatar-placeholder" class="dossier-header-placeholder" style="display:none;">Photo</div>
                     <div class="dossier-title">
@@ -788,6 +690,7 @@
                                     <div class="step-group"><label class="step-label" style="font-size:1rem;">Sex:</label><input type="text" id="soc-sex" class="cp-input"></div>
                                     <div class="step-group" style="grid-column: span 2;"><label class="step-label" style="font-size:1rem;">Nationalité:</label><input type="text" id="soc-nationality" class="cp-input"></div>
                                     
+                                    <!-- UPLOAD IMAGE PROFIL (CONSERVÉ) -->
                                     <div class="step-group" style="grid-column: span 2;">
                                         <label class="step-label" style="font-size:0.9rem; color: var(--cp-cyan);">> UPLOAD IMAGE PROFIL:</label>
                                         <input type="file" id="soc-avatar-upload" class="cp-input" accept="image/*" onchange="handleImgBBUpload(this, 'soc-avatar-url')">
@@ -1041,7 +944,7 @@
     <!-- SCRIPT PRINCIPAL DU SITE -->
     <script>
         // ==========================================
-        // FONCTION D'UPLOAD IMGBB
+        // FONCTION D'UPLOAD IMGBB (CONSERVÉ)
         // ==========================================
         async function handleImgBBUpload(inputElement, targetHiddenId) {
             const file = inputElement.files[0];
@@ -1115,7 +1018,7 @@
         });
 
         // ==========================================
-        // FIX CLAVIER MOBILE : Garder les inputs visibles
+        // FIX CLAVIER MOBILE : Garder les inputs visibles (CONSERVÉ)
         // ==========================================
         document.addEventListener('focusin', (e) => {
             if (window.innerWidth <= 768 && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA')) {
@@ -1420,6 +1323,9 @@
 
         function switchTab(viewId, direction = 'fade') {
             if(mindmapAnimId) { cancelAnimationFrame(mindmapAnimId); mindmapAnimId = null; }
+            
+            // DÉCLENCHEMENT DE L'ANIMATION DE PLUIE DE DONNÉES À CHAQUE CHANGEMENT D'ONGLET
+            triggerDataRain();
             
             document.querySelectorAll('.nav-btn').forEach(btn => {
                 btn.classList.remove('active');
@@ -1835,7 +1741,7 @@
             if(!t) return;
             
             document.getElementById('ag-title').value = t.title; document.getElementById('ag-date').value = t.date; document.getElementById('ag-tags').value = (t.tags || []).join(', '); document.getElementById('ag-source').value = t.source || '';
-            document.getElementById('agenda-form-title').innerText = "MODIFIER L'ACTION"; document.getElementById('ag-btn-submit').innerText = "METTRE À À JOUR"; document.getElementById('ag-btn-cancel').style.display = "block";
+            document.getElementById('agenda-form-title').innerText = "MODIFIER L'ACTION"; document.getElementById('ag-btn-submit').innerText = "METTRE À JOUR"; document.getElementById('ag-btn-cancel').style.display = "block";
             
             if(window.innerWidth <= 768) document.getElementById('agenda-form-title').scrollIntoView({behavior: 'smooth', block:'start'});
         }
