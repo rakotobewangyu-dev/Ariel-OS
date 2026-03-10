@@ -11,6 +11,7 @@
     <meta name="theme-color" content="#0a0a0c">
     
     <title>Ariel OS - Command Center</title>
+    <!-- Polices lisses (sans zéro barré ni pixels bruts) -->
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700;800&family=Orbitron:wght@400;700;900&family=Rajdhani:wght@500;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -44,7 +45,7 @@
         ::-webkit-calendar-picker-indicator:hover { filter: invert(1) drop-shadow(0 0 5px var(--cp-cyan)); }
 
         body {
-            /* Restauration de l'image de fond futuriste avec overlay sombre */
+            /* Image de fond futuriste avec overlay sombre pour garantir la lisibilité */
             background-color: #050505;
             background-image: 
                 linear-gradient(180deg, rgba(74, 0, 8, 0.85) 0%, rgba(5, 5, 5, 0.92) 60%, rgba(0, 0, 0, 0.98) 100%),
@@ -116,13 +117,17 @@
         .panel.active.slide-next { animation: slideInNext 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards; }
         .panel.active.slide-prev { animation: slideInPrev 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards; }
 
-        /* Nombres Cyber avec Zéro Barré */
+        /* DESIGN DES CHIFFRES LISSES : Plus de zéros barrés */
         .cyber-number, .dash-card-value, .stat-value, .sys-status, .task-date, .trans-amount, .trans-date, input[type="number"] {
-            font-family: 'JetBrains Mono', var(--font-mono) !important;
-            font-variant-numeric: slashed-zero;
-            font-feature-settings: "zero" 1;
+            font-family: 'Share Tech Mono', monospace !important;
             letter-spacing: 1px;
         }
+        
+        .dash-card-value { font-size: 3.5rem; }
+        .trans-amount { font-size: 1.8rem; }
+        .sys-status { font-size: 1.1rem; }
+        /* Agrandissement majeur des statistiques en Finance */
+        .stat-value { font-size: 3.5rem !important; margin-top: 15px; font-weight: bold; }
 
         /* CSS pour les Tags (Filtres & Badges) */
         .filter-bar { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
@@ -136,7 +141,7 @@
         .xp-bar-fill { background: linear-gradient(90deg, var(--cp-purple), var(--cp-cyan)); height: 100%; width: 0%; transition: width 0.5s ease-out; box-shadow: 0 0 10px var(--cp-cyan); }
         .xp-header { display: flex; justify-content: space-between; font-family: var(--font-mono); color: white; font-size: 0.95rem; align-items: flex-end;}
 
-        /* Header / HUD */
+        /* Header */
         header {
             display: flex; justify-content: space-between; align-items: center; padding: 20px 30px;
             background: rgba(10, 10, 12, 0.7); backdrop-filter: blur(15px);
@@ -144,7 +149,7 @@
             box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5);
         }
 
-        .sys-status { color: var(--cp-cyan); font-size: 1.1rem; display: flex; align-items: center; gap: 10px; text-shadow: 0 0 8px rgba(0, 229, 255, 0.5); }
+        .sys-status { color: var(--cp-cyan); display: flex; align-items: center; gap: 10px; text-shadow: 0 0 8px rgba(0, 229, 255, 0.5); }
         .blink { animation: blinker 1s linear infinite; }
 
         .fs-btn { padding: 5px 10px; margin-left: 15px; font-size: 1.2rem; }
@@ -244,18 +249,91 @@
         .dash-card { background: rgba(10, 10, 12, 0.5); border: 1px solid var(--glass-border); padding: 20px; border-left: 4px solid; transition: all 0.3s; }
         .dash-card:hover { background: rgba(20, 20, 25, 0.8); box-shadow: 0 0 15px inset rgba(0, 229, 255, 0.1); transform: translateY(-3px); }
         .dash-card-title { font-family: var(--font-mono); font-size: 0.9rem; color: var(--cp-text); }
-        .dash-card-value { font-size: 2.5rem; color: white; margin-top: 10px; }
+        .dash-card-value { color: white; margin-top: 10px; } 
 
-        /* VIEW: PROTOCOLES */
-        .protocol-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 25px; }
-        .protocol-card { border-left: 4px solid var(--cp-yellow); padding: 25px; display: flex; flex-direction: column; gap: 10px; cursor: pointer; transition: all 0.3s; position: relative; }
-        .protocol-card::before { content: ''; position: absolute; top: 0; right: 0; border-style: solid; border-width: 0 20px 20px 0; border-color: transparent rgba(0,0,0,0.8) transparent transparent; }
-        .protocol-card:hover { border-left-color: var(--cp-cyan); box-shadow: 0 10px 30px rgba(0, 229, 255, 0.2); transform: translateY(-5px); background-color: rgba(30, 30, 35, 0.8); }
-        .protocol-title { font-family: var(--font-title); font-size: 1.5rem; color: white; text-shadow: 0 2px 4px rgba(0,0,0,0.8); }
+        /* ==========================================
+           CP2077 JOURNAL LAYOUT (PROJETS & NOTES)
+           ========================================== */
+        .journal-layout {
+            display: grid;
+            grid-template-columns: minmax(300px, 1fr) minmax(400px, 2.5fr);
+            gap: 30px;
+            align-items: start;
+        }
+        
+        /* FIXE LA COLONNE DE GAUCHE AU SCROLL */
+        .journal-left { 
+            display: flex; 
+            flex-direction: column; 
+            gap: 15px; 
+            position: sticky; 
+            top: 0; 
+            z-index: 5;
+        }
+        
+        /* Conteneur avec scroll indépendant pour la liste des projets / notes */
+        .journal-grid-scroll {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            max-height: 70vh;
+            overflow-y: auto;
+            padding-right: 10px;
+        }
+        .journal-grid-scroll::-webkit-scrollbar { width: 5px; }
+        .journal-grid-scroll::-webkit-scrollbar-track { background: rgba(0, 229, 255, 0.05); border-radius: 3px; }
+        .journal-grid-scroll::-webkit-scrollbar-thumb { background: var(--cp-cyan); border-radius: 3px; }
 
-        /* VIEW: PROTOCOLE DETAIL */
-        .detail-header-panel { border-bottom: 2px solid var(--cp-cyan); padding: 20px 30px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; flex-wrap: wrap; gap:15px;}
-        .phase-section { margin-bottom: 20px; transition: all 0.3s;}
+        .journal-right {
+            display: none; /* hidden by default */
+            flex-direction: column;
+            gap: 20px;
+            padding-left: 30px;
+            animation: slideInNext 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+        }
+        #journal-detail-view { border-left: 4px solid var(--cp-red); }
+        #note-detail-view { border-left: 4px solid var(--cp-cyan); }
+        
+        .cp-journal-item {
+            display: flex; align-items: center; background: rgba(255, 0, 85, 0.05);
+            border: 1px solid rgba(255, 0, 85, 0.2); cursor: pointer; transition: all 0.2s; position: relative;
+        }
+        .cp-journal-item:hover { background: rgba(255, 0, 85, 0.15); border-color: var(--cp-red); transform: translateX(5px); }
+        .cp-journal-item.active { background: var(--cp-red); color: black; box-shadow: 0 0 15px rgba(255,0,85,0.4); border-color: var(--cp-red); transform: translateX(5px); }
+        .cp-journal-item.active .title { color: black; text-shadow: none; }
+        .cp-journal-item.active .subtitle { color: rgba(0,0,0,0.7); }
+        .cp-journal-item.active .cp-journal-item-icon { background: black; color: var(--cp-red); border-color: black; }
+        .cp-journal-item.active .cyber-number { color: rgba(0,0,0,0.8) !important; }
+        
+        .cp-journal-item-icon {
+            width: 60px; height: 60px; display: flex; justify-content: center; align-items: center;
+            background: rgba(255, 0, 85, 0.1); color: var(--cp-red); border-right: 1px solid rgba(255, 0, 85, 0.2); flex-shrink: 0; transition: all 0.2s;
+        }
+        .cp-journal-item-icon svg { width: 30px; height: 30px; }
+        .cp-journal-item-text { padding: 12px 15px; display: flex; flex-direction: column; overflow: hidden; width: 100%;}
+        
+        /* Titre de la liste de projets en bleu */
+        .cp-journal-item-text .title { font-family: var(--font-title); font-size: 1.15rem; color: var(--cp-cyan); text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; transition: all 0.2s;}
+        
+        .cp-journal-item-text .subtitle { font-family: var(--font-mono); font-size: 0.8rem; color: var(--cp-yellow); margin-top: 3px; transition: all 0.2s;}
+
+        .btn-prio { background: transparent; border: none; color: var(--cp-cyan); font-size: 1.2rem; cursor: pointer; transition: 0.2s; }
+        .btn-prio:hover { color: white; transform: scale(1.2); }
+        .cp-journal-item.active .btn-prio { color: black; }
+        .cp-journal-item.active .btn-prio:hover { color: white; }
+
+        /* NOUVEAU LAYOUT SPLIT POUR LES PHASES (A-E vs F) */
+        .phases-split-layout {
+            display: grid;
+            grid-template-columns: 1.2fr 1fr; 
+            gap: 30px;
+            align-items: start;
+        }
+        .phases-left-col { display: flex; flex-direction: column; gap: 20px; }
+        .phases-right-col { display: flex; flex-direction: column; position: sticky; top: 20px; }
+
+        /* VIEW: PROJET DETAIL INTERNE (EDIT MODE) */
+        .phase-section { transition: all 0.3s;}
         .phase-header { padding: 18px 25px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; font-family: var(--font-title); font-size: 1.3rem; background: rgba(0,0,0,0.4); transition: background 0.2s;}
         .phase-header:hover { background-color: rgba(0, 229, 255, 0.1); }
         .phase-body { display: none; padding: 25px; border-top: 1px solid var(--glass-border); flex-direction: column; gap: 20px; background: rgba(0,0,0,0.3); }
@@ -267,20 +345,11 @@
         .phase-c .phase-header { color: var(--cp-yellow); border-left: 4px solid var(--cp-yellow); }
         .phase-d .phase-header { color: var(--cp-purple); border-left: 4px solid var(--cp-purple); }
         .phase-e .phase-header { color: var(--cp-green); border-left: 4px solid var(--cp-green); }
-        .phase-f .phase-header { color: var(--cp-orange); border-left: 4px solid var(--cp-orange); }
-
+        
         .cyber-toggle { width: 34px; height: 34px; border: 1px solid currentColor; display: flex; justify-content: center; align-items: center; transition: 0.4s; background: rgba(0,0,0,0.5); }
         .cyber-toggle svg { width: 16px; height: 16px; fill: currentColor; transition: 0.4s; }
         .phase-section.active .cyber-toggle { background: currentColor; box-shadow: 0 0 15px currentColor; }
         .phase-section.active .cyber-toggle svg { fill: black; transform: rotate(90deg); }
-
-        /* VIEW: BASE DE DONNÉES */
-        .note-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; }
-        .note-card { border-left: 4px solid var(--cp-red); padding: 25px; display: flex; flex-direction: column; position: relative; transition: all 0.3s; min-height: 200px; }
-        .note-card::before { content: ''; position: absolute; top: 0; right: 0; border-style: solid; border-width: 0 20px 20px 0; border-color: transparent rgba(0,0,0,0.8) transparent transparent; }
-        .note-card:hover { background-color: rgba(30, 20, 20, 0.8); border-left-color: var(--cp-yellow); box-shadow: 0 10px 25px rgba(255,0,85,0.2); transform: translateY(-4px); }
-        .note-title { color: var(--cp-red); font-family: var(--font-title); font-size: 1.3rem; margin-bottom: 15px; }
-        .note-preview { font-family: var(--font-mono); font-size: 1rem; color: #ccc; display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; flex-grow: 1; margin-bottom: 10px; line-height: 1.5; }
 
         /* VIEW: SOCIAL */
         .social-list-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; }
@@ -290,19 +359,27 @@
         .contact-card-img { width: 100%; height: 100%; object-fit: cover; }
         .contact-card-name { font-family: var(--font-title); font-size: 1.25rem; color: white; margin-bottom: 3px;}
 
-        /* DOSSIER SOCIAL (VIEW MODE) */
+        /* DOSSIER (VIEW MODE COMMUN POUR SOCIAL ET PROJETS ET NOTES) */
         .dossier-container { border: 1px solid var(--cp-cyan); background: rgba(10,10,12,0.8); padding: 30px; font-family: var(--font-mono); position: relative;}
+        .dossier-container.proj-theme { border-color: var(--cp-red); }
         .dossier-container::before { content: ''; position: absolute; top: 0; right: 0; border-style: solid; border-width: 0 30px 30px 0; border-color: transparent rgba(0,229,255,0.2) transparent transparent; }
+        .dossier-container.proj-theme::before { border-color: transparent rgba(255,0,85,0.2) transparent transparent; }
+        
         .dossier-header { display: flex; gap: 25px; align-items: center; border-bottom: 1px dashed rgba(0,229,255,0.5); padding-bottom: 25px; margin-bottom: 25px; }
+        .dossier-container.proj-theme .dossier-header { border-bottom-color: rgba(255,0,85,0.5); }
         .dossier-header img { width: 120px; height: 120px; border-radius: 8px; border: 2px solid var(--cp-cyan); object-fit: cover; cursor: zoom-in; }
         .dossier-header-placeholder { width: 120px; height: 120px; border-radius: 8px; border: 2px dashed var(--cp-cyan); display: flex; align-items: center; justify-content: center; color: var(--cp-cyan); text-align: center; font-size: 0.8rem; flex-shrink: 0;}
         .dossier-title h2 { color: var(--cp-yellow); font-family: var(--font-title); text-transform: uppercase; font-size: 2.2rem; margin-bottom: 5px; text-shadow: 0 0 10px rgba(252,238,10,0.3); }
+        .dossier-container.proj-theme .dossier-title h2 { color: var(--cp-red); text-shadow: 0 0 10px rgba(255,0,85,0.3); }
         .dossier-subtitle { color: var(--cp-cyan); font-size: 1.2rem; letter-spacing: 1px; }
         
         .dossier-grid { display: grid; grid-template-columns: minmax(350px, 1.4fr) minmax(300px, 1fr); gap: 30px; }
+        .dossier-grid.full-width { grid-template-columns: 1fr; }
         
         .dossier-section { border: 1px solid rgba(255,255,255,0.1); padding: 25px 20px 20px 20px; position: relative; background: rgba(0,0,0,0.4); margin-bottom: 20px;}
         .dossier-section::before { content: attr(data-title); position: absolute; top: -12px; left: 15px; background: var(--cp-dark); padding: 0 10px; color: var(--cp-cyan); font-weight: bold; font-family: var(--font-title); border: 1px solid var(--cp-cyan); border-radius: 2px;}
+        .dossier-container.proj-theme .dossier-section::before { color: var(--cp-yellow); border-color: var(--cp-yellow); }
+        
         .data-row { display: flex; margin-bottom: 12px; border-bottom: 1px dotted rgba(255,255,255,0.1); padding-bottom: 6px; }
         .data-label { color: #888; width: 130px; flex-shrink: 0; text-transform: uppercase; font-size: 0.95rem; }
         .data-val { color: #fff; font-weight: bold; font-size: 1.05rem; }
@@ -364,7 +441,7 @@
         .task-card { border-left: 4px solid var(--cp-yellow); padding: 20px 25px; display: flex; justify-content: space-between; align-items: center; position: relative; transition: all 0.3s; }
         .task-card::before { content: ''; position: absolute; top: 0; right: 0; border-style: solid; border-width: 0 15px 15px 0; border-color: transparent rgba(0,0,0,0.8) transparent transparent; }
         .task-card:hover { transform: translateX(8px); border-color: var(--cp-cyan); box-shadow: -5px 5px 20px rgba(0,229,255,0.15); background-color: rgba(30, 30, 35, 0.8); }
-        .task-date { color: var(--cp-yellow); font-size: 0.95rem; margin-bottom: 8px; }
+        .task-date { color: var(--cp-yellow); margin-bottom: 8px; }
         .task-title { font-size: 1.3rem; font-weight: bold; color: white; }
         
         .task-card.completed-task { opacity: 0.6; border-left-color: var(--cp-green); }
@@ -375,7 +452,7 @@
         .stat-card { padding: 25px; transition: transform 0.3s; }
         .stat-card:hover { transform: translateY(-5px); border-color: var(--cp-cyan); box-shadow: 0 10px 20px rgba(0,229,255,0.1); }
         .stat-title { font-family: var(--font-mono); color: var(--cp-text); font-size: 1rem; text-transform: uppercase; }
-        .stat-value { font-size: 2.2rem; margin-top: 10px; }
+        
         .finance-grid { display: grid; grid-template-columns: 380px 1fr; gap: 25px; }
         .trans-card { padding: 18px 25px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; border-left: 4px solid; transition: all 0.3s; }
         .trans-card:hover { transform: scale(1.02); background-color: rgba(30,30,35,0.8); }
@@ -391,12 +468,19 @@
         .toast { background: rgba(15,15,20,0.9); backdrop-filter: blur(10px); border: 1px solid var(--cp-green); color: white; padding: 18px 25px; font-family: var(--font-mono); border-left: 4px solid var(--cp-green); box-shadow: 0 5px 20px rgba(0,255,102,0.3); animation: slideInRight 0.4s; }
         @keyframes fadeIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
 
-        /* RESPONSIVE DESIGN */
+        /* RESPONSIVE DESIGN & ADAPTATION MOBILE */
         @media (max-width: 1024px) {
             .agenda-grid { grid-template-columns: 1fr 300px; }
             .finance-grid { grid-template-columns: 300px 1fr; }
             .dossier-grid { grid-template-columns: 1fr; gap: 20px; } 
             .social-layout { grid-template-columns: 1fr; gap: 20px; }
+            
+            /* CP Journal Mobile Adaptations */
+            .journal-layout { grid-template-columns: 1fr !important; display: block !important; }
+            .journal-right { border-left: none !important; padding-left: 0 !important; border-top: 4px solid var(--cp-red); padding-top: 20px; }
+            #note-detail-view { border-top: 4px solid var(--cp-cyan); }
+            #mobile-back-protocol, #mobile-back-note { display: inline-block !important; }
+            .phases-split-layout { grid-template-columns: 1fr !important; }
         }
 
         @media (max-width: 768px) {
@@ -412,7 +496,11 @@
             .overview-box { padding: 15px; }
             .dash-stats-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
             .dash-card { padding: 15px; }
-            .dash-card-value { font-size: 1.6rem; }
+            
+            /* Réduction des nombres immenses sur mobile */
+            .stat-value { font-size: 2.2rem !important; }
+            .dash-card-value { font-size: 2rem; }
+
             .form-row { grid-template-columns: 1fr; gap: 10px; }
             .protocol-grid, .note-grid { grid-template-columns: 1fr; gap: 15px; }
             .detail-header-panel { flex-direction: column; align-items: flex-start; padding: 15px; gap: 10px; }
@@ -471,12 +559,13 @@
             }
         };
 
+        // FORMAT DE DATE UNIVERSEL : Jour/ Mois/ Année [Heure : minute : seconde]
         window.formatDateFull = function(timestamp) {
             if(!timestamp) return '--';
             const pad = n => n.toString().padStart(2, '0'); 
             const d = new Date(timestamp);
             if(isNaN(d.getTime())) return '--'; 
-            return `${pad(d.getDate())}/${pad(d.getMonth()+1)}/${d.getFullYear()} à ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+            return `${pad(d.getDate())}/ ${pad(d.getMonth()+1)}/ ${d.getFullYear()} [${pad(d.getHours())} : ${pad(d.getMinutes())} : ${pad(d.getSeconds())}]`;
         };
     </script>
 
@@ -497,7 +586,7 @@
 
     <nav>
         <button class="nav-btn chamfer active" onclick="switchTab('view-nexus')">CENTRE DE CONTRÔLE</button>
-        <button class="nav-btn chamfer" onclick="switchTab('view-protocols')">PROTOCOLES</button>
+        <button class="nav-btn chamfer" onclick="switchTab('view-protocols')">PROJETS</button>
         <button class="nav-btn chamfer" onclick="switchTab('view-database')">BASE DE DONNÉES</button>
         <button class="nav-btn chamfer" onclick="switchTab('view-social')">SOCIAL</button>
         <button class="nav-btn chamfer" onclick="switchTab('view-mindmap')">MINDMAP</button>
@@ -515,7 +604,7 @@
                     
                     <div class="dash-stats-grid">
                         <div class="dash-card" style="border-left-color: var(--cp-cyan);">
-                            <div class="dash-card-title">PROTOCOLES ACTIFS</div>
+                            <div class="dash-card-title">PROJETS ACTIFS</div>
                             <div class="dash-card-value cyber-number" id="sum-protocols">0</div>
                         </div>
                         <div class="dash-card" style="border-left-color: var(--cp-yellow);">
@@ -532,7 +621,7 @@
                         </div>
                         <div class="dash-card" style="border-left-color: var(--cp-green);">
                             <div class="dash-card-title">CAPITAL DISPONIBLE</div>
-                            <div class="dash-card-value cyber-number" id="sum-finance" style="font-size: 1.8rem;">0.00 ¥</div>
+                            <div class="dash-card-value cyber-number" id="sum-finance">0 ¥</div>
                         </div>
                     </div>
                     
@@ -546,57 +635,176 @@
             </div>
         </div>
 
-        <!-- VIEW: PROTOCOLES -->
+        <!-- VIEW: PROJETS (MASTER/DETAIL TYPE CP2077) -->
         <div id="view-protocols" class="panel">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; flex-wrap: wrap; gap: 15px;">
-                <h2 class="section-title" style="margin: 0;">Base de Protocoles</h2>
-                <button class="cp-btn chamfer" onclick="openModal('modal-new-protocol')">+ NOUVEAU PROTOCOLE</button>
+            <h2 class="section-title" style="margin-bottom: 25px;">Journal des Projets</h2>
+            
+            <div class="journal-layout">
+                <!-- COLONNE GAUCHE: LISTE DES MISSIONS (FIXÉE LORS DU SCROLL) -->
+                <div class="journal-left" id="journal-left-panel">
+                    <button class="cp-btn chamfer" style="margin-bottom: 15px; width: 100%; font-size: 1.1rem; letter-spacing: 1px;" onclick="openModal('modal-new-protocol')">+ NOUVEAU PROJET</button>
+                    <div id="protocol-grid" class="journal-grid-scroll">
+                        <!-- Rendu JS de la liste ici -->
+                    </div>
+                </div>
+
+                <!-- COLONNE DROITE: DETAILS DU PROJET -->
+                <div class="journal-right" id="journal-detail-view">
+                    
+                    <!-- EN-TETE DES BOUTONS DE CONTROLE -->
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 15px;">
+                        <button class="cp-btn-outline danger chamfer" id="mobile-back-protocol" style="display: none;" onclick="closeProtocolDetail()">[ RETOUR AUX PROJETS ]</button>
+                        
+                        <div id="proj-view-controls" style="display: flex; gap: 15px; margin-left: auto;">
+                            <button class="cp-btn warning chamfer" onclick="toggleProtocolEditMode(true)">[ MODIFIER LE PROJET ]</button>
+                        </div>
+                        
+                        <div id="proj-edit-controls" style="display: none; gap: 15px; margin-left: auto;">
+                            <button class="cp-btn cyan chamfer" onclick="saveCurrentProtocol()">SAUVEGARDER</button>
+                            <button class="cp-btn-outline danger chamfer" onclick="toggleProtocolEditMode(false)">ANNULER</button>
+                            <button class="cp-btn danger chamfer" onclick="deleteCurrentProtocol()">SUPPRIMER</button>
+                        </div>
+                    </div>
+
+                    <!-- MODE LECTURE (DOSSIER CLASSE) -->
+                    <div id="protocol-view-mode" class="dossier-container proj-theme chamfer-reverse">
+                        <div class="dossier-header" style="border-bottom: 1px dashed rgba(255,0,85,0.5);">
+                            <div class="dossier-title">
+                                <h2 id="v-p-name" style="color: var(--cp-red); font-size: 2.2rem; text-shadow: 0 0 10px rgba(255,0,85,0.3);">NOM DU PROJET</h2>
+                                <div class="dossier-subtitle cyber-number" id="v-p-date" style="color: var(--cp-cyan); font-size: 1rem;">--</div>
+                            </div>
+                        </div>
+                        
+                        <div class="phases-split-layout">
+                            <!-- COLONNE DE GAUCHE : PHASES A À E -->
+                            <div class="phases-left-col">
+                                <div class="dossier-section" data-title="[ PHASE A - DIAGNOSTIC ]" style="border-color: var(--cp-red);">
+                                    <div class="data-block"><span class="data-block-label">DÉFINITION DU PROBLÈME:</span><div class="data-block-val" id="v-p-step2">--</div></div>
+                                    <div class="data-block"><span class="data-block-label">CAUSE RAÇINE:</span><div class="data-block-val" id="v-p-step3">--</div></div>
+                                    <div class="data-block"><span class="data-block-label">RISQUES DE L'INACTION:</span><div class="data-block-val" id="v-p-step4">--</div></div>
+                                </div>
+
+                                <div class="dossier-section" data-title="[ PHASE B - OBJECTIVITÉ ]" style="border-color: var(--cp-cyan);">
+                                    <div class="data-block"><span class="data-block-label">OBJECTIFS CIBLES:</span><div class="data-block-val" id="v-p-step5">--</div></div>
+                                    <div class="data-block"><span class="data-block-label">HIÉRARCHISATION:</span><div class="data-block-val" id="v-p-step6">--</div></div>
+                                    <div class="data-row"><span class="data-label">ÉCHÉANCES:</span><span class="data-val" id="v-p-step7">--</span></div>
+                                </div>
+
+                                <div class="dossier-section" data-title="[ PHASE C - SOLUTIONS ]" style="border-color: var(--cp-yellow);">
+                                    <div class="data-block"><span class="data-block-label">PISTES DE RÉFLEXION:</span><div class="data-block-val" id="v-p-step8">--</div></div>
+                                    <div class="data-block"><span class="data-block-label">RESSOURCES & FAISABILITÉ:</span><div class="data-block-val" id="v-p-step9">--</div></div>
+                                </div>
+
+                                <div class="dossier-section" data-title="[ PHASE D - DÉCISION ]" style="border-color: var(--cp-purple);">
+                                    <div class="data-block"><span class="data-block-label">TRAITEMENT CHOISI:</span><div class="data-block-val" id="v-p-step10">--</div></div>
+                                    <div class="data-block"><span class="data-block-label">ENGAGEMENT:</span><div class="data-block-val" id="v-p-step11">--</div></div>
+                                </div>
+
+                                <div class="dossier-section" data-title="[ PHASE E - EXÉCUTION ]" style="border-color: var(--cp-green);">
+                                    <div class="data-block"><span class="data-block-label">ACTIONS CONCRÈTES:</span><div class="data-block-val" id="v-p-step12">--</div></div>
+                                    <div class="data-block"><span class="data-block-label">AJUSTEMENTS:</span><div class="data-block-val" id="v-p-step13">--</div></div>
+                                    <div class="data-block"><span class="data-block-label">PRÉVENTION:</span><div class="data-block-val" id="v-p-step14">--</div></div>
+                                </div>
+                            </div>
+                            
+                            <!-- COLONNE DE DROITE : PHASE F -->
+                            <div class="phases-right-col">
+                                <div class="dossier-section" data-title="[ PHASE F - OPÉRATIONS DE TERRAIN ]" style="border-color: var(--cp-orange); height: 100%;">
+                                    <div class="step-subtext" style="margin-bottom: 15px; color: #aaa;">> Actions extraites de l'Agenda liées à ce projet.</div>
+                                    <div id="v-protocol-agenda-list" style="display:flex; flex-direction:column; gap:12px; margin-bottom: 25px;"></div>
+                                    <button class="cp-btn-outline orange chamfer" style="align-self: flex-start; padding: 12px 20px; width: 100%;" onclick="goToAgendaWithSource()">+ PLANIFIER UNE ACTION</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- MODE ÉDITION (FORMULAIRES) -->
+                    <div id="protocol-edit-mode" style="display: none;">
+                        <div class="phases-split-layout">
+                            <!-- COLONNE DE GAUCHE : PHASES A À E -->
+                            <div class="phases-left-col">
+                                <div class="phase-section glass-panel phase-a chamfer-reverse active"><div class="phase-header" onclick="togglePhase(this)"><div>A – Diagnostic</div><div class="cyber-toggle"><svg viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></svg></div></div><div class="phase-body"><div class="step-group"><label class="step-label">1) Nom du problème à traiter :</label><div class="step-subtext">→ Donne un titre clair et court.</div><input type="text" class="cp-input" id="step-1" style="font-size: 1.5rem; font-family: var(--font-title); border-color: var(--cp-red);"></div><div class="form-row"><div class="step-group"><label class="step-label">2) Définition du problème :</label><textarea class="cp-textarea" id="step-2"></textarea></div><div class="step-group"><label class="step-label">3) Cause du problème :</label><textarea class="cp-textarea" id="step-3"></textarea></div></div><div class="step-group"><label class="step-label">4) Risques de l'inaction :</label><textarea class="cp-textarea" id="step-4"></textarea></div></div></div>
+                                <div class="phase-section glass-panel phase-b chamfer-reverse"><div class="phase-header" onclick="togglePhase(this)"><div>B – Objectivité</div><div class="cyber-toggle"><svg viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></svg></div></div><div class="phase-body"><div class="form-row"><div class="step-group"><label class="step-label">5) Liste des objectifs :</label><textarea class="cp-textarea" id="step-5"></textarea></div><div class="step-group"><label class="step-label">6) Hiérarchisation :</label><textarea class="cp-textarea" id="step-6"></textarea></div></div><div class="step-group"><label class="step-label">7) Échéances :</label><input type="text" class="cp-input" id="step-7"></div></div></div>
+                                <div class="phase-section glass-panel phase-c chamfer-reverse"><div class="phase-header" onclick="togglePhase(this)"><div>C – Solutions</div><div class="cyber-toggle"><svg viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></svg></div></div><div class="phase-body"><div class="step-group"><label class="step-label">8) Brainstorming libre :</label><textarea class="cp-textarea" id="step-8"></textarea></div><div class="step-group"><label class="step-label">9) Ressources & Faisabilité :</label><textarea class="cp-textarea" id="step-9"></textarea></div></div></div>
+                                <div class="phase-section glass-panel phase-d chamfer-reverse"><div class="phase-header" onclick="togglePhase(this)"><div>D – Décision</div><div class="cyber-toggle"><svg viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></svg></div></div><div class="phase-body"><div class="step-group"><label class="step-label">10) Choix optimal :</label><textarea class="cp-textarea" id="step-10"></textarea></div><div class="step-group"><label class="step-label">11) Engagement personnel :</label><textarea class="cp-textarea" id="step-11"></textarea></div></div></div>
+                                <div class="phase-section glass-panel phase-e chamfer-reverse"><div class="phase-header" onclick="togglePhase(this)"><div>E – Exécution</div><div class="cyber-toggle"><svg viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></svg></div></div><div class="phase-body"><div class="step-group"><label class="step-label">12) Actions concrètes :</label><textarea class="cp-textarea" id="step-12"></textarea></div><div class="form-row"><div class="step-group"><label class="step-label">13) Ajustements :</label><textarea class="cp-textarea" id="step-13"></textarea></div><div class="step-group"><label class="step-label">14) Prévention :</label><textarea class="cp-textarea" id="step-14"></textarea></div></div></div></div>
+                            </div>
+
+                            <!-- COLONNE DE DROITE : PHASE F -->
+                            <div class="phases-right-col">
+                                <div class="phase-section glass-panel phase-f chamfer-reverse active" style="height: 100%;">
+                                    <div class="phase-header">
+                                        <div>F – Opérations de Terrain</div>
+                                    </div>
+                                    <div class="phase-body" style="display: flex;">
+                                        <div class="step-subtext" style="margin-bottom: 10px; color: #aaa;">> Actions extraites de l'Agenda liées à ce projet.</div>
+                                        <div id="protocol-agenda-list" style="display:flex; flex-direction:column; gap:12px; margin-bottom: 25px;"></div>
+                                        <button class="cp-btn-outline orange chamfer" style="align-self: flex-start; padding: 12px 20px; width: 100%;" onclick="goToAgendaWithSource()">+ PLANIFIER UNE ACTION</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
-            <div class="protocol-grid" id="protocol-grid"></div>
         </div>
 
-        <!-- VIEW: PROTOCOLE DETAIL -->
-        <div id="view-protocol-detail" class="panel">
-            <button class="cp-btn-outline chamfer" style="align-self: flex-start; margin-bottom: 20px;" onclick="closeProtocolDetail()">[ RETOUR AUX PROTOCOLES ]</button>
-            
-            <div class="detail-header-panel glass-panel chamfer-reverse">
-                <div>
-                    <div class="cyber-number" style="color: #aaa; margin-bottom: 5px;" id="detail-last-mod">--</div>
-                    <h2 style="font-family: var(--font-title); font-size: 2.2rem; color: white; text-shadow: 0 2px 5px rgba(0,0,0,0.8);" id="detail-title">Titre</h2>
-                </div>
-                <div style="display: flex; gap: 15px;">
-                    <button class="cp-btn cyan chamfer" onclick="saveCurrentProtocol()">SAUVEGARDER L'ÉTAT</button>
-                    <button class="cp-btn danger chamfer" onclick="deleteCurrentProtocol()">SUPPRIMER</button>
-                </div>
-            </div>
-
-            <div class="phase-section glass-panel phase-a chamfer-reverse active"><div class="phase-header" onclick="togglePhase(this)"><div>A – Diagnostic : Comprendre avant d'agir</div><div class="cyber-toggle"><svg viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></svg></div></div><div class="phase-body"><div class="step-group"><label class="step-label">1) Nom du problème à traiter :</label><div class="step-subtext">→ Donne un titre clair et court.</div><input type="text" class="cp-input" id="step-1" style="font-size: 1.5rem; font-family: var(--font-title); border-color: var(--cp-red);"></div><div class="form-row"><div class="step-group"><label class="step-label">2) Définition du ou des problèmes :</label><div class="step-subtext">→ Qu'est-ce que c'est exactement et fait une liste.<br>→ Comment ce problème se manifeste concrètement ?</div><textarea class="cp-textarea" id="step-2"></textarea></div><div class="step-group"><label class="step-label">3) La raison qui a causé le problème :</label><div class="step-subtext">→ Causes directes, causes profondes, boucles qui entretiennent le problème.</div><textarea class="cp-textarea" id="step-3"></textarea></div></div><div class="step-group"><label class="step-label">4) Les risques et les conséquences de mon inaction :</label><div class="step-subtext">→ Si j'agis sans réfléchir : quels dommages possibles ? Si je ne fais rien : quelles conséquences ? Le résultat serait-il souhaitable ?</div><textarea class="cp-textarea" id="step-4"></textarea></div></div></div>
-            <div class="phase-section glass-panel phase-b chamfer-reverse"><div class="phase-header" onclick="togglePhase(this)"><div>B – Objectivité : Redéfinir le futur souhaité</div><div class="cyber-toggle"><svg viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></svg></div></div><div class="phase-body"><div class="form-row"><div class="step-group"><label class="step-label">5) Liste des objectifs :</label><div class="step-subtext">→ Objectifs principaux et secondaires.</div><textarea class="cp-textarea" id="step-5"></textarea></div><div class="step-group"><label class="step-label">6) Hiérarchisation :</label><div class="step-subtext">→ Classer les objectifs. Identifier le meilleur ratio Impact/Effort.</div><textarea class="cp-textarea" id="step-6"></textarea></div></div><div class="step-group"><label class="step-label">7) Échéances :</label><div class="step-subtext">→ Deadline globale, sous-deadlines, fenêtre d'opportunité.</div><input type="text" class="cp-input" id="step-7"></div></div></div>
-            <div class="phase-section glass-panel phase-c chamfer-reverse"><div class="phase-header" onclick="togglePhase(this)"><div>C – Génération de solutions : Ouvrir le champ des possibles</div><div class="cyber-toggle"><svg viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></svg></div></div><div class="phase-body"><div class="step-group"><label class="step-label">8) Brainstorming libre :</label><div class="step-subtext">→ Collecte d'idées sans jugement.</div><textarea class="cp-textarea" id="step-8"></textarea></div><div class="step-group"><label class="step-label">9) Vérification des ressources et faisabilité :</label><div class="step-subtext">→ Temps, Argent, Compétences, Probabilité de succès.</div><textarea class="cp-textarea" id="step-9"></textarea></div></div></div>
-            <div class="phase-section glass-panel phase-d chamfer-reverse"><div class="phase-header" onclick="togglePhase(this)"><div>D – Décision : Choisir et s'engager</div><div class="cyber-toggle"><svg viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></svg></div></div><div class="phase-body"><div class="step-group"><label class="step-label">10) Choix du traitement optimal :</label><div class="step-subtext">→ Le meilleur compromis Impact/Risque/Ressources.</div><textarea class="cp-textarea" id="step-10"></textarea></div><div class="step-group"><label class="step-label">11) Engagement personnel :</label><div class="step-subtext">→ Déclaration : "Je m'engage à..."</div><textarea class="cp-textarea" id="step-11"></textarea></div></div></div>
-            <div class="phase-section glass-panel phase-e chamfer-reverse"><div class="phase-header" onclick="togglePhase(this)"><div>E – Exécution : Transformer la théorie en pouvoir</div><div class="cyber-toggle"><svg viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></svg></div></div><div class="phase-body"><div class="step-group"><label class="step-label">12) Actions concrètes :</label><div class="step-subtext">→ Liste d'actions, ordre d'exécution.</div><textarea class="cp-textarea" id="step-12"></textarea></div><div class="form-row"><div class="step-group"><label class="step-label">13) Correction / Ajustements :</label><div class="step-subtext">→ Mesure des résultats, ajustements.</div><textarea class="cp-textarea" id="step-13"></textarea></div><div class="step-group"><label class="step-label">14) Prévention :</label><div class="step-subtext">→ Comment éviter que le problème réapparaisse ?</div><textarea class="cp-textarea" id="step-14"></textarea></div></div></div></div>
-            
-            <div class="phase-section glass-panel phase-f chamfer-reverse">
-                <div class="phase-header" onclick="togglePhase(this)">
-                    <div>F – Opération : Planificateur</div>
-                    <div class="cyber-toggle"><svg viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></svg></div>
-                </div>
-                <div class="phase-body">
-                    <div class="step-subtext" style="margin-bottom: 10px;">> Liste des actions de ce protocole extraites de votre Agenda.</div>
-                    <div id="protocol-agenda-list" style="display:flex; flex-direction:column; gap:12px; margin-bottom: 25px;"></div>
-                    <button class="cp-btn-outline orange chamfer" style="align-self: flex-start; padding: 12px 20px;" onclick="goToAgendaWithSource()">+ PLANIFIER UNE NOUVELLE ACTION</button>
-                </div>
-            </div>
-        </div>
-
-        <!-- VIEW: BASE DE DONNÉES (NOTES) -->
+        <!-- VIEW: BASE DE DONNÉES (NOTES) - REDESIGN MASTER/DETAIL -->
         <div id="view-database" class="panel">
-             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; flex-wrap: wrap; gap: 15px;">
-                <h2 class="section-title" style="margin: 0;">Base de Données / Notes Libres</h2>
-                <button class="cp-btn cyan chamfer" onclick="openNewNoteModal()">+ NOUVELLE ENTRÉE</button>
+            <h2 class="section-title" style="margin-bottom: 25px;">Base de Données / Notes Libres</h2>
+            
+            <div class="journal-layout">
+                <!-- COLONNE GAUCHE: LISTE DES NOTES (FIXÉE LORS DU SCROLL) -->
+                <div class="journal-left" id="note-left-panel">
+                    <button class="cp-btn cyan chamfer" style="margin-bottom: 15px; width: 100%; font-size: 1.1rem; letter-spacing: 1px;" onclick="createNewNote()">+ NOUVELLE ENTRÉE</button>
+                    <div id="note-filters" class="filter-bar"></div>
+                    <div id="note-grid" class="journal-grid-scroll">
+                        <!-- Rendu JS de la liste ici -->
+                    </div>
+                </div>
+
+                <!-- COLONNE DROITE: DETAILS DE LA NOTE -->
+                <div class="journal-right" id="note-detail-view">
+                    
+                    <!-- Bouton retour mobile -->
+                    <button class="cp-btn-outline danger chamfer" id="mobile-back-note" style="align-self: flex-start; margin-bottom: 20px; display: none;" onclick="closeNoteDetail()">[ RETOUR A LA LISTE ]</button>
+                    
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 15px;">
+                        <div id="note-view-controls" style="display: flex; gap: 15px; margin-left: auto;">
+                            <button class="cp-btn warning chamfer" onclick="toggleNoteEditMode(true)">[ MODIFIER LA DONNÉE ]</button>
+                        </div>
+                        
+                        <div id="note-edit-controls" style="display: none; gap: 15px; margin-left: auto;">
+                            <button class="cp-btn cyan chamfer" onclick="saveCurrentNote()">SAUVEGARDER</button>
+                            <button class="cp-btn-outline danger chamfer" onclick="toggleNoteEditMode(false)">ANNULER</button>
+                            <button class="cp-btn danger chamfer" onclick="deleteCurrentNote()">SUPPRIMER</button>
+                        </div>
+                    </div>
+
+                    <!-- MODE LECTURE (DOSSIER) -->
+                    <div id="note-view-mode" class="dossier-container chamfer-reverse">
+                        <div class="dossier-header" style="border-bottom: 1px dashed rgba(0, 229, 255, 0.5);">
+                            <div class="dossier-title">
+                                <h2 id="v-n-title" style="color: var(--cp-cyan); font-size: 2.2rem; text-shadow: 0 0 10px rgba(0,229,255,0.3);">TITRE</h2>
+                                <div class="dossier-subtitle cyber-number" id="v-n-date" style="color: var(--cp-yellow); font-size: 1rem;">--</div>
+                                <div id="v-n-tags" style="margin-top: 10px;"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="data-block-val" id="v-n-content" style="white-space: pre-wrap; font-family: var(--font-mono); font-size: 1.15rem; line-height: 1.6; border-left-color: var(--cp-cyan); min-height: 300px;">
+                        </div>
+                    </div>
+
+                    <!-- MODE ÉDITION -->
+                    <div id="note-edit-mode" style="display: none;" class="glass-panel chamfer-reverse">
+                         <div style="padding: 25px; border-left: 4px solid var(--cp-cyan);">
+                            <div class="step-group"><label class="step-label">Sujet / Titre :</label><input type="text" id="e-n-title" class="cp-input" style="font-size:1.5rem; font-family:var(--font-title);"></div>
+                            <div class="step-group"><label class="step-label">Tags (séparés par des virgules) :</label><input type="text" id="e-n-tags" class="cp-input" placeholder="ex: #Aridago, #USTB"></div>
+                            <div class="step-group" style="margin-top:20px;"><label class="step-label">Contenu des données :</label><textarea id="e-n-content" class="cp-textarea" style="min-height: 350px; font-size: 1.1rem;"></textarea></div>
+                         </div>
+                    </div>
+                </div>
             </div>
-            <div id="note-filters" class="filter-bar"></div>
-            <div class="note-grid" id="note-list-container"></div>
         </div>
 
         <!-- VIEW: SOCIAL -->
@@ -785,14 +993,14 @@
                     <div class="glass-panel chamfer-reverse" style="padding: 30px; position: sticky; top: 0;">
                         <h3 style="color: var(--cp-cyan); margin-bottom: 25px; font-family: var(--font-title);" id="agenda-form-title">AJOUTER ACTION</h3>
                         <div class="step-group"><label class="step-label" style="font-size:1rem;">Titre de l'action</label><input type="text" id="ag-title" class="cp-input"></div>
-                        <div class="step-group"><label class="step-label" style="font-size:1rem;">Date & Heure limite</label><input type="datetime-local" id="ag-date" class="cp-input" style="font-family: var(--font-mono);"></div>
+                        <div class="step-group"><label class="step-label" style="font-size:1rem;">Date & Heure limite (Optionnel)</label><input type="datetime-local" id="ag-date" class="cp-input" style="font-family: var(--font-mono);"></div>
                         
                         <div class="step-group">
-                            <label class="step-label" style="font-size:1rem;">Tags / Projet (Optionnel)</label>
+                            <label class="step-label" style="font-size:1rem;">Tags (Optionnel)</label>
                             <input type="text" id="ag-tags" class="cp-input" placeholder="ex: #Aridago, #USTB">
                         </div>
 
-                        <div class="step-group" style="margin-bottom: 30px;"><label class="step-label" style="font-size:1rem;">Source (Protocole lié)</label><input type="text" id="ag-source" class="cp-input" placeholder="Ex: Projet Alpha"></div>
+                        <div class="step-group" style="margin-bottom: 30px;"><label class="step-label" style="font-size:1rem;">Source (Projet lié)</label><input type="text" id="ag-source" class="cp-input" placeholder="Ex: Projet Alpha"></div>
                         <button class="cp-btn chamfer" style="width: 100%;" id="ag-btn-submit" onclick="submitAgendaTask()">GÉNÉRER</button>
                         <button class="cp-btn danger chamfer" style="width: 100%; margin-top: 15px; display: none;" id="ag-btn-cancel" onclick="resetAgendaForm()">ANNULER MODIFICATION</button>
                     </div>
@@ -816,13 +1024,13 @@
             </div>
             
             <div class="finance-stats">
-                <div class="stat-card glass-panel chamfer-reverse"><div class="stat-title">Solde Total</div><div class="stat-value cyber-number" id="fin-solde">0.00</div></div>
-                <div class="stat-card glass-panel chamfer-reverse"><div class="stat-title">Total Revenus</div><div class="stat-value cyber-number text-green" id="fin-revenus">0.00</div></div>
-                <div class="stat-card glass-panel chamfer-reverse"><div class="stat-title">Total Dépenses</div><div class="stat-value cyber-number text-red" id="fin-depenses">0.00</div></div>
+                <div class="stat-card glass-panel chamfer-reverse"><div class="stat-title">Solde Total</div><div class="stat-value cyber-number" id="fin-solde">0</div></div>
+                <div class="stat-card glass-panel chamfer-reverse"><div class="stat-title">Total Revenus</div><div class="stat-value cyber-number text-green" id="fin-revenus">0</div></div>
+                <div class="stat-card glass-panel chamfer-reverse"><div class="stat-title">Total Dépenses</div><div class="stat-value cyber-number text-red" id="fin-depenses">0</div></div>
             </div>
 
             <div class="finance-grid">
-                <div class="glass-panel chamfer-reverse" style="padding: 30px;">
+                <div class="glass-panel chamfer-reverse" style="padding: 30px; position: sticky; top: 0;">
                     <h3 style="color: var(--cp-cyan); margin-bottom: 25px; font-family: var(--font-title);" id="fin-form-title">NOUVELLE TRANSACTION</h3>
                     <div class="step-group"><label class="step-label" style="font-size:1rem;">Type</label><select id="fin-type" class="cp-select"><option value="in">Revenu (+)</option><option value="out">Dépense (-)</option></select></div>
                     <div class="step-group"><label class="step-label" style="font-size:1rem;">Libellé</label><input type="text" id="fin-label" class="cp-input" placeholder="Ex: Loyer, Salaire"></div>
@@ -839,9 +1047,7 @@
 
     </main>
 
-    <!-- MODALS & TOASTS -->
-    <div id="toast-container"></div>
-    
+    <!-- MODALS (INITIALISATION PROJET) -->
     <div class="modal" id="modal-new-protocol">
         <div class="modal-content glass-panel chamfer">
             <h2 class="section-title">INITIALISATION</h2>
@@ -852,28 +1058,6 @@
             <div style="display:flex; gap:15px; justify-content:flex-end;">
                 <button class="cp-btn chamfer" onclick="createProtocol()">CRÉER</button>
                 <button class="cp-btn-outline danger chamfer" onclick="closeModal('modal-new-protocol')">ANNULER</button>
-            </div>
-        </div>
-    </div>
-
-    <div class="modal" id="modal-new-note">
-        <div class="modal-content glass-panel chamfer">
-            <h2 class="section-title" id="note-modal-title" style="color: var(--cp-red); border-color: var(--cp-red);">NOUVELLE ENTRÉE (BDD)</h2>
-            <div class="step-group" style="margin-bottom: 15px;">
-                <label style="color: white; font-family: var(--font-ui);">Sujet / Titre</label>
-                <input type="text" id="new-n-title" class="cp-input" style="font-size: 1.1rem;">
-            </div>
-            <div class="step-group" style="margin-bottom: 15px;">
-                <label style="color: white; font-family: var(--font-ui);">Tags / Projet (Optionnel)</label>
-                <input type="text" id="new-n-tags" class="cp-input" style="font-size: 1.1rem;" placeholder="ex: #Aridago, #USTB">
-            </div>
-            <div class="step-group" style="margin-bottom: 25px;">
-                <label style="color: white; font-family: var(--font-ui);">Contenu des données</label>
-                <textarea id="new-n-content" class="cp-textarea"></textarea>
-            </div>
-            <div style="display:flex; gap:15px; justify-content:flex-end;">
-                <button class="cp-btn danger chamfer" onclick="submitNote()">SAUVEGARDER</button>
-                <button class="cp-btn-outline danger chamfer" onclick="closeModal('modal-new-note')">ANNULER</button>
             </div>
         </div>
     </div>
@@ -943,6 +1127,22 @@
     <!-- SCRIPT PRINCIPAL DU SITE -->
     <script>
         // ==========================================
+        // VALIDATION CLAVIER (Touche Entrée)
+        // ==========================================
+        document.addEventListener('keydown', (e) => {
+            // Empêche le déclenchement dans un champ de texte multiligne
+            if (e.key === 'Enter' && e.target.tagName !== 'TEXTAREA') {
+                if (document.getElementById('view-agenda').classList.contains('active') && (e.target.id === 'ag-title' || e.target.id === 'ag-date' || e.target.id === 'ag-tags' || e.target.id === 'ag-source')) {
+                    submitAgendaTask();
+                } else if (document.getElementById('view-finance').classList.contains('active') && (e.target.id === 'fin-label' || e.target.id === 'fin-amount')) {
+                    submitTransaction();
+                } else if (document.getElementById('modal-new-protocol').classList.contains('active') && e.target.id === 'new-p-name') {
+                    createProtocol();
+                }
+            }
+        });
+
+        // ==========================================
         // FONCTION D'UPLOAD IMGBB (CONSERVÉ)
         // ==========================================
         async function handleImgBBUpload(inputElement, targetHiddenId) {
@@ -1010,14 +1210,14 @@
         };
 
         document.addEventListener('click', (e) => {
-            const target = e.target.closest('button, .nav-btn, .protocol-card, .note-card, .contact-card, .task-card, .trans-card, .soc-car-btn, .soc-car-dot, .phase-header, .filter-btn, select');
+            const target = e.target.closest('button, .nav-btn, .protocol-card, .cp-journal-item, .note-card, .contact-card, .task-card, .trans-card, .soc-car-btn, .soc-car-dot, .phase-header, .filter-btn, select');
             if (target) {
                 CyberSFX.play();
             }
         });
 
         // ==========================================
-        // FIX CLAVIER MOBILE : Garder les inputs visibles (CONSERVÉ)
+        // FIX CLAVIER MOBILE : Garder les inputs visibles
         // ==========================================
         document.addEventListener('focusin', (e) => {
             if (window.innerWidth <= 768 && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA')) {
@@ -1037,13 +1237,13 @@
         const mainView = document.getElementById('main-view');
         
         mainView.addEventListener('touchstart', e => {
-            if(e.target.closest('#mindmap-canvas, nav, .soc-carousel, input, textarea')) return;
+            if(e.target.closest('#mindmap-canvas, nav, .soc-carousel, input, textarea, .journal-grid-scroll')) return;
             touchStartX = e.changedTouches[0].screenX;
             touchStartY = e.changedTouches[0].screenY;
         }, {passive: true});
 
         mainView.addEventListener('touchend', e => {
-            if(e.target.closest('#mindmap-canvas, nav, .soc-carousel, input, textarea')) return;
+            if(e.target.closest('#mindmap-canvas, nav, .soc-carousel, input, textarea, .journal-grid-scroll')) return;
             let touchEndX = e.changedTouches[0].screenX;
             let touchEndY = e.changedTouches[0].screenY;
             
@@ -1152,6 +1352,11 @@
                     }
                 }
             } catch(e) { console.error("Erreur LocalStorage", e); }
+            
+            // Initialiser l'ordre des projets/notes si inexistant (pour le tri manuel)
+            protocols.forEach((p, idx) => { if (p.order === undefined) p.order = (p.lastModified || Date.now()) + idx; });
+            notes.forEach((n, idx) => { if (n.order === undefined) n.order = (n.lastModified || Date.now()) + idx; });
+            
             renderAll(); 
         };
 
@@ -1171,6 +1376,10 @@
                 const currSelect = document.getElementById('fin-currency');
                 if(currSelect) currSelect.value = currentCurrency;
             }
+            
+            protocols.forEach((p, idx) => { if (p.order === undefined) p.order = (p.lastModified || Date.now()) + idx; });
+            notes.forEach((n, idx) => { if (n.order === undefined) n.order = (n.lastModified || Date.now()) + idx; });
+            
             renderAll();
         };
 
@@ -1217,6 +1426,31 @@
                 const container = document.getElementById('mindmap-container');
                 mmCanvas.width = container.clientWidth; mmCanvas.height = container.clientHeight;
             }
+            
+            // GESTION DU RESPONSIVE DU JOURNAL DES PROJETS & NOTES
+            const leftPanelP = document.getElementById('journal-left-panel');
+            const rightPanelP = document.getElementById('journal-detail-view');
+            if (leftPanelP && rightPanelP && document.getElementById('view-protocols').classList.contains('active')) {
+                if (window.innerWidth > 1024) {
+                    leftPanelP.style.display = 'flex';
+                    if (currentProtocolId) rightPanelP.style.display = 'flex';
+                } else {
+                    if (currentProtocolId) { leftPanelP.style.display = 'none'; rightPanelP.style.display = 'flex'; } 
+                    else { leftPanelP.style.display = 'flex'; rightPanelP.style.display = 'none'; }
+                }
+            }
+
+            const leftPanelN = document.getElementById('note-left-panel');
+            const rightPanelN = document.getElementById('note-detail-view');
+            if (leftPanelN && rightPanelN && document.getElementById('view-database').classList.contains('active')) {
+                if (window.innerWidth > 1024) {
+                    leftPanelN.style.display = 'flex';
+                    if (currentEditNoteId) rightPanelN.style.display = 'flex';
+                } else {
+                    if (currentEditNoteId) { leftPanelN.style.display = 'none'; rightPanelN.style.display = 'flex'; } 
+                    else { leftPanelN.style.display = 'flex'; rightPanelN.style.display = 'none'; }
+                }
+            }
         });
 
         function triggerDataRain() {
@@ -1235,11 +1469,19 @@
             let sumAgenda = document.getElementById('sum-agenda'); if(sumAgenda) sumAgenda.innerText = agendaTasks.length;
             let sumNotes = document.getElementById('sum-notes'); if(sumNotes) sumNotes.innerText = notes.length;
             let sumContacts = document.getElementById('sum-contacts'); if(sumContacts) sumContacts.innerText = socialContacts.length;
+            
             let sumFinance = document.getElementById('sum-finance');
             if(sumFinance) {
                 let inT = 0, outT = 0;
                 transactions.forEach(t => { if(t.type === 'in') inT += t.baseAmount; else outT += t.baseAmount; });
-                sumFinance.innerText = formatCurrency(inT - outT);
+                let balance = inT - outT;
+                sumFinance.innerText = formatCurrency(balance);
+                
+                if (balance < 0) {
+                    sumFinance.style.color = 'var(--cp-red)';
+                } else {
+                    sumFinance.style.color = 'var(--cp-green)';
+                }
             }
             renderXP();
         }
@@ -1311,6 +1553,7 @@
             }
         }
 
+        /* HORLOGE RESTAUREE AU FORMAT D'ORIGINE */
         function updateClock() {
             const days = ['Dimanche', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi'];
             const months = ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'];
@@ -1321,7 +1564,6 @@
         setInterval(updateClock, 1000);
 
         function switchTab(viewId, direction = 'fade') {
-            // DECLENCHE L'ANIMATION DE PLUIE DE DONNÉES A CHAQUE CHANGEMENT D'ONGLET
             triggerDataRain();
 
             if(mindmapAnimId) { cancelAnimationFrame(mindmapAnimId); mindmapAnimId = null; }
@@ -1335,21 +1577,39 @@
             });
             
             document.querySelectorAll('.panel').forEach(panel => {
-                panel.classList.remove('active', 'slide-next', 'slide-prev', 'slide-right', 'slide-left');
+                panel.classList.remove('active', 'slide-next', 'slide-prev');
             });
-            
-            let finalViewId = viewId;
-            if(viewId === 'view-protocol-detail' && !currentProtocolId) finalViewId = 'view-protocols';
-            if(viewId === 'view-social-detail' && !currentContactId) finalViewId = 'view-social';
 
-            let targetView = document.getElementById(finalViewId);
+            if(viewId === 'view-protocols') {
+                const leftPanel = document.getElementById('journal-left-panel');
+                const rightPanel = document.getElementById('journal-detail-view');
+                if (window.innerWidth <= 1024) {
+                    if(currentProtocolId) { leftPanel.style.display = 'none'; rightPanel.style.display = 'flex'; } 
+                    else { leftPanel.style.display = 'flex'; rightPanel.style.display = 'none'; }
+                } else {
+                    leftPanel.style.display = 'flex'; rightPanel.style.display = currentProtocolId ? 'flex' : 'none';
+                }
+            }
+
+            if(viewId === 'view-database') {
+                const leftPanel = document.getElementById('note-left-panel');
+                const rightPanel = document.getElementById('note-detail-view');
+                if (window.innerWidth <= 1024) {
+                    if(currentEditNoteId) { leftPanel.style.display = 'none'; rightPanel.style.display = 'flex'; } 
+                    else { leftPanel.style.display = 'flex'; rightPanel.style.display = 'none'; }
+                } else {
+                    leftPanel.style.display = 'flex'; rightPanel.style.display = currentEditNoteId ? 'flex' : 'none';
+                }
+            }
+
+            let targetView = document.getElementById(viewId);
             if(targetView) {
                 targetView.classList.add('active');
                 if(direction === 'next') targetView.classList.add('slide-next');
                 else if(direction === 'prev') targetView.classList.add('slide-prev');
             }
             
-            if(finalViewId === 'view-mindmap') { setTimeout(initMindmap, 100); }
+            if(viewId === 'view-mindmap') { setTimeout(initMindmap, 100); }
         }
 
         function togglePhase(element) { if(element && element.parentElement) element.parentElement.classList.toggle('active'); }
@@ -1357,33 +1617,120 @@
         function closeModal(id) { 
             let modal = document.getElementById(id); if(modal) modal.classList.remove('active'); 
             if(id==='modal-new-protocol') { let ni = document.getElementById('new-p-name'); if(ni) ni.value = ''; }
-            if(id==='modal-new-note') { document.getElementById('new-n-title').value = ''; document.getElementById('new-n-tags').value = ''; document.getElementById('new-n-content').value = ''; }
+        }
+
+        // ==========================================
+        // PROJETS (MASTER / DETAIL)
+        // ==========================================
+        
+        function moveProjectUp(e, id) {
+            e.stopPropagation(); CyberSFX.play();
+            protocols.sort((a,b) => (b.order || 0) - (a.order || 0));
+            const idx = protocols.findIndex(p => p.id === id);
+            if (idx > 0) {
+                let temp = protocols[idx].order;
+                protocols[idx].order = protocols[idx-1].order;
+                protocols[idx-1].order = temp;
+                if(protocols[idx].order === protocols[idx-1].order) protocols[idx].order += 1000;
+                stateChanged(); renderProtocols();
+            }
+        }
+        
+        function moveProjectDown(e, id) {
+            e.stopPropagation(); CyberSFX.play();
+            protocols.sort((a,b) => (b.order || 0) - (a.order || 0));
+            const idx = protocols.findIndex(p => p.id === id);
+            if (idx >= 0 && idx < protocols.length - 1) {
+                let temp = protocols[idx].order;
+                protocols[idx].order = protocols[idx+1].order;
+                protocols[idx+1].order = temp;
+                if(protocols[idx].order === protocols[idx+1].order) protocols[idx].order -= 1000;
+                stateChanged(); renderProtocols();
+            }
         }
 
         function renderProtocols() {
             const grid = document.getElementById('protocol-grid'); if(!grid) return; grid.innerHTML = '';
+            
             if(protocols.length === 0) {
-                grid.innerHTML = '<div style="color:var(--cp-text); font-family:var(--font-mono); opacity:0.7;">> AUCUN PROTOCOLE ENREGISTRÉ DANS LA MATRICE.</div>';
+                grid.innerHTML = '<div style="color:var(--cp-text); font-family:var(--font-mono); opacity:0.7; padding: 20px;">> AUCUN PROJET ENREGISTRÉ DANS LA MATRICE.</div>';
                 return;
             }
-            protocols.sort((a,b) => (b.lastModified || 0) - (a.lastModified || 0)).forEach(p => {
-                const card = document.createElement('div'); card.className = 'protocol-card glass-panel chamfer-reverse'; card.onclick = () => openProtocolDetail(p.id);
-                card.innerHTML = `<div class="cyber-number" style="color:var(--text-muted); font-size:0.8rem;">${window.formatDateFull(p.lastModified)}</div><div class="protocol-title">${p.data.step1 || 'Sans Titre'}</div>`;
+            
+            protocols.sort((a,b) => (b.order || 0) - (a.order || 0)).forEach(p => {
+                const isActive = p.id === currentProtocolId;
+                const card = document.createElement('div');
+                card.className = `cp-journal-item ${isActive ? 'active' : ''}`; 
+                card.onclick = () => openProtocolDetail(p.id);
+                
+                card.innerHTML = `
+                    <div class="cp-journal-item-icon">
+                        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2h12c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>
+                    </div>
+                    <div class="cp-journal-item-text">
+                        <div class="title">${p.data.step1 || 'SANS TITRE'}</div>
+                        <div class="subtitle">PROJET: EN COURS</div>
+                    </div>
+                    <div style="display:flex; flex-direction:column; gap:2px; margin-right:10px; z-index:10;">
+                        <button class="btn-prio" onclick="moveProjectUp(event, ${p.id})">▲</button>
+                        <button class="btn-prio" onclick="moveProjectDown(event, ${p.id})">▼</button>
+                    </div>
+                `;
                 grid.appendChild(card);
             });
         }
+        
         function openProtocolDetail(id) {
-            currentProtocolId = id; const p = protocols.find(x => x.id === id); if(!p) return;
-            for(let i=1; i<=14; i++) { const el = document.getElementById('step-'+i); if(el) el.value = p.data['step'+i] || ''; }
-            document.getElementById('detail-title').innerText = p.data.step1 || 'Protocole'; document.getElementById('detail-last-mod').innerText = window.formatDateFull(p.lastModified);
+            currentProtocolId = id; 
+            const p = protocols.find(x => x.id === id); 
+            if(!p) return;
+            
+            for(let i=1; i<=14; i++) { 
+                const el = document.getElementById('step-'+i); 
+                if(el) el.value = p.data['step'+i] || ''; 
+            }
+            
+            document.getElementById('v-p-name').innerText = p.data.step1 || 'SANS TITRE'; 
+            document.getElementById('v-p-date').innerText = "DERNIÈRE MODIFICATION : " + window.formatDateFull(p.lastModified);
+            for(let i=2; i<=14; i++) {
+                let el = document.getElementById('v-p-step'+i);
+                if(el) el.innerText = p.data['step'+i] || '--';
+            }
+
             renderProtocolAgenda(p.data.step1);
-            document.querySelectorAll('.panel').forEach(el => el.classList.remove('active'));
-            document.getElementById('view-protocol-detail').classList.add('active');
+            
+            document.getElementById('journal-detail-view').style.display = 'flex';
+            if(window.innerWidth <= 1024) {
+                document.getElementById('journal-left-panel').style.display = 'none';
+            }
+            
+            toggleProtocolEditMode(false); 
+            renderProtocols(); 
         }
+
+        function toggleProtocolEditMode(isEditing) {
+            const viewMode = document.getElementById('protocol-view-mode');
+            const editMode = document.getElementById('protocol-edit-mode');
+            const viewBtns = document.getElementById('proj-view-controls');
+            const editBtns = document.getElementById('proj-edit-controls');
+            
+            if(isEditing) {
+                viewMode.style.display = 'none'; viewBtns.style.display = 'none';
+                editMode.style.display = 'block'; editBtns.style.display = 'flex';
+            } else {
+                editMode.style.display = 'none'; editBtns.style.display = 'none';
+                viewMode.style.display = 'block'; viewBtns.style.display = 'flex';
+            }
+        }
+        
         function closeProtocolDetail() {
-            currentProtocolId = null; document.querySelectorAll('.panel').forEach(el => el.classList.remove('active'));
-            document.getElementById('view-protocols').classList.add('active'); renderProtocols(); if(mindmapAnimId) buildMindmapData();
+            currentProtocolId = null; 
+            document.getElementById('journal-detail-view').style.display = 'none';
+            document.getElementById('journal-left-panel').style.display = 'flex';
+            renderProtocols(); 
+            if(mindmapAnimId) buildMindmapData();
         }
+        
         function saveCurrentProtocol() {
             if(!currentProtocolId) return; const p = protocols.find(x => x.id === currentProtocolId); if(!p) return;
             let oldTitle = p.data.step1;
@@ -1394,33 +1741,64 @@
                 renderAgenda(); 
             }
             p.lastModified = Date.now();
-            document.getElementById('detail-title').innerText = p.data.step1 || 'Sans Titre'; document.getElementById('detail-last-mod').innerText = window.formatDateFull(p.lastModified);
-            renderProtocolAgenda(p.data.step1); window.showToast("DONNÉES SAUVEGARDÉES", "var(--cp-green)"); stateChanged();
+            window.showToast("PROJET SAUVEGARDÉ", "var(--cp-green)"); 
+            stateChanged();
+            openProtocolDetail(currentProtocolId);
         }
+        
         function createProtocol() {
-            let nameInput = document.getElementById('new-p-name'); if(!nameInput) return; const name = nameInput.value; if(!name) return;
-            const newId = Date.now(); protocols.push({ id: newId, lastModified: Date.now(), data: { step1: name } });
-            stateChanged(); window.showToast("PROTOCOLE INITIALISÉ", "var(--cp-cyan)"); closeModal('modal-new-protocol'); renderProtocols(); openProtocolDetail(newId); 
+            let nameInput = document.getElementById('new-p-name'); 
+            let name = "NOUVEAU PROJET";
+            if(nameInput && nameInput.value) {
+                name = nameInput.value;
+                closeModal('modal-new-protocol');
+            }
+            const newId = Date.now(); 
+            protocols.push({ id: newId, order: Date.now(), lastModified: Date.now(), data: { step1: name } });
+            stateChanged(); window.showToast("PROJET INITIALISÉ", "var(--cp-cyan)"); 
+            renderProtocols(); 
+            openProtocolDetail(newId);
+            toggleProtocolEditMode(true); 
         }
+
         function deleteCurrentProtocol() {
             if(!currentProtocolId) return;
-            if(confirm("Confirmer la suppression de ce protocole ? (Les actions associées perdront leur source)")) {
-                protocols = protocols.filter(p => p.id !== currentProtocolId); stateChanged(); window.showToast("PROTOCOLE SUPPRIMÉ", "var(--cp-red)"); closeProtocolDetail(); 
+            if(confirm("Confirmer la suppression de ce projet ? (Les actions associées perdront leur source)")) {
+                protocols = protocols.filter(p => p.id !== currentProtocolId); stateChanged(); window.showToast("PROJET SUPPRIMÉ", "var(--cp-red)"); closeProtocolDetail(); 
             }
         }
+
         function renderProtocolAgenda(sourceName) {
-            const container = document.getElementById('protocol-agenda-list'); if(!container) return; container.innerHTML = '';
+            const containerView = document.getElementById('v-protocol-agenda-list'); 
+            const containerEdit = document.getElementById('protocol-agenda-list'); 
+            if(!containerView || !containerEdit) return; 
+            
+            containerView.innerHTML = ''; containerEdit.innerHTML = '';
+            
             const tasks = agendaTasks.filter(t => t.source === sourceName);
-            if(tasks.length === 0) { container.innerHTML = '<div style="color:var(--cp-text); font-family:var(--font-mono); opacity:0.7;">> Aucune action planifiée pour le moment.</div>'; return; }
-            tasks.forEach(t => { container.innerHTML += `<div style="background:rgba(10,10,12,0.8); border-left:3px solid var(--cp-orange); padding:15px; font-family:var(--font-mono); color:white; display:flex; justify-content:space-between; align-items:center;"><div><div class="cyber-number" style="color:var(--cp-orange); font-size:0.85rem; margin-bottom:5px;">${t.date.replace('T', ' à ')}</div><div style="font-size: 1.1rem; font-weight:bold;">${t.title}</div></div></div>`; });
+            if(tasks.length === 0) { 
+                let msg = '<div style="color:var(--cp-text); font-family:var(--font-mono); opacity:0.7;">> Aucune action planifiée pour le moment.</div>'; 
+                containerView.innerHTML = msg; containerEdit.innerHTML = msg; return; 
+            }
+            
+            tasks.forEach(t => { 
+                let dateStr = "NON DÉFINI";
+                if(t.date) { const d = new Date(t.date); dateStr = window.formatDateFull(d.getTime()); }
+                let html = `<div style="background:rgba(10,10,12,0.8); border-left:3px solid var(--cp-orange); padding:15px; font-family:var(--font-mono); color:white; display:flex; justify-content:space-between; align-items:center;"><div><div class="cyber-number" style="color:var(--cp-orange); font-size:0.85rem; margin-bottom:5px;">${dateStr}</div><div style="font-size: 1.1rem; font-weight:bold;">${t.title}</div></div></div>`; 
+                containerView.innerHTML += html;
+                containerEdit.innerHTML += html;
+            });
         }
+
         function goToAgendaWithSource() {
             if(!currentProtocolId) return; const p = protocols.find(x => x.id === currentProtocolId);
             if(p) { switchTab('view-agenda'); document.getElementById('ag-source').value = p.data.step1; document.getElementById('ag-title').focus(); }
         }
 
-        function openNewNoteModal() { currentEditNoteId = null; document.getElementById('new-n-title').value = ''; document.getElementById('new-n-tags').value = ''; document.getElementById('new-n-content').value = ''; document.getElementById('note-modal-title').innerText = "NOUVELLE ENTRÉE (BDD)"; openModal('modal-new-note'); }
-        function editNote(id) { currentEditNoteId = id; const n = notes.find(x => x.id === id); if(!n) return; document.getElementById('new-n-title').value = n.title; document.getElementById('new-n-tags').value = (n.tags || []).join(', '); document.getElementById('new-n-content').value = n.content; document.getElementById('note-modal-title').innerText = "MODIFIER L'ENTRÉE"; openModal('modal-new-note'); }
+        // ==========================================
+        // NOTES (BASE DE DONNÉES)
+        // ==========================================
+
         function renderNotes() {
             const filtersContainer = document.getElementById('note-filters');
             if(filtersContainer) {
@@ -1428,26 +1806,153 @@
                 filtersContainer.innerHTML = `<button class="filter-btn ${currentNoteFilter === 'ALL' ? 'active' : ''}" onclick="setNoteFilter('ALL')">TOUT</button>`;
                 Array.from(allTags).sort().forEach(tag => { filtersContainer.innerHTML += `<button class="filter-btn ${currentNoteFilter === tag ? 'active' : ''}" onclick="setNoteFilter('${tag}')">${tag}</button>`; });
             }
-            const grid = document.getElementById('note-list-container'); if(!grid) return; grid.innerHTML = '';
+            const grid = document.getElementById('note-grid'); if(!grid) return; grid.innerHTML = '';
             
             let filteredNotes = currentNoteFilter === 'ALL' ? notes : notes.filter(n => n.tags && n.tags.includes(currentNoteFilter));
-            if(filteredNotes.length === 0) { grid.innerHTML = '<div style="color:var(--cp-text); font-family:var(--font-mono); opacity:0.7;">> AUCUNE ENTRÉE DANS LA BASE DE DONNÉES.</div>'; return; }
+            if(filteredNotes.length === 0) { grid.innerHTML = '<div style="color:var(--cp-text); font-family:var(--font-mono); opacity:0.7; padding:20px;">> AUCUNE ENTRÉE DANS LA BASE DE DONNÉES.</div>'; return; }
 
-            filteredNotes.forEach(n => {
-                let tagsHtml = n.tags ? n.tags.map(t => `<span class="tag-badge">${t}</span>`).join('') : '';
-                const card = document.createElement('div'); card.className = 'note-card glass-panel chamfer-reverse';
-                card.innerHTML = `<div class="note-title">${n.title}</div><div class="note-preview">${n.content.replace(/\n/g, '<br>')}</div><div style="margin-bottom: 15px;">${tagsHtml}</div><div style="display: flex; gap: 10px; margin-top: auto;"><button class="cp-btn-outline chamfer" style="padding: 8px 12px; font-size: 0.8rem;" onclick="editNote(${n.id}); event.stopPropagation();">MODIFIER</button><button class="cp-btn-outline danger chamfer" style="padding: 8px 12px; font-size: 0.8rem;" onclick="deleteNote(${n.id}); event.stopPropagation();">X</button></div>`;
+            filteredNotes.sort((a,b) => (b.order || 0) - (a.order || 0)).forEach(n => {
+                const isActive = n.id === currentEditNoteId;
+                const card = document.createElement('div');
+                card.className = `cp-journal-item ${isActive ? 'active' : ''}`;
+                card.onclick = () => openNoteDetail(n.id);
+                let tagsStr = (n.tags || []).join(' ');
+                
+                card.innerHTML = `
+                    <div class="cp-journal-item-icon" style="color: var(--cp-cyan); background: rgba(0, 229, 255, 0.1); border-color: rgba(0, 229, 255, 0.2);">
+                        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2h12c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>
+                    </div>
+                    <div class="cp-journal-item-text">
+                        <div class="title" style="color: ${isActive ? 'black' : 'var(--cp-cyan)'};">${n.title || 'SANS TITRE'}</div>
+                        <div class="subtitle" style="color: ${isActive ? 'rgba(0,0,0,0.7)' : '#888'};">${tagsStr || 'Aucun tag'}</div>
+                    </div>
+                    <div style="display:flex; flex-direction:column; gap:2px; margin-right:10px; z-index:10;">
+                        <button class="btn-prio" style="color: ${isActive ? 'black' : 'var(--cp-cyan)'};" onclick="moveNoteUp(event, ${n.id})">▲</button>
+                        <button class="btn-prio" style="color: ${isActive ? 'black' : 'var(--cp-cyan)'};" onclick="moveNoteDown(event, ${n.id})">▼</button>
+                    </div>
+                `;
                 grid.appendChild(card);
             });
         }
-        function submitNote() {
-            const title = document.getElementById('new-n-title').value; const tagsInput = document.getElementById('new-n-tags').value; const content = document.getElementById('new-n-content').value; const tags = extractTags(tagsInput);
-            if(!title) return window.showToast("Titre requis", "var(--cp-red)");
-            if(currentEditNoteId) { const n = notes.find(x => x.id === currentEditNoteId); if(n) { n.title = title; n.tags = tags; n.content = content; } window.showToast("NOTE MODIFIÉE"); } 
-            else { notes.push({ id: Date.now(), title, tags, content }); window.showToast("NOTE ENREGISTRÉE"); }
-            stateChanged(); closeModal('modal-new-note'); renderNotes(); if(mindmapAnimId) buildMindmapData();
+
+        function moveNoteUp(e, id) {
+            e.stopPropagation(); CyberSFX.play();
+            notes.sort((a,b) => (b.order || 0) - (a.order || 0));
+            const idx = notes.findIndex(p => p.id === id);
+            if (idx > 0) {
+                let temp = notes[idx].order;
+                notes[idx].order = notes[idx-1].order;
+                notes[idx-1].order = temp;
+                if(notes[idx].order === notes[idx-1].order) notes[idx].order += 1000;
+                stateChanged(); renderNotes();
+            }
         }
-        function deleteNote(id) { if(confirm("Confirmer la suppression de cette note ?")) { notes = notes.filter(n => n.id !== id); stateChanged(); renderNotes(); if(mindmapAnimId) buildMindmapData(); window.showToast("NOTE SUPPRIMÉE", "var(--cp-red)"); } }
+        
+        function moveNoteDown(e, id) {
+            e.stopPropagation(); CyberSFX.play();
+            notes.sort((a,b) => (b.order || 0) - (a.order || 0));
+            const idx = notes.findIndex(p => p.id === id);
+            if (idx >= 0 && idx < notes.length - 1) {
+                let temp = notes[idx].order;
+                notes[idx].order = notes[idx+1].order;
+                notes[idx+1].order = temp;
+                if(notes[idx].order === notes[idx+1].order) notes[idx].order -= 1000;
+                stateChanged(); renderNotes();
+            }
+        }
+
+        function createNewNote() {
+            const newId = Date.now();
+            notes.push({ id: newId, title: 'NOUVELLE ENTRÉE', tags: [], content: '', order: Date.now(), lastModified: Date.now() });
+            stateChanged();
+            window.showToast("NOTE INITIALISÉE", "var(--cp-cyan)");
+            renderNotes();
+            openNoteDetail(newId);
+            toggleNoteEditMode(true);
+        }
+
+        function openNoteDetail(id) {
+            currentEditNoteId = id; 
+            const n = notes.find(x => x.id === id); 
+            if(!n) return;
+            
+            // Edit Mode
+            document.getElementById('e-n-title').value = n.title;
+            document.getElementById('e-n-tags').value = (n.tags || []).join(', ');
+            document.getElementById('e-n-content').value = n.content || '';
+            
+            // View Mode
+            document.getElementById('v-n-title').innerText = n.title || 'SANS TITRE'; 
+            document.getElementById('v-n-date').innerText = "DERNIÈRE MODIFICATION : " + window.formatDateFull(n.lastModified);
+            
+            let tagsHtml = n.tags ? n.tags.map(t => `<span class="tag-badge cyan">${t}</span>`).join('') : '';
+            document.getElementById('v-n-tags').innerHTML = tagsHtml;
+            document.getElementById('v-n-content').innerHTML = (n.content || '--').replace(/\n/g, '<br>');
+            
+            // Layout Management
+            document.getElementById('note-detail-view').style.display = 'flex';
+            if(window.innerWidth <= 1024) {
+                document.getElementById('note-left-panel').style.display = 'none';
+            }
+            
+            toggleNoteEditMode(false); 
+            renderNotes();
+        }
+
+        function toggleNoteEditMode(isEditing) {
+            const viewMode = document.getElementById('note-view-mode');
+            const editMode = document.getElementById('note-edit-mode');
+            const viewBtns = document.getElementById('note-view-controls');
+            const editBtns = document.getElementById('note-edit-controls');
+            
+            if(isEditing) {
+                viewMode.style.display = 'none'; viewBtns.style.display = 'none';
+                editMode.style.display = 'block'; editBtns.style.display = 'flex';
+            } else {
+                editMode.style.display = 'none'; editBtns.style.display = 'none';
+                viewMode.style.display = 'block'; viewBtns.style.display = 'flex';
+            }
+        }
+
+        function closeNoteDetail() {
+            currentEditNoteId = null; 
+            document.getElementById('note-detail-view').style.display = 'none';
+            document.getElementById('note-left-panel').style.display = 'flex';
+            renderNotes(); 
+            if(mindmapAnimId) buildMindmapData();
+        }
+
+        function saveCurrentNote() {
+            if(!currentEditNoteId) return;
+            const n = notes.find(x => x.id === currentEditNoteId);
+            if(!n) return;
+            
+            const title = document.getElementById('e-n-title').value; 
+            if(!title) return window.showToast("Titre requis", "var(--cp-red)");
+
+            n.title = title;
+            n.tags = extractTags(document.getElementById('e-n-tags').value);
+            n.content = document.getElementById('e-n-content').value;
+            n.lastModified = Date.now();
+            
+            stateChanged(); 
+            window.showToast("NOTE SAUVEGARDÉE", "var(--cp-green)");
+            openNoteDetail(currentEditNoteId);
+            if(mindmapAnimId) buildMindmapData();
+        }
+
+        function deleteCurrentNote() {
+            if(!currentEditNoteId) return;
+            if(confirm("Confirmer la suppression de cette note ?")) { 
+                notes = notes.filter(n => n.id !== currentEditNoteId); 
+                stateChanged(); window.showToast("NOTE SUPPRIMÉE", "var(--cp-red)"); closeNoteDetail(); 
+            }
+        }
+
+
+        // ==========================================
+        // SOCIAL
+        // ==========================================
 
         function renderSocialContacts() {
             const grid = document.getElementById('social-list-container'); if(!grid) return; grid.innerHTML = '';
@@ -1670,6 +2175,9 @@
             renderSocialContacts();
         }
 
+        // ==========================================
+        // AGENDA (PLANIFICATEUR)
+        // ==========================================
         function setAgendaTab(tab) {
             currentAgendaTab = tab;
             document.getElementById('btn-agenda-pending').className = `cp-btn-outline chamfer ${tab === 'pending' ? 'active' : ''}`;
@@ -1695,11 +2203,22 @@
                 return;
             }
 
-            filteredTasks.sort((a,b) => new Date(a.date) - new Date(b.date)).forEach(t => {
+            // Tri chronologique, actions sans date en bas
+            filteredTasks.sort((a,b) => {
+                if (!a.date && !b.date) return 0;
+                if (!a.date) return 1; 
+                if (!b.date) return -1;
+                return new Date(a.date) - new Date(b.date);
+            }).forEach(t => {
                 let tagsHtml = t.tags ? t.tags.map(tg => `<span class="tag-badge cyan">${tg}</span>`).join('') : '';
-                const d = new Date(t.date); const dateStr = `${d.getDate().toString().padStart(2,'0')}/${(d.getMonth()+1).toString().padStart(2,'0')} à ${d.getHours().toString().padStart(2,'0')}:${d.getMinutes().toString().padStart(2,'0')}`;
-                const card = document.createElement('div'); 
                 
+                let dateStr = "NON DÉFINI";
+                if(t.date) {
+                    const d = new Date(t.date); 
+                    dateStr = window.formatDateFull(d.getTime());
+                }
+
+                const card = document.createElement('div'); 
                 card.className = `task-card glass-panel chamfer-reverse ${currentAgendaTab === 'completed' ? 'completed-task' : ''}`;
                 
                 let buttonsHtml = '';
@@ -1709,14 +2228,20 @@
                     buttonsHtml = `<button class="cp-btn orange chamfer" style="padding: 10px 15px;" onclick="restoreAgendaTask(${t.id})">RÉCUPÉRER</button><button class="cp-btn-outline danger chamfer" onclick="deleteCompletedTask(${t.id})">X</button><button class="cp-btn-outline chamfer" onclick="editAgendaTask(${t.id}, 'completed')">MODIFIER</button>`;
                 }
 
-                card.innerHTML = `<div><div class="task-date cyber-number" style="color: ${currentAgendaTab === 'completed' ? 'var(--cp-green)' : 'var(--cp-yellow)'};">${currentAgendaTab === 'completed' ? '[ACCOMPLI] ' : ''}${dateStr}</div><div class="task-title" style="${currentAgendaTab === 'completed' ? 'text-decoration: line-through; color: #888;' : ''}">${t.title}</div>${t.source ? `<div style="color: var(--cp-cyan); font-family: var(--font-mono); font-size: 0.85rem; margin-top:5px;">> ${t.source}</div>` : ''}<div style="margin-top:5px;">${tagsHtml}</div></div><div style="display:flex; gap:10px;">${buttonsHtml}</div>`;
+                card.innerHTML = `<div><div class="task-date cyber-number" style="color: ${currentAgendaTab === 'completed' ? 'var(--cp-green)' : 'var(--cp-yellow)'};">${currentAgendaTab === 'completed' ? '[ACCOMPLI] ' : ''}${dateStr}</div><div class="task-title" style="${currentAgendaTab === 'completed' ? 'text-decoration: line-through; color: #888;' : ''}">${t.title}</div>${t.source ? `<div style="color: var(--cp-cyan); font-family: var(--font-mono); font-size: 0.85rem; margin-top:5px;">> Projet: ${t.source}</div>` : ''}<div style="margin-top:5px;">${tagsHtml}</div></div><div style="display:flex; gap:10px;">${buttonsHtml}</div>`;
                 list.appendChild(card);
             });
         }
 
         function submitAgendaTask() {
-            const title = document.getElementById('ag-title').value; const date = document.getElementById('ag-date').value; const tagsInput = document.getElementById('ag-tags').value; const source = document.getElementById('ag-source').value; const tags = extractTags(tagsInput);
-            if(!title || !date) return window.showToast("Requis", "var(--cp-red)");
+            const title = document.getElementById('ag-title').value; 
+            const date = document.getElementById('ag-date').value; 
+            const tagsInput = document.getElementById('ag-tags').value; 
+            const source = document.getElementById('ag-source').value; 
+            const tags = extractTags(tagsInput);
+            
+            // La date n'est plus requise
+            if(!title) return window.showToast("Titre requis", "var(--cp-red)");
             
             if(currentEditTaskId) { 
                 const list = currentEditTaskType === 'pending' ? agendaTasks : completedTasksList;
@@ -1739,7 +2264,7 @@
             const t = list.find(x => x.id === id); 
             if(!t) return;
             
-            document.getElementById('ag-title').value = t.title; document.getElementById('ag-date').value = t.date; document.getElementById('ag-tags').value = (t.tags || []).join(', '); document.getElementById('ag-source').value = t.source || '';
+            document.getElementById('ag-title').value = t.title; document.getElementById('ag-date').value = t.date || ''; document.getElementById('ag-tags').value = (t.tags || []).join(', '); document.getElementById('ag-source').value = t.source || '';
             document.getElementById('agenda-form-title').innerText = "MODIFIER L'ACTION"; document.getElementById('ag-btn-submit').innerText = "METTRE À JOUR"; document.getElementById('ag-btn-cancel').style.display = "block";
             
             if(window.innerWidth <= 768) document.getElementById('agenda-form-title').scrollIntoView({behavior: 'smooth', block:'start'});
@@ -1777,12 +2302,23 @@
             document.getElementById('agenda-form-title').innerText = "AJOUTER ACTION"; document.getElementById('ag-btn-submit').innerText = "GÉNÉRER"; document.getElementById('ag-btn-cancel').style.display = "none";
         }
 
-        function formatCurrency(baseAmount) { return new Intl.NumberFormat('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(baseAmount * exchangeRates[currentCurrency]) + ' ' + currencySymbols[currentCurrency]; }
+        // ==========================================
+        // FINANCE
+        // ==========================================
+        
+        // FORMATAGE INTELLIGENT: Enlève la virgule et les zéros s'il s'agit d'un nombre entier
+        function formatCurrency(baseAmount) { 
+            let val = baseAmount * exchangeRates[currentCurrency];
+            let isInteger = Math.abs(Math.round(val) - val) < 0.001; 
+            return new Intl.NumberFormat('fr-FR', { 
+                minimumFractionDigits: isInteger ? 0 : 2, 
+                maximumFractionDigits: 2 
+            }).format(val) + ' ' + currencySymbols[currentCurrency]; 
+        }
         
         function changeCurrency() { 
             currentCurrency = document.getElementById('fin-currency').value; 
             stateChanged(); renderFinance(); 
-            // DECLENCHE L'ANIMATION DE PLUIE DE DONNÉES AU CHANGEMENT DE DEVISE
             triggerDataRain();
         }
 
@@ -1796,11 +2332,19 @@
             transactions.sort((a,b) => (b.date || 0) - (a.date || 0)).forEach(t => {
                 if(t.type === 'in') inT += t.baseAmount; else outT += t.baseAmount;
                 const card = document.createElement('div'); card.className = `trans-card glass-panel chamfer-reverse ${t.type}`;
-                card.innerHTML = `<div><div style="font-size: 1.2rem; color: white; font-weight: bold;">${t.label}</div><div class="trans-date cyber-number" style="font-size: 0.8rem; color: #888;">${window.formatDateFull(t.date)}</div></div><div style="display: flex; align-items: center; gap: 15px;"><div class="trans-amount cyber-number" style="font-size: 1.3rem; font-weight: bold; color: ${t.type === 'in' ? 'var(--cp-green)' : 'var(--cp-red)'}">${t.type === 'in' ? '+' : '-'}${formatCurrency(t.baseAmount)}</div><button class="cp-btn-outline warning chamfer" style="padding: 5px 10px;" onclick="editTransaction(${t.id})">MODIFIER</button><button class="cp-btn-outline danger chamfer" style="padding: 5px 10px;" onclick="deleteTransaction(${t.id})">X</button></div>`;
+                card.innerHTML = `<div><div style="font-size: 1.2rem; color: white; font-weight: bold;">${t.label}</div><div class="trans-date cyber-number" style="font-size: 0.8rem; color: #888;">${window.formatDateFull(t.date)}</div></div><div style="display: flex; align-items: center; gap: 15px;"><div class="trans-amount cyber-number" style="font-weight: bold; color: ${t.type === 'in' ? 'var(--cp-green)' : 'var(--cp-red)'}">${t.type === 'in' ? '+' : '-'}${formatCurrency(t.baseAmount)}</div><button class="cp-btn-outline warning chamfer" style="padding: 5px 10px;" onclick="editTransaction(${t.id})">MODIFIER</button><button class="cp-btn-outline danger chamfer" style="padding: 5px 10px;" onclick="deleteTransaction(${t.id})">X</button></div>`;
                 list.appendChild(card);
             });
             document.getElementById('fin-revenus').innerText = formatCurrency(inT); document.getElementById('fin-depenses').innerText = formatCurrency(outT);
-            const soldeEl = document.getElementById('fin-solde'); soldeEl.innerText = formatCurrency(inT - outT); soldeEl.style.color = (inT - outT) >= 0 ? 'var(--cp-cyan)' : 'var(--cp-red)';
+            
+            let balance = inT - outT;
+            const soldeEl = document.getElementById('fin-solde'); 
+            soldeEl.innerText = formatCurrency(balance); 
+            if (balance < 0) {
+                soldeEl.style.color = 'var(--cp-red)';
+            } else {
+                soldeEl.style.color = 'var(--cp-green)';
+            }
         }
         function submitTransaction() {
             const type = document.getElementById('fin-type').value; const label = document.getElementById('fin-label').value; const amt = parseFloat(document.getElementById('fin-amount').value);
@@ -1820,6 +2364,9 @@
             document.getElementById('fin-form-title').innerText = "NOUVELLE TRANSACTION"; document.getElementById('fin-btn-submit').innerText = "ENREGISTRER LE FLUX"; document.getElementById('fin-btn-cancel').style.display = "none";
         }
 
+        // ==========================================
+        // MINDMAP 
+        // ==========================================
         function initMindmap() {
             const container = document.getElementById('mindmap-container'); mmCanvas = document.getElementById('mindmap-canvas'); if(!container || !mmCanvas) return;
             mmCanvas.width = container.clientWidth; mmCanvas.height = container.clientHeight; mmCtx = mmCanvas.getContext('2d');
@@ -1832,7 +2379,7 @@
             let root = { id: 'root', label: 'MATRICE', type: 'root', x: 0, y: 0, vx: 0, vy: 0, color: '#fcee0a', text: "Cœur de la base de données.", editable: false }; mmNodes.push(root);
             
             protocols.forEach(p => {
-                let pNode = { id: 'p_'+p.id, label: p.data.step1 || 'Anomalie', type: 'protocol', x: Math.random()*200-100, y: Math.random()*200-100, vx: 0, vy: 0, color: '#00e5ff', text: "Dossier source Protocole. Pour modifier le titre, allez dans l'onglet PROTOCOLES.", editable: false };
+                let pNode = { id: 'p_'+p.id, label: p.data.step1 || 'Anomalie', type: 'protocol', x: Math.random()*200-100, y: Math.random()*200-100, vx: 0, vy: 0, color: '#00e5ff', text: "Dossier source Projet. Pour modifier le titre, allez dans l'onglet PROJETS.", editable: false };
                 mmNodes.push(pNode); mmLinks.push({ source: root, target: pNode });
                 const phases = [ { id: 'Diag', steps: [2,3,4], name: "Diag" }, { id: 'Obj', steps: [5,6,7], name: "Objectifs" }, { id: 'Sol', steps: [8,9], name: "Solutions" }, { id: 'Dec', steps: [10,11], name: "Décision" }, { id: 'Exe', steps: [12,13,14], name: "Exécution" } ];
                 const titles = {2:"Déf",3:"Cause",4:"Risque",5:"Obj",6:"Hiér",7:"Échéance",8:"Idées",9:"Ressources",10:"Choix",11:"Engage",12:"Action",13:"Ajust",14:"Prév"};
@@ -1988,8 +2535,8 @@
         Object.assign(window, {
             toggleFullScreen, switchTab, togglePhase, openModal, closeModal,
             renderProtocols, openProtocolDetail, closeProtocolDetail, saveCurrentProtocol,
-            createProtocol, deleteCurrentProtocol, renderProtocolAgenda, goToAgendaWithSource,
-            openNewNoteModal, editNote, renderNotes, submitNote, deleteNote,
+            createProtocol, deleteCurrentProtocol, renderProtocolAgenda, goToAgendaWithSource, toggleProtocolEditMode, moveProjectUp, moveProjectDown,
+            renderNotes, createNewNote, openNoteDetail, closeNoteDetail, saveCurrentNote, deleteCurrentNote, toggleNoteEditMode, moveNoteUp, moveNoteDown,
             renderSocialContacts, createNewContact, openContactDetail, updateContactAvatarPreview,
             saveContact, deleteContact, closeContactDetail,
             setAgendaTab, renderAgenda, submitAgendaTask, editAgendaTask, completeAgendaTask,
