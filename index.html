@@ -11,8 +11,8 @@
     <meta name="theme-color" content="#0a0a0c">
     
     <title>Ariel OS - Command Center</title>
-    <!-- Polices lisses (sans zéro barré ni pixels bruts) -->
-    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700;800&family=Orbitron:wght@400;700;900&family=Rajdhani:wght@500;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+    <!-- AJOUT DE LA POLICE 'TEKO' POUR LES CHIFFRES STYLE CALL OF DUTY MOBILE -->
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700;800&family=Orbitron:wght@400;700;900&family=Rajdhani:wght@500;700&family=Share+Tech+Mono&family=Teko:wght@400;500;600&display=swap" rel="stylesheet">
     <style>
         :root {
             /* COULEURS ORIGINALES RESTAURÉES */
@@ -117,17 +117,18 @@
         .panel.active.slide-next { animation: slideInNext 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards; }
         .panel.active.slide-prev { animation: slideInPrev 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards; }
 
-        /* DESIGN DES CHIFFRES LISSES : Plus de zéros barrés */
+        /* DESIGN DES CHIFFRES LISSES : Style Call of Duty Mobile (HUD tactique net sans zéro barré) */
         .cyber-number, .dash-card-value, .stat-value, .sys-status, .task-date, .trans-amount, .trans-date, input[type="number"] {
-            font-family: 'Share Tech Mono', monospace !important;
+            font-family: 'Teko', sans-serif !important;
             letter-spacing: 1px;
+            font-weight: 500;
         }
         
-        .dash-card-value { font-size: 3.5rem; }
-        .trans-amount { font-size: 1.8rem; }
-        .sys-status { font-size: 1.1rem; }
+        .dash-card-value { font-size: 3.5rem; line-height: 1; margin-top: 10px; }
+        .trans-amount { font-size: 2.2rem; }
+        .sys-status { font-size: 1.4rem; letter-spacing: 2px; }
         /* Agrandissement majeur des statistiques en Finance */
-        .stat-value { font-size: 3.5rem !important; margin-top: 15px; font-weight: bold; }
+        .stat-value { font-size: 4rem !important; margin-top: 5px; font-weight: 600; line-height: 1; }
 
         /* CSS pour les Tags (Filtres & Badges) */
         .filter-bar { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
@@ -441,7 +442,7 @@
         .task-card { border-left: 4px solid var(--cp-yellow); padding: 20px 25px; display: flex; justify-content: space-between; align-items: center; position: relative; transition: all 0.3s; }
         .task-card::before { content: ''; position: absolute; top: 0; right: 0; border-style: solid; border-width: 0 15px 15px 0; border-color: transparent rgba(0,0,0,0.8) transparent transparent; }
         .task-card:hover { transform: translateX(8px); border-color: var(--cp-cyan); box-shadow: -5px 5px 20px rgba(0,229,255,0.15); background-color: rgba(30, 30, 35, 0.8); }
-        .task-date { color: var(--cp-yellow); margin-bottom: 8px; }
+        .task-date { color: var(--cp-yellow); margin-bottom: 8px; font-size: 1.2rem; }
         .task-title { font-size: 1.3rem; font-weight: bold; color: white; }
         
         .task-card.completed-task { opacity: 0.6; border-left-color: var(--cp-green); }
@@ -498,8 +499,8 @@
             .dash-card { padding: 15px; }
             
             /* Réduction des nombres immenses sur mobile */
-            .stat-value { font-size: 2.2rem !important; }
-            .dash-card-value { font-size: 2rem; }
+            .stat-value { font-size: 2.5rem !important; }
+            .dash-card-value { font-size: 2.2rem; }
 
             .form-row { grid-template-columns: 1fr; gap: 10px; }
             .protocol-grid, .note-grid { grid-template-columns: 1fr; gap: 15px; }
@@ -565,7 +566,11 @@
             const pad = n => n.toString().padStart(2, '0'); 
             const d = new Date(timestamp);
             if(isNaN(d.getTime())) return '--'; 
-            return `${pad(d.getDate())}/ ${pad(d.getMonth()+1)}/ ${d.getFullYear()} [${pad(d.getHours())} : ${pad(d.getMinutes())} : ${pad(d.getSeconds())}]`;
+            
+            const days = ['Dimanche', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi'];
+            const months = ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'];
+            
+            return `${days[d.getDay()]} ${pad(d.getDate())} ${months[d.getMonth()]} ${d.getFullYear()} [${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}]`;
         };
     </script>
 
@@ -671,7 +676,7 @@
                         <div class="dossier-header" style="border-bottom: 1px dashed rgba(255,0,85,0.5);">
                             <div class="dossier-title">
                                 <h2 id="v-p-name" style="color: var(--cp-red); font-size: 2.2rem; text-shadow: 0 0 10px rgba(255,0,85,0.3);">NOM DU PROJET</h2>
-                                <div class="dossier-subtitle cyber-number" id="v-p-date" style="color: var(--cp-cyan); font-size: 1rem;">--</div>
+                                <div class="dossier-subtitle cyber-number" id="v-p-date" style="color: var(--cp-cyan); font-size: 1.1rem;">--</div>
                             </div>
                         </div>
                         
@@ -786,7 +791,7 @@
                         <div class="dossier-header" style="border-bottom: 1px dashed rgba(0, 229, 255, 0.5);">
                             <div class="dossier-title">
                                 <h2 id="v-n-title" style="color: var(--cp-cyan); font-size: 2.2rem; text-shadow: 0 0 10px rgba(0,229,255,0.3);">TITRE</h2>
-                                <div class="dossier-subtitle cyber-number" id="v-n-date" style="color: var(--cp-yellow); font-size: 1rem;">--</div>
+                                <div class="dossier-subtitle cyber-number" id="v-n-date" style="color: var(--cp-yellow); font-size: 1.1rem;">--</div>
                                 <div id="v-n-tags" style="margin-top: 10px;"></div>
                             </div>
                         </div>
@@ -1052,7 +1057,7 @@
         <div class="modal-content glass-panel chamfer">
             <h2 class="section-title">INITIALISATION</h2>
             <div class="step-group" style="margin-bottom: 25px;">
-                <label style="color: white; font-size: 1.1rem; font-family: var(--font-ui);">Nom du problème</label>
+                <label style="color: white; font-size: 1.1rem; font-family: var(--font-ui);">Nom du problème / Projet</label>
                 <input type="text" id="new-p-name" class="cp-input" style="font-size: 1.2rem;">
             </div>
             <div style="display:flex; gap:15px; justify-content:flex-end;">
@@ -1138,12 +1143,16 @@
                     submitTransaction();
                 } else if (document.getElementById('modal-new-protocol').classList.contains('active') && e.target.id === 'new-p-name') {
                     createProtocol();
+                } else if (document.getElementById('view-database').classList.contains('active') && (e.target.id === 'e-n-title' || e.target.id === 'e-n-tags')) {
+                    saveCurrentNote();
+                } else if (document.getElementById('view-protocols').classList.contains('active') && document.getElementById('protocol-edit-mode').style.display === 'block' && e.target.tagName === 'INPUT') {
+                    saveCurrentProtocol();
                 }
             }
         });
 
         // ==========================================
-        // FONCTION D'UPLOAD IMGBB (CONSERVÉ)
+        // FONCTION D'UPLOAD IMGBB
         // ==========================================
         async function handleImgBBUpload(inputElement, targetHiddenId) {
             const file = inputElement.files[0];
@@ -2530,24 +2539,6 @@
             currentEditNode = null; 
             document.getElementById('mindmap-container').style.display = 'block';
         }
-
-        // Export de toutes les fonctions nécessaires pour le HTML
-        Object.assign(window, {
-            toggleFullScreen, switchTab, togglePhase, openModal, closeModal,
-            renderProtocols, openProtocolDetail, closeProtocolDetail, saveCurrentProtocol,
-            createProtocol, deleteCurrentProtocol, renderProtocolAgenda, goToAgendaWithSource, toggleProtocolEditMode, moveProjectUp, moveProjectDown,
-            renderNotes, createNewNote, openNoteDetail, closeNoteDetail, saveCurrentNote, deleteCurrentNote, toggleNoteEditMode, moveNoteUp, moveNoteDown,
-            renderSocialContacts, createNewContact, openContactDetail, updateContactAvatarPreview,
-            saveContact, deleteContact, closeContactDetail,
-            setAgendaTab, renderAgenda, submitAgendaTask, editAgendaTask, completeAgendaTask,
-            restoreAgendaTask, deleteCompletedTask, resetAgendaForm, changeCurrency,
-            renderFinance, submitTransaction, editTransaction, deleteTransaction, resetFinanceForm,
-            zoomMindmap, resetMindmapView, openMindmapPanel, saveMindmapNode, closeMindmapDetail,
-            setNoteFilter, setAgendaFilter, openImageViewer, openImageViewerFromCarousel,
-            closeImageViewer, prevGalleryImg, nextGalleryImg, toggleSocialEditMode, loadData,
-            initRain, drawRain, triggerDataRain, updateDashboardSummary, renderXP, updateClock,
-            handleImgBBUpload 
-        });
 
         window.addEventListener('load', () => { window.loadData(); });
     </script>
