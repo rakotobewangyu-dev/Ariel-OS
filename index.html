@@ -115,7 +115,8 @@
         /* Data Rain Canvas - Animé en continu et omniprésent */
         #data-rain-canvas {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
-            pointer-events: none; z-index: -1; opacity: 0.3; transition: opacity 0.5s;
+            pointer-events: none; z-index: 1; /* z-index 1 : au-dessus du fond, sous l'interface */
+            opacity: 0.3; transition: opacity 0.5s;
         }
 
         /* Utils & Animations */
@@ -129,6 +130,45 @@
         @keyframes blinker { 50% { opacity: 0; } }
         @keyframes pulse { 0% { opacity: 0.5; } 50% { opacity: 1; text-shadow: 0 0 10px var(--cp-cyan); box-shadow: 0 0 20px var(--cp-cyan); } 100% { opacity: 0.5; } }
         @keyframes glitch-anim-fade { 0% { opacity: 0; transform: translateY(15px); } 100% { opacity: 1; transform: translateY(0); } }
+
+        /* ==========================================
+           SECURITY LOCK SCREEN (MOT DE PASSE)
+           ========================================== */
+        #lock-screen {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 9000;
+            background: rgba(5, 5, 5, 0.7);
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            transition: opacity 0.6s ease-out, visibility 0.6s ease-out;
+        }
+
+        .pin-dots { display: flex; gap: 20px; margin: 40px 0; }
+        .pin-dot { 
+            width: 20px; height: 20px; border: 2px solid var(--cp-cyan); border-radius: 50%; 
+            box-shadow: 0 0 10px rgba(0,229,255,0.2); transition: all 0.2s; 
+        }
+        .pin-dot.filled { background: var(--cp-cyan); box-shadow: 0 0 20px var(--cp-cyan); transform: scale(1.2); }
+        
+        .numpad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; }
+        .num-btn { 
+            width: 80px; height: 80px; font-size: 2.2rem; font-family: var(--font-title); 
+            background: rgba(0,229,255,0.05); color: var(--cp-cyan); border: 1px solid var(--cp-cyan); 
+            cursor: pointer; transition: 0.2s; display: flex; justify-content: center; align-items: center; 
+            clip-path: polygon(15px 0, 100% 0, 100% calc(100% - 15px), calc(100% - 15px) 100%, 0 100%, 0 15px); 
+        }
+        .num-btn:hover, .num-btn:active { background: var(--cp-cyan); color: black; box-shadow: 0 0 20px var(--cp-cyan); transform: scale(1.05); }
+        
+        @keyframes errorShake { 0%, 100% { transform: translateX(0); } 20%, 60% { transform: translateX(-15px); } 40%, 80% { transform: translateX(15px); } }
+        .error-shake { animation: errorShake 0.4s; }
+
+        #os-content {
+            width: 100%; height: 100%; display: flex; flex-direction: column; flex: 1; z-index: 5; position: relative;
+            transition: filter 0.8s ease-out, opacity 0.8s ease-out;
+        }
+        #os-content.locked-blur {
+            filter: blur(25px) grayscale(60%) brightness(0.4);
+            pointer-events: none; user-select: none;
+        }
 
         /* HUD ALERT : 0% Flou, Bordures strictes */
         .hud-alert {
@@ -504,10 +544,10 @@
         let currentSocialGalleryUrls = []; let currentSocialGalleryIndex = 0;
     </script>
 
-    <!-- CONTENEUR PRINCIPAL (Gère la rotation et l'échelle de l'OS entier) -->
+    <!-- CONTENEUR PRINCIPAL -->
     <div id="app-wrapper">
 
-        <!-- HUD ALERT SYSTEM -->
+        <!-- HUD ALERT SYSTEM (HORS DU FLOU) -->
         <div id="hud-alert" class="hud-alert chamfer">
             <div class="hud-alert-header" id="hud-alert-header">SYS.NOTIFICATION</div>
             <div class="hud-alert-content">
@@ -518,434 +558,463 @@
 
         <canvas id="data-rain-canvas"></canvas>
 
-        <header>
-            <div style="display: flex; align-items: center; justify-content: center;">
-                <div class="sys-status cyber-number" id="sys-clock">
-                    <span class="blink">▶</span> CHARGEMENT TEMPOREL...
+        <!-- SECURITY LOCK SCREEN -->
+        <div id="lock-screen">
+            <h2 style="font-family: var(--font-title); color: var(--cp-red); font-size: 2.5rem; text-shadow: 0 0 15px rgba(255,0,85,0.5); letter-spacing: 4px; text-align: center; margin-bottom: 5px;">ACCÈS RESTREINT</h2>
+            <div style="font-family: var(--font-mono); color: var(--cp-cyan); font-size: 1.1rem; opacity: 0.8;">> IDENTIFICATION SYSTÈME REQUISE</div>
+            
+            <div class="pin-dots" id="pin-dots">
+                <div class="pin-dot"></div><div class="pin-dot"></div><div class="pin-dot"></div>
+                <div class="pin-dot"></div><div class="pin-dot"></div><div class="pin-dot"></div>
+            </div>
+
+            <div class="numpad">
+                <button class="num-btn" onclick="pressPin('1')">1</button>
+                <button class="num-btn" onclick="pressPin('2')">2</button>
+                <button class="num-btn" onclick="pressPin('3')">3</button>
+                <button class="num-btn" onclick="pressPin('4')">4</button>
+                <button class="num-btn" onclick="pressPin('5')">5</button>
+                <button class="num-btn" onclick="pressPin('6')">6</button>
+                <button class="num-btn" onclick="pressPin('7')">7</button>
+                <button class="num-btn" onclick="pressPin('8')">8</button>
+                <button class="num-btn" onclick="pressPin('9')">9</button>
+                <button class="num-btn" style="color: var(--cp-red); border-color: var(--cp-red);" onclick="clearPin()">X</button>
+                <button class="num-btn" onclick="pressPin('0')">0</button>
+                <button class="num-btn" style="color: var(--cp-orange); border-color: var(--cp-orange);" onclick="delPin()">❮</button>
+            </div>
+        </div>
+
+        <!-- CONTENU DU SYSTEME (FLOUTÉ AU DÉMARRAGE) -->
+        <div id="os-content" class="locked-blur">
+            <header>
+                <div style="display: flex; align-items: center; justify-content: center;">
+                    <div class="sys-status cyber-number" id="sys-clock">
+                        <span class="blink">▶</span> CHARGEMENT TEMPOREL...
+                    </div>
+                    <button id="fullscreen-btn" onclick="toggleFullScreen()" class="cp-btn-outline chamfer fs-btn" title="Plein Écran">[ ]</button>
                 </div>
-                <button id="fullscreen-btn" onclick="toggleFullScreen()" class="cp-btn-outline chamfer fs-btn" title="Plein Écran">[ ]</button>
-            </div>
-            <div class="player-info">
-                <div class="player-name">V</div>
-            </div>
-        </header>
+                <div class="player-info">
+                    <div class="player-name">V</div>
+                </div>
+            </header>
 
-        <nav>
-            <button class="nav-btn chamfer active" onclick="switchTab('view-nexus')">CENTRE DE CONTRÔLE</button>
-            <button class="nav-btn chamfer" onclick="switchTab('view-protocols')">PROJETS</button>
-            <button class="nav-btn chamfer" onclick="switchTab('view-database')">BASE DE DONNÉES</button>
-            <button class="nav-btn chamfer" onclick="switchTab('view-social')">SOCIAL</button>
-            <button class="nav-btn chamfer" onclick="switchTab('view-mindmap')">MINDMAP</button>
-            <button class="nav-btn chamfer" onclick="switchTab('view-agenda')">PLANIFICATEUR</button>
-            <button class="nav-btn chamfer" onclick="switchTab('view-finance')">FINANCE</button>
-        </nav>
+            <nav>
+                <button class="nav-btn chamfer active" onclick="switchTab('view-nexus')">CENTRE DE CONTRÔLE</button>
+                <button class="nav-btn chamfer" onclick="switchTab('view-protocols')">PROJETS</button>
+                <button class="nav-btn chamfer" onclick="switchTab('view-database')">BASE DE DONNÉES</button>
+                <button class="nav-btn chamfer" onclick="switchTab('view-social')">SOCIAL</button>
+                <button class="nav-btn chamfer" onclick="switchTab('view-mindmap')">MINDMAP</button>
+                <button class="nav-btn chamfer" onclick="switchTab('view-agenda')">PLANIFICATEUR</button>
+                <button class="nav-btn chamfer" onclick="switchTab('view-finance')">FINANCE</button>
+            </nav>
 
-        <main id="main-view">
-            <!-- VIEW: NEXUS -->
-            <div id="view-nexus" class="panel active">
-                <h2 class="section-title">Centre de Contrôle Global</h2>
-                <div class="overview-grid">
-                    <div class="overview-box glass-panel chamfer-reverse">
-                        <h3 style="color: var(--cp-yellow); font-family: var(--font-title); margin-bottom: 25px; text-shadow: 0 0 10px rgba(252,238,10,0.3);">RÉSUMÉ OPÉRATIONNEL</h3>
-                        
-                        <div class="dash-stats-grid">
-                            <div class="dash-card" style="border-left-color: var(--cp-cyan);">
-                                <div class="dash-card-title">PROJETS ACTIFS</div>
-                                <div class="dash-card-value cyber-number" id="sum-protocols">0</div>
+            <main id="main-view">
+                <!-- VIEW: NEXUS -->
+                <div id="view-nexus" class="panel active">
+                    <h2 class="section-title">Centre de Contrôle Global</h2>
+                    <div class="overview-grid">
+                        <div class="overview-box glass-panel chamfer-reverse">
+                            <h3 style="color: var(--cp-yellow); font-family: var(--font-title); margin-bottom: 25px; text-shadow: 0 0 10px rgba(252,238,10,0.3);">RÉSUMÉ OPÉRATIONNEL</h3>
+                            
+                            <div class="dash-stats-grid">
+                                <div class="dash-card" style="border-left-color: var(--cp-cyan);">
+                                    <div class="dash-card-title">PROJETS ACTIFS</div>
+                                    <div class="dash-card-value cyber-number" id="sum-protocols">0</div>
+                                </div>
+                                <div class="dash-card" style="border-left-color: var(--cp-yellow);">
+                                    <div class="dash-card-title">ACTIONS PLANIFIÉES</div>
+                                    <div class="dash-card-value cyber-number" id="sum-agenda">0</div>
+                                </div>
+                                <div class="dash-card" style="border-left-color: var(--cp-purple);">
+                                    <div class="dash-card-title">ENTRÉES BDD</div>
+                                    <div class="dash-card-value cyber-number" id="sum-notes">0</div>
+                                </div>
+                                <div class="dash-card" style="border-left-color: var(--cp-red);">
+                                    <div class="dash-card-title">CONTACTS RÉSEAU</div>
+                                    <div class="dash-card-value cyber-number" id="sum-contacts">0</div>
+                                </div>
+                                <div class="dash-card" style="border-left-color: var(--cp-green);">
+                                    <div class="dash-card-title">CAPITAL DISPONIBLE</div>
+                                    <div class="dash-card-value cyber-number" id="sum-finance">0 ¥</div>
+                                </div>
                             </div>
-                            <div class="dash-card" style="border-left-color: var(--cp-yellow);">
-                                <div class="dash-card-title">ACTIONS PLANIFIÉES</div>
-                                <div class="dash-card-value cyber-number" id="sum-agenda">0</div>
-                            </div>
-                            <div class="dash-card" style="border-left-color: var(--cp-purple);">
-                                <div class="dash-card-title">ENTRÉES BDD</div>
-                                <div class="dash-card-value cyber-number" id="sum-notes">0</div>
-                            </div>
-                            <div class="dash-card" style="border-left-color: var(--cp-red);">
-                                <div class="dash-card-title">CONTACTS RÉSEAU</div>
-                                <div class="dash-card-value cyber-number" id="sum-contacts">0</div>
-                            </div>
-                            <div class="dash-card" style="border-left-color: var(--cp-green);">
-                                <div class="dash-card-title">CAPITAL DISPONIBLE</div>
-                                <div class="dash-card-value cyber-number" id="sum-finance">0 ¥</div>
-                            </div>
+                            
+                            <p style="font-family: var(--font-mono); color: var(--cp-cyan); margin-top: 30px; font-size: 1.1rem; text-shadow: 0 0 5px rgba(0,229,255,0.5);">> Synthèse des données en temps réel. Le système est opérationnel.</p>
                         </div>
                         
-                        <p style="font-family: var(--font-mono); color: var(--cp-cyan); margin-top: 30px; font-size: 1.1rem; text-shadow: 0 0 5px rgba(0,229,255,0.5);">> Synthèse des données en temps réel. Le système est opérationnel.</p>
+                        <div class="overview-box glass-panel chamfer-reverse">
+                            <h3 style="color: var(--cp-purple); font-family: var(--font-title); margin-bottom: 25px; text-shadow: 0 0 10px rgba(176,0,255,0.3);">TRACKING DES MISSIONS (XP)</h3>
+                            <div id="xp-bars-container" style="display: flex; flex-direction: column; gap: 20px;"></div>
+                        </div>
                     </div>
+                </div>
+
+                <!-- VIEW: PROJETS -->
+                <div id="view-protocols" class="panel">
+                    <h2 class="section-title" style="margin-bottom: 25px;">Journal des Projets</h2>
                     
-                    <div class="overview-box glass-panel chamfer-reverse">
-                        <h3 style="color: var(--cp-purple); font-family: var(--font-title); margin-bottom: 25px; text-shadow: 0 0 10px rgba(176,0,255,0.3);">TRACKING DES MISSIONS (XP)</h3>
-                        <div id="xp-bars-container" style="display: flex; flex-direction: column; gap: 20px;"></div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- VIEW: PROJETS -->
-            <div id="view-protocols" class="panel">
-                <h2 class="section-title" style="margin-bottom: 25px;">Journal des Projets</h2>
-                
-                <div class="journal-layout">
-                    <div class="journal-left" id="journal-left-panel">
-                        <button class="cp-btn chamfer" style="margin-bottom: 15px; width: 100%; font-size: 1.1rem; letter-spacing: 1px;" onclick="openModal('modal-new-protocol')">+ NOUVEAU PROJET</button>
-                        <div id="protocol-grid" class="journal-grid-scroll"></div>
-                    </div>
-
-                    <div class="journal-right" id="journal-detail-view" style="display: none;">
-                        
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 15px;">
-                            <div id="proj-view-controls" style="display: flex; gap: 15px; margin-left: auto;">
-                                <button class="cp-btn warning chamfer" onclick="toggleProtocolEditMode(true)">[ MODIFIER LE PROJET ]</button>
-                            </div>
-                            
-                            <div id="proj-edit-controls" style="display: none; gap: 15px; margin-left: auto;">
-                                <button class="cp-btn cyan chamfer" onclick="saveCurrentProtocol()">SAUVEGARDER</button>
-                                <button class="cp-btn-outline danger chamfer" onclick="toggleProtocolEditMode(false)">ANNULER</button>
-                                <button class="cp-btn danger chamfer" onclick="deleteCurrentProtocol()">SUPPRIMER</button>
-                            </div>
+                    <div class="journal-layout">
+                        <div class="journal-left" id="journal-left-panel">
+                            <button class="cp-btn chamfer" style="margin-bottom: 15px; width: 100%; font-size: 1.1rem; letter-spacing: 1px;" onclick="openModal('modal-new-protocol')">+ NOUVEAU PROJET</button>
+                            <div id="protocol-grid" class="journal-grid-scroll"></div>
                         </div>
 
-                        <div id="protocol-view-mode" class="dossier-container proj-theme chamfer-reverse">
-                            <div class="dossier-header" style="border-bottom: 1px dashed rgba(255,0,85,0.5);">
-                                <div class="dossier-title">
-                                    <h2 id="v-p-name" style="color: var(--cp-red); font-size: 2.2rem; text-shadow: 0 0 10px rgba(255,0,85,0.3);">NOM DU PROJET</h2>
-                                    <div class="dossier-subtitle cyber-number" id="v-p-date" style="color: var(--cp-cyan); font-size: 1.1rem;">--</div>
-                                </div>
-                            </div>
+                        <div class="journal-right" id="journal-detail-view" style="display: none;">
                             
-                            <div class="phases-split-layout">
-                                <div class="phases-left-col">
-                                    <div class="dossier-section" data-title="[ PHASE A - DIAGNOSTIC ]" style="border-color: var(--cp-red);">
-                                        <div class="data-block"><span class="data-block-label">DÉFINITION DU PROBLÈME:</span><div class="data-block-val" id="v-p-step2">--</div></div>
-                                        <div class="data-block"><span class="data-block-label">CAUSE RAÇINE:</span><div class="data-block-val" id="v-p-step3">--</div></div>
-                                        <div class="data-block"><span class="data-block-label">RISQUES DE L'INACTION:</span><div class="data-block-val" id="v-p-step4">--</div></div>
-                                    </div>
-                                    <div class="dossier-section" data-title="[ PHASE B - OBJECTIVITÉ ]" style="border-color: var(--cp-cyan);">
-                                        <div class="data-block"><span class="data-block-label">OBJECTIFS CIBLES:</span><div class="data-block-val" id="v-p-step5">--</div></div>
-                                        <div class="data-block"><span class="data-block-label">HIÉRARCHISATION:</span><div class="data-block-val" id="v-p-step6">--</div></div>
-                                        <div class="data-row"><span class="data-label">ÉCHÉANCES:</span><span class="data-val" id="v-p-step7">--</span></div>
-                                    </div>
-                                    <div class="dossier-section" data-title="[ PHASE C - SOLUTIONS ]" style="border-color: var(--cp-yellow);">
-                                        <div class="data-block"><span class="data-block-label">PISTES DE RÉFLEXION:</span><div class="data-block-val" id="v-p-step8">--</div></div>
-                                        <div class="data-block"><span class="data-block-label">RESSOURCES & FAISABILITÉ:</span><div class="data-block-val" id="v-p-step9">--</div></div>
-                                    </div>
-                                    <div class="dossier-section" data-title="[ PHASE D - DÉCISION ]" style="border-color: var(--cp-purple);">
-                                        <div class="data-block"><span class="data-block-label">TRAITEMENT CHOISI:</span><div class="data-block-val" id="v-p-step10">--</div></div>
-                                        <div class="data-block"><span class="data-block-label">ENGAGEMENT:</span><div class="data-block-val" id="v-p-step11">--</div></div>
-                                    </div>
-                                    <div class="dossier-section" data-title="[ PHASE E - EXÉCUTION ]" style="border-color: var(--cp-green);">
-                                        <div class="data-block"><span class="data-block-label">ACTIONS CONCRÈTES:</span><div class="data-block-val" id="v-p-step12">--</div></div>
-                                        <div class="data-block"><span class="data-block-label">AJUSTEMENTS:</span><div class="data-block-val" id="v-p-step13">--</div></div>
-                                        <div class="data-block"><span class="data-block-label">PRÉVENTION:</span><div class="data-block-val" id="v-p-step14">--</div></div>
-                                    </div>
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 15px;">
+                                <div id="proj-view-controls" style="display: flex; gap: 15px; margin-left: auto;">
+                                    <button class="cp-btn warning chamfer" onclick="toggleProtocolEditMode(true)">[ MODIFIER LE PROJET ]</button>
                                 </div>
-                                <div class="phases-right-col">
-                                    <div class="dossier-section" data-title="[ PHASE F - OPÉRATIONS DE TERRAIN ]" style="border-color: var(--cp-orange); height: 100%;">
-                                        <div class="step-subtext" style="margin-bottom: 15px; color: #aaa;">> Actions extraites de l'Agenda liées à ce projet.</div>
-                                        <div id="v-protocol-agenda-list" style="display:flex; flex-direction:column; gap:12px; margin-bottom: 25px;"></div>
-                                        <button class="cp-btn-outline orange chamfer" style="align-self: flex-start; padding: 12px 20px; width: 100%;" onclick="goToAgendaWithSource()">+ PLANIFIER UNE ACTION</button>
-                                    </div>
+                                
+                                <div id="proj-edit-controls" style="display: none; gap: 15px; margin-left: auto;">
+                                    <button class="cp-btn cyan chamfer" onclick="saveCurrentProtocol()">SAUVEGARDER</button>
+                                    <button class="cp-btn-outline danger chamfer" onclick="toggleProtocolEditMode(false)">ANNULER</button>
+                                    <button class="cp-btn danger chamfer" onclick="deleteCurrentProtocol()">SUPPRIMER</button>
                                 </div>
                             </div>
-                        </div>
 
-                        <div id="protocol-edit-mode" style="display: none;">
-                            <div class="phases-split-layout">
-                                <div class="phases-left-col">
-                                    <div class="phase-section glass-panel phase-a chamfer-reverse active"><div class="phase-header" onclick="togglePhase(this)"><div>A – Diagnostic</div><div class="cyber-toggle"><svg viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></svg></div></div><div class="phase-body"><div class="step-group"><label class="step-label">1) Nom du problème à traiter :</label><div class="step-subtext">→ Donne un titre clair et court.</div><input type="text" class="cp-input" id="step-1" style="font-size: 1.5rem; font-family: var(--font-title); border-color: var(--cp-red);"></div><div class="form-row"><div class="step-group"><label class="step-label">2) Définition du problème :</label><textarea class="cp-textarea" id="step-2"></textarea></div><div class="step-group"><label class="step-label">3) Cause du problème :</label><textarea class="cp-textarea" id="step-3"></textarea></div></div><div class="step-group"><label class="step-label">4) Risques de l'inaction :</label><textarea class="cp-textarea" id="step-4"></textarea></div></div></div>
-                                    <div class="phase-section glass-panel phase-b chamfer-reverse"><div class="phase-header" onclick="togglePhase(this)"><div>B – Objectivité</div><div class="cyber-toggle"><svg viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></svg></div></div><div class="phase-body"><div class="form-row"><div class="step-group"><label class="step-label">5) Liste des objectifs :</label><textarea class="cp-textarea" id="step-5"></textarea></div><div class="step-group"><label class="step-label">6) Hiérarchisation :</label><textarea class="cp-textarea" id="step-6"></textarea></div></div><div class="step-group"><label class="step-label">7) Échéances :</label><input type="text" class="cp-input" id="step-7"></div></div></div>
-                                    <div class="phase-section glass-panel phase-c chamfer-reverse"><div class="phase-header" onclick="togglePhase(this)"><div>C – Solutions</div><div class="cyber-toggle"><svg viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></svg></div></div><div class="phase-body"><div class="step-group"><label class="step-label">8) Brainstorming libre :</label><textarea class="cp-textarea" id="step-8"></textarea></div><div class="step-group"><label class="step-label">9) Ressources & Faisabilité :</label><textarea class="cp-textarea" id="step-9"></textarea></div></div></div>
-                                    <div class="phase-section glass-panel phase-d chamfer-reverse"><div class="phase-header" onclick="togglePhase(this)"><div>D – Décision</div><div class="cyber-toggle"><svg viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></svg></div></div><div class="phase-body"><div class="step-group"><label class="step-label">10) Choix optimal :</label><textarea class="cp-textarea" id="step-10"></textarea></div><div class="step-group"><label class="step-label">11) Engagement personnel :</label><textarea class="cp-textarea" id="step-11"></textarea></div></div></div>
-                                    <div class="phase-section glass-panel phase-e chamfer-reverse"><div class="phase-header" onclick="togglePhase(this)"><div>E – Exécution</div><div class="cyber-toggle"><svg viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></svg></div></div><div class="phase-body"><div class="step-group"><label class="step-label">12) Actions concrètes :</label><textarea class="cp-textarea" id="step-12"></textarea></div><div class="form-row"><div class="step-group"><label class="step-label">13) Ajustements :</label><textarea class="cp-textarea" id="step-13"></textarea></div><div class="step-group"><label class="step-label">14) Prévention :</label><textarea class="cp-textarea" id="step-14"></textarea></div></div></div></div>
+                            <div id="protocol-view-mode" class="dossier-container proj-theme chamfer-reverse">
+                                <div class="dossier-header" style="border-bottom: 1px dashed rgba(255,0,85,0.5);">
+                                    <div class="dossier-title">
+                                        <h2 id="v-p-name" style="color: var(--cp-red); font-size: 2.2rem; text-shadow: 0 0 10px rgba(255,0,85,0.3);">NOM DU PROJET</h2>
+                                        <div class="dossier-subtitle cyber-number" id="v-p-date" style="color: var(--cp-cyan); font-size: 1.1rem;">--</div>
+                                    </div>
                                 </div>
-                                <div class="phases-right-col">
-                                    <div class="phase-section glass-panel phase-f chamfer-reverse active" style="height: 100%;">
-                                        <div class="phase-header"><div>F – Opérations de Terrain</div></div>
-                                        <div class="phase-body" style="display: flex;">
-                                            <div class="step-subtext" style="margin-bottom: 10px; color: #aaa;">> Actions extraites de l'Agenda liées à ce projet.</div>
-                                            <div id="protocol-agenda-list" style="display:flex; flex-direction:column; gap:12px; margin-bottom: 25px;"></div>
+                                
+                                <div class="phases-split-layout">
+                                    <div class="phases-left-col">
+                                        <div class="dossier-section" data-title="[ PHASE A - DIAGNOSTIC ]" style="border-color: var(--cp-red);">
+                                            <div class="data-block"><span class="data-block-label">DÉFINITION DU PROBLÈME:</span><div class="data-block-val" id="v-p-step2">--</div></div>
+                                            <div class="data-block"><span class="data-block-label">CAUSE RAÇINE:</span><div class="data-block-val" id="v-p-step3">--</div></div>
+                                            <div class="data-block"><span class="data-block-label">RISQUES DE L'INACTION:</span><div class="data-block-val" id="v-p-step4">--</div></div>
+                                        </div>
+                                        <div class="dossier-section" data-title="[ PHASE B - OBJECTIVITÉ ]" style="border-color: var(--cp-cyan);">
+                                            <div class="data-block"><span class="data-block-label">OBJECTIFS CIBLES:</span><div class="data-block-val" id="v-p-step5">--</div></div>
+                                            <div class="data-block"><span class="data-block-label">HIÉRARCHISATION:</span><div class="data-block-val" id="v-p-step6">--</div></div>
+                                            <div class="data-row"><span class="data-label">ÉCHÉANCES:</span><span class="data-val" id="v-p-step7">--</span></div>
+                                        </div>
+                                        <div class="dossier-section" data-title="[ PHASE C - SOLUTIONS ]" style="border-color: var(--cp-yellow);">
+                                            <div class="data-block"><span class="data-block-label">PISTES DE RÉFLEXION:</span><div class="data-block-val" id="v-p-step8">--</div></div>
+                                            <div class="data-block"><span class="data-block-label">RESSOURCES & FAISABILITÉ:</span><div class="data-block-val" id="v-p-step9">--</div></div>
+                                        </div>
+                                        <div class="dossier-section" data-title="[ PHASE D - DÉCISION ]" style="border-color: var(--cp-purple);">
+                                            <div class="data-block"><span class="data-block-label">TRAITEMENT CHOISI:</span><div class="data-block-val" id="v-p-step10">--</div></div>
+                                            <div class="data-block"><span class="data-block-label">ENGAGEMENT:</span><div class="data-block-val" id="v-p-step11">--</div></div>
+                                        </div>
+                                        <div class="dossier-section" data-title="[ PHASE E - EXÉCUTION ]" style="border-color: var(--cp-green);">
+                                            <div class="data-block"><span class="data-block-label">ACTIONS CONCRÈTES:</span><div class="data-block-val" id="v-p-step12">--</div></div>
+                                            <div class="data-block"><span class="data-block-label">AJUSTEMENTS:</span><div class="data-block-val" id="v-p-step13">--</div></div>
+                                            <div class="data-block"><span class="data-block-label">PRÉVENTION:</span><div class="data-block-val" id="v-p-step14">--</div></div>
+                                        </div>
+                                    </div>
+                                    <div class="phases-right-col">
+                                        <div class="dossier-section" data-title="[ PHASE F - OPÉRATIONS DE TERRAIN ]" style="border-color: var(--cp-orange); height: 100%;">
+                                            <div class="step-subtext" style="margin-bottom: 15px; color: #aaa;">> Actions extraites de l'Agenda liées à ce projet.</div>
+                                            <div id="v-protocol-agenda-list" style="display:flex; flex-direction:column; gap:12px; margin-bottom: 25px;"></div>
                                             <button class="cp-btn-outline orange chamfer" style="align-self: flex-start; padding: 12px 20px; width: 100%;" onclick="goToAgendaWithSource()">+ PLANIFIER UNE ACTION</button>
                                         </div>
                                     </div>
                                 </div>
                             </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
 
-            <!-- VIEW: BASE DE DONNÉES (NOTES) -->
-            <div id="view-database" class="panel">
-                <h2 class="section-title" style="margin-bottom: 25px;">Base de Données / Notes Libres</h2>
-                
-                <div class="journal-layout">
-                    <div class="journal-left" id="note-left-panel">
-                        <button class="cp-btn cyan chamfer" style="margin-bottom: 15px; width: 100%; font-size: 1.1rem; letter-spacing: 1px;" onclick="createNewNote()">+ NOUVELLE ENTRÉE</button>
-                        <div id="note-filters" class="filter-bar"></div>
-                        <div id="note-grid" class="journal-grid-scroll"></div>
-                    </div>
-
-                    <div class="journal-right" id="note-detail-view" style="display: none;">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 15px;">
-                            <div id="note-view-controls" style="display: flex; gap: 15px; margin-left: auto;">
-                                <button class="cp-btn warning chamfer" onclick="toggleNoteEditMode(true)">[ MODIFIER LA DONNÉE ]</button>
-                            </div>
-                            <div id="note-edit-controls" style="display: none; gap: 15px; margin-left: auto;">
-                                <button class="cp-btn cyan chamfer" onclick="saveCurrentNote()">SAUVEGARDER</button>
-                                <button class="cp-btn-outline danger chamfer" onclick="toggleNoteEditMode(false)">ANNULER</button>
-                                <button class="cp-btn danger chamfer" onclick="deleteCurrentNote()">SUPPRIMER</button>
-                            </div>
-                        </div>
-
-                        <div id="note-view-mode" class="dossier-container chamfer-reverse">
-                            <div class="dossier-header" style="border-bottom: 1px dashed rgba(0, 229, 255, 0.5);">
-                                <div class="dossier-title">
-                                    <h2 id="v-n-title" style="color: var(--cp-cyan); font-size: 2.2rem; text-shadow: 0 0 10px rgba(0,229,255,0.3);">TITRE</h2>
-                                    <div class="dossier-subtitle cyber-number" id="v-n-date" style="color: var(--cp-yellow); font-size: 1.1rem;">--</div>
-                                    <div id="v-n-tags" style="margin-top: 10px;"></div>
-                                </div>
-                            </div>
-                            <div class="data-block-val" id="v-n-content" style="white-space: pre-wrap; font-family: var(--font-mono); font-size: 1.15rem; line-height: 1.6; border-left-color: var(--cp-cyan); min-height: 300px;"></div>
-                        </div>
-
-                        <div id="note-edit-mode" style="display: none;" class="glass-panel chamfer-reverse">
-                            <div style="padding: 25px; border-left: 4px solid var(--cp-cyan);">
-                                <div class="step-group"><label class="step-label">Sujet / Titre :</label><input type="text" id="e-n-title" class="cp-input" style="font-size:1.5rem; font-family:var(--font-title);"></div>
-                                <div class="step-group"><label class="step-label">Tags (séparés par des virgules) :</label><input type="text" id="e-n-tags" class="cp-input" placeholder="ex: #Aridago, #USTB"></div>
-                                <div class="step-group" style="margin-top:20px;"><label class="step-label">Contenu des données :</label><textarea id="e-n-content" class="cp-textarea" style="min-height: 350px; font-size: 1.1rem;"></textarea></div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- VIEW: SOCIAL -->
-            <div id="view-social" class="panel">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; flex-wrap: wrap; gap: 15px;">
-                    <h2 class="section-title" style="margin: 0;">Réseau Social / Contacts</h2>
-                    <button class="cp-btn chamfer" onclick="createNewContact()">+ NOUVEAU CONTACT</button>
-                </div>
-                <div class="social-list-grid" id="social-list-container"></div>
-            </div>
-
-            <div id="view-social-detail" class="panel">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 15px;">
-                    <button class="cp-btn-outline chamfer" onclick="closeContactDetail()">[ RETOUR AU RÉSEAU ]</button>
-                    <div id="soc-view-controls" style="display: flex; gap: 15px;">
-                        <button class="cp-btn warning chamfer" onclick="toggleSocialEditMode(true)">[ MODIFIER LE DOSSIER ]</button>
-                    </div>
-                    <div id="soc-edit-controls" style="display: none; gap: 15px;">
-                        <button class="cp-btn cyan chamfer" onclick="saveContact()">SAUVEGARDER</button>
-                        <button class="cp-btn-outline danger chamfer" onclick="toggleSocialEditMode(false)">ANNULER</button>
-                        <button class="cp-btn danger chamfer" onclick="deleteContact()">SUPPRIMER</button>
-                    </div>
-                </div>
-                
-                <div id="contact-view-mode" class="dossier-container chamfer-reverse">
-                    <div class="dossier-header">
-                        <img id="v-soc-avatar" src="" onerror="this.style.display='none'; document.getElementById('v-soc-avatar-placeholder').style.display='flex';" onclick="if(this.src) openImageViewer(this.src)">
-                        <div id="v-soc-avatar-placeholder" class="dossier-header-placeholder" style="display:none;">Photo</div>
-                        <div class="dossier-title">
-                            <h2 id="v-soc-name">NOM PRENOM</h2>
-                            <div class="dossier-subtitle" id="v-soc-profile">Profil non défini</div>
-                        </div>
-                    </div>
-
-                    <div class="dossier-grid">
-                        <div style="display: flex; flex-direction: column; gap: 20px;">
-                            <div class="dossier-section" data-title="[ IDENTIFICATION ]">
-                                <div class="data-row"><span class="data-label">AGE:</span><span class="data-val" id="v-soc-age">--</span></div>
-                                <div class="data-row"><span class="data-label">SEXE:</span><span class="data-val" id="v-soc-sex">--</span></div>
-                                <div class="data-row"><span class="data-label">NAT.:</span><span class="data-val" id="v-soc-nationality">--</span></div>
-                                <div class="data-row"><span class="data-label">TAILLE:</span><span class="data-val" id="v-soc-height">--</span></div>
-                                <div class="data-row"><span class="data-label">NAISSANCE:</span><span class="data-val" id="v-soc-birthDate">--</span></div>
-                            </div>
-                            <div class="dossier-section" data-title="[ CHOSES A SAVOIR ]">
-                                <div class="data-block"><span class="data-block-label">AIME:</span><div class="data-block-val" id="v-soc-likes">--</div></div>
-                                <div class="data-block"><span class="data-block-label">N'AIME PAS:</span><div class="data-block-val" id="v-soc-dislikes">--</div></div>
-                                <div class="data-block"><span class="data-block-label">VALEURS / OBJ.:</span><div class="data-block-val" id="v-soc-morals">--</div></div>
-                                <div class="data-block"><span class="data-block-label">AUTRE:</span><div class="data-block-val" id="v-soc-other">--</div></div>
-                            </div>
-                        </div>
-                        <div style="display: flex; flex-direction: column; gap: 20px;">
-                            <div class="dossier-section" data-title="[ AUTRES INFOS ]">
-                                <div class="data-row"><span class="data-label">LANGUE:</span><span class="data-val" id="v-soc-language">--</span></div>
-                                <div class="data-row"><span class="data-label">CONTACT:</span><span class="data-val" id="v-soc-contact">--</span></div>
-                                <div class="data-row"><span class="data-label">JOB/ETUDE:</span><span class="data-val" id="v-soc-job">--</span></div>
-                                <div class="data-row"><span class="data-label">SITUATION:</span><span class="data-val" id="v-soc-relationship">--</span></div>
-                            </div>
-                            <div class="dossier-section" data-title="[ GALERIE ]">
-                                <div class="soc-carousel" id="soc-carousel-container">
-                                    <button class="soc-car-btn soc-car-prev" onclick="prevGalleryImg()">&#10094;</button>
-                                    <img id="soc-carousel-img" src="" style="cursor: zoom-in;" onclick="openImageViewerFromCarousel()">
-                                    <button class="soc-car-btn soc-car-next" onclick="nextGalleryImg()">&#10095;</button>
-                                    <div class="soc-car-dots" id="soc-carousel-dots"></div>
-                                </div>
-                                <div id="soc-carousel-empty" style="color: #888; margin-top: 15px; font-style: italic;">> Aucune photo enregistrée dans le dossier.</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div id="contact-edit-mode" style="display: none;">
-                    <div class="social-layout">
-                        <div class="social-col-left">
-                            <div class="glass-panel chamfer-reverse" style="padding: 25px; border-color: var(--cp-cyan);">
-                                <div class="social-profile-header-edit">
-                                    <div class="social-avatar-container">
-                                        <span class="social-avatar-placeholder" id="soc-avatar-placeholder-edit">Photo de<br>Profil</span>
-                                        <img id="soc-avatar-img" src="" alt="" style="display: none;">
+                            <div id="protocol-edit-mode" style="display: none;">
+                                <div class="phases-split-layout">
+                                    <div class="phases-left-col">
+                                        <div class="phase-section glass-panel phase-a chamfer-reverse active"><div class="phase-header" onclick="togglePhase(this)"><div>A – Diagnostic</div><div class="cyber-toggle"><svg viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></svg></div></div><div class="phase-body"><div class="step-group"><label class="step-label">1) Nom du problème à traiter :</label><div class="step-subtext">→ Donne un titre clair et court.</div><input type="text" class="cp-input" id="step-1" style="font-size: 1.5rem; font-family: var(--font-title); border-color: var(--cp-red);"></div><div class="form-row"><div class="step-group"><label class="step-label">2) Définition du problème :</label><textarea class="cp-textarea" id="step-2"></textarea></div><div class="step-group"><label class="step-label">3) Cause du problème :</label><textarea class="cp-textarea" id="step-3"></textarea></div></div><div class="step-group"><label class="step-label">4) Risques de l'inaction :</label><textarea class="cp-textarea" id="step-4"></textarea></div></div></div>
+                                        <div class="phase-section glass-panel phase-b chamfer-reverse"><div class="phase-header" onclick="togglePhase(this)"><div>B – Objectivité</div><div class="cyber-toggle"><svg viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></svg></div></div><div class="phase-body"><div class="form-row"><div class="step-group"><label class="step-label">5) Liste des objectifs :</label><textarea class="cp-textarea" id="step-5"></textarea></div><div class="step-group"><label class="step-label">6) Hiérarchisation :</label><textarea class="cp-textarea" id="step-6"></textarea></div></div><div class="step-group"><label class="step-label">7) Échéances :</label><input type="text" class="cp-input" id="step-7"></div></div></div>
+                                        <div class="phase-section glass-panel phase-c chamfer-reverse"><div class="phase-header" onclick="togglePhase(this)"><div>C – Solutions</div><div class="cyber-toggle"><svg viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></svg></div></div><div class="phase-body"><div class="step-group"><label class="step-label">8) Brainstorming libre :</label><textarea class="cp-textarea" id="step-8"></textarea></div><div class="step-group"><label class="step-label">9) Ressources & Faisabilité :</label><textarea class="cp-textarea" id="step-9"></textarea></div></div></div>
+                                        <div class="phase-section glass-panel phase-d chamfer-reverse"><div class="phase-header" onclick="togglePhase(this)"><div>D – Décision</div><div class="cyber-toggle"><svg viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></svg></div></div><div class="phase-body"><div class="step-group"><label class="step-label">10) Choix optimal :</label><textarea class="cp-textarea" id="step-10"></textarea></div><div class="step-group"><label class="step-label">11) Engagement personnel :</label><textarea class="cp-textarea" id="step-11"></textarea></div></div></div>
+                                        <div class="phase-section glass-panel phase-e chamfer-reverse"><div class="phase-header" onclick="togglePhase(this)"><div>E – Exécution</div><div class="cyber-toggle"><svg viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></svg></div></div><div class="phase-body"><div class="step-group"><label class="step-label">12) Actions concrètes :</label><textarea class="cp-textarea" id="step-12"></textarea></div><div class="form-row"><div class="step-group"><label class="step-label">13) Ajustements :</label><textarea class="cp-textarea" id="step-13"></textarea></div><div class="step-group"><label class="step-label">14) Prévention :</label><textarea class="cp-textarea" id="step-14"></textarea></div></div></div></div>
                                     </div>
-                                    <div class="social-basic-info">
-                                        <div class="step-group"><label class="step-label" style="font-size:1rem;">Nom:</label><input type="text" id="soc-lastName" class="cp-input"></div>
-                                        <div class="step-group"><label class="step-label" style="font-size:1rem;">Prénom:</label><input type="text" id="soc-firstName" class="cp-input"></div>
-                                        <div class="step-group"><label class="step-label" style="font-size:1rem;">Age:</label><input type="number" id="soc-age" class="cp-input"></div>
-                                        <div class="step-group"><label class="step-label" style="font-size:1rem;">Sex:</label><input type="text" id="soc-sex" class="cp-input"></div>
-                                        <div class="step-group" style="grid-column: span 2;"><label class="step-label" style="font-size:1rem;">Nationalité:</label><input type="text" id="soc-nationality" class="cp-input"></div>
-                                        
-                                        <div class="step-group" style="grid-column: span 2;">
-                                            <label class="step-label" style="font-size:0.9rem; color: var(--cp-cyan);">> UPLOAD IMAGE PROFIL (PC / Mobile):</label>
-                                            <input type="file" id="soc-avatar-upload" class="cp-input" accept="image/*" onchange="handleImgBBUpload(this, 'soc-avatar-url')">
-                                            <input type="hidden" id="soc-avatar-url">
+                                    <div class="phases-right-col">
+                                        <div class="phase-section glass-panel phase-f chamfer-reverse active" style="height: 100%;">
+                                            <div class="phase-header"><div>F – Opérations de Terrain</div></div>
+                                            <div class="phase-body" style="display: flex;">
+                                                <div class="step-subtext" style="margin-bottom: 10px; color: #aaa;">> Actions extraites de l'Agenda liées à ce projet.</div>
+                                                <div id="protocol-agenda-list" style="display:flex; flex-direction:column; gap:12px; margin-bottom: 25px;"></div>
+                                                <button class="cp-btn-outline orange chamfer" style="align-self: flex-start; padding: 12px 20px; width: 100%;" onclick="goToAgendaWithSource()">+ PLANIFIER UNE ACTION</button>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
                             </div>
-                            <div class="glass-panel chamfer-reverse" style="padding: 25px;">
-                                <h3 style="color: white; font-family: var(--font-mono); margin-bottom: 20px;">Chose a savoir:</h3>
-                                <div style="padding-left: 20px; border-left: 2px solid var(--cp-light-gray); display: flex; flex-direction: column; gap: 15px;">
-                                    <div class="step-group"><label class="step-label" style="font-size:1rem;">Ce qu'il/elle aime:</label><textarea id="soc-likes" class="cp-textarea" style="min-height: 60px;"></textarea></div>
-                                    <div class="step-group"><label class="step-label" style="font-size:1rem;">Ce qu'il/elle n'aime pas:</label><textarea id="soc-dislikes" class="cp-textarea" style="min-height: 60px;"></textarea></div>
-                                    <div class="step-group"><label class="step-label" style="font-size:1rem;">Valeur moraux et objectif de vie:</label><textarea id="soc-morals" class="cp-textarea" style="min-height: 80px;"></textarea></div>
-                                    <div class="step-group"><label class="step-label" style="font-size:1rem;">Autre:</label><textarea id="soc-other" class="cp-textarea" style="min-height: 80px;"></textarea></div>
-                                    <div class="step-group"><label class="step-label" style="font-size:1rem;">Profil social (Etudiant/Employer/PDG):</label><input type="text" id="soc-socialProfile" class="cp-input"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- VIEW: BASE DE DONNÉES (NOTES) -->
+                <div id="view-database" class="panel">
+                    <h2 class="section-title" style="margin-bottom: 25px;">Base de Données / Notes Libres</h2>
+                    
+                    <div class="journal-layout">
+                        <div class="journal-left" id="note-left-panel">
+                            <button class="cp-btn cyan chamfer" style="margin-bottom: 15px; width: 100%; font-size: 1.1rem; letter-spacing: 1px;" onclick="createNewNote()">+ NOUVELLE ENTRÉE</button>
+                            <div id="note-filters" class="filter-bar"></div>
+                            <div id="note-grid" class="journal-grid-scroll"></div>
+                        </div>
+
+                        <div class="journal-right" id="note-detail-view" style="display: none;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 15px;">
+                                <div id="note-view-controls" style="display: flex; gap: 15px; margin-left: auto;">
+                                    <button class="cp-btn warning chamfer" onclick="toggleNoteEditMode(true)">[ MODIFIER LA DONNÉE ]</button>
+                                </div>
+                                <div id="note-edit-controls" style="display: none; gap: 15px; margin-left: auto;">
+                                    <button class="cp-btn cyan chamfer" onclick="saveCurrentNote()">SAUVEGARDER</button>
+                                    <button class="cp-btn-outline danger chamfer" onclick="toggleNoteEditMode(false)">ANNULER</button>
+                                    <button class="cp-btn danger chamfer" onclick="deleteCurrentNote()">SUPPRIMER</button>
+                                </div>
+                            </div>
+
+                            <div id="note-view-mode" class="dossier-container chamfer-reverse">
+                                <div class="dossier-header" style="border-bottom: 1px dashed rgba(0, 229, 255, 0.5);">
+                                    <div class="dossier-title">
+                                        <h2 id="v-n-title" style="color: var(--cp-cyan); font-size: 2.2rem; text-shadow: 0 0 10px rgba(0,229,255,0.3);">TITRE</h2>
+                                        <div class="dossier-subtitle cyber-number" id="v-n-date" style="color: var(--cp-yellow); font-size: 1.1rem;">--</div>
+                                        <div id="v-n-tags" style="margin-top: 10px;"></div>
+                                    </div>
+                                </div>
+                                <div class="data-block-val" id="v-n-content" style="white-space: pre-wrap; font-family: var(--font-mono); font-size: 1.15rem; line-height: 1.6; border-left-color: var(--cp-cyan); min-height: 300px;"></div>
+                            </div>
+
+                            <div id="note-edit-mode" style="display: none;" class="glass-panel chamfer-reverse">
+                                <div style="padding: 25px; border-left: 4px solid var(--cp-cyan);">
+                                    <div class="step-group"><label class="step-label">Sujet / Titre :</label><input type="text" id="e-n-title" class="cp-input" style="font-size:1.5rem; font-family:var(--font-title);"></div>
+                                    <div class="step-group"><label class="step-label">Tags (séparés par des virgules) :</label><input type="text" id="e-n-tags" class="cp-input" placeholder="ex: #Aridago, #USTB"></div>
+                                    <div class="step-group" style="margin-top:20px;"><label class="step-label">Contenu des données :</label><textarea id="e-n-content" class="cp-textarea" style="min-height: 350px; font-size: 1.1rem;"></textarea></div>
                                 </div>
                             </div>
                         </div>
-                        <div class="social-col-right glass-panel chamfer-reverse" style="padding: 25px; border-color: var(--cp-yellow);">
-                            <h3 style="color: white; font-family: var(--font-mono); margin-bottom: 20px;">Autre info:</h3>
-                            <div style="display: flex; flex-direction: column; gap: 15px; margin-bottom: 30px;">
-                                <div class="step-group"><label class="step-label" style="font-size:1rem; color: var(--cp-yellow);">Date de naissance</label><input type="text" id="soc-birthDate" class="cp-input" style="border-left-color: var(--cp-yellow);"></div>
-                                <div class="step-group"><label class="step-label" style="font-size:1rem; color: var(--cp-yellow);">Langue de communication</label><input type="text" id="soc-language" class="cp-input" style="border-left-color: var(--cp-yellow);"></div>
-                                <div class="step-group"><label class="step-label" style="font-size:1rem; color: var(--cp-yellow);">Moyen de contact</label><input type="text" id="soc-contact" class="cp-input" style="border-left-color: var(--cp-yellow);"></div>
-                                <div class="step-group"><label class="step-label" style="font-size:1rem; color: var(--cp-yellow);">Taille</label><input type="text" id="soc-height" class="cp-input" style="border-left-color: var(--cp-yellow);"></div>
-                                <div class="step-group"><label class="step-label" style="font-size:1rem; color: var(--cp-yellow);">Etudie ou travaille dans Quoi?</label><input type="text" id="soc-job" class="cp-input" style="border-left-color: var(--cp-yellow);"></div>
-                                <div class="step-group"><label class="step-label" style="font-size:1rem; color: var(--cp-yellow);">Situation amoureuse</label><input type="text" id="soc-relationship" class="cp-input" style="border-left-color: var(--cp-yellow);"></div>
-                            </div>
-                            <h3 style="color: white; font-family: var(--font-mono);">Photos (Galerie):</h3>
-                            <div class="step-subtext" style="margin-bottom: 10px;">> UPLOAD - 3 photos max pour la galerie</div>
-                            
-                            <input type="file" class="cp-input" style="margin-bottom: 5px; font-size: 0.8rem;" accept="image/*" onchange="handleImgBBUpload(this, 'soc-photo1')">
-                            <input type="hidden" id="soc-photo1">
-                            
-                            <input type="file" class="cp-input" style="margin-bottom: 5px; font-size: 0.8rem;" accept="image/*" onchange="handleImgBBUpload(this, 'soc-photo2')">
-                            <input type="hidden" id="soc-photo2">
-                            
-                            <input type="file" class="cp-input" style="margin-bottom: 5px; font-size: 0.8rem;" accept="image/*" onchange="handleImgBBUpload(this, 'soc-photo3')">
-                            <input type="hidden" id="soc-photo3">
-                        </div>
                     </div>
                 </div>
-            </div>
 
-            <!-- VIEW: MINDMAP -->
-            <div id="view-mindmap" class="panel">
-                <h2 class="section-title">Réseau Neural / Mindmap</h2>
-                
-                <div class="mindmap-wrapper">
-                    <div id="mindmap-container" class="glass-panel">
-                        <canvas id="mindmap-canvas"></canvas>
-                        <div class="zoom-controls">
-                            <button class="zoom-btn chamfer" onclick="zoomMindmap(0.2)">+</button>
-                            <button class="zoom-btn chamfer" onclick="resetMindmapView()">[ ]</button>
-                            <button class="zoom-btn chamfer" onclick="zoomMindmap(-0.2)">-</button>
+                <!-- VIEW: SOCIAL -->
+                <div id="view-social" class="panel">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; flex-wrap: wrap; gap: 15px;">
+                        <h2 class="section-title" style="margin: 0;">Réseau Social / Contacts</h2>
+                        <button class="cp-btn chamfer" onclick="createNewContact()">+ NOUVEAU CONTACT</button>
+                    </div>
+                    <div class="social-list-grid" id="social-list-container"></div>
+                </div>
+
+                <div id="view-social-detail" class="panel">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 15px;">
+                        <button class="cp-btn-outline chamfer" onclick="closeContactDetail()">[ RETOUR AU RÉSEAU ]</button>
+                        <div id="soc-view-controls" style="display: flex; gap: 15px;">
+                            <button class="cp-btn warning chamfer" onclick="toggleSocialEditMode(true)">[ MODIFIER LE DOSSIER ]</button>
                         </div>
-                        <div class="mm-overlay-text">
-                            > EXPLORATEUR ACTIF <br>> SCROLL/PINCER = ZOOM <br>> GLISSER = NAVIGUER
+                        <div id="soc-edit-controls" style="display: none; gap: 15px;">
+                            <button class="cp-btn cyan chamfer" onclick="saveContact()">SAUVEGARDER</button>
+                            <button class="cp-btn-outline danger chamfer" onclick="toggleSocialEditMode(false)">ANNULER</button>
+                            <button class="cp-btn danger chamfer" onclick="deleteContact()">SUPPRIMER</button>
                         </div>
                     </div>
                     
-                    <div id="mindmap-detail-panel" class="glass-panel">
-                        <h3 id="mm-detail-title" style="color: var(--cp-cyan); font-family: var(--font-title); font-size: 1.5rem; margin-bottom: 15px;">Titre</h3>
-                        <div id="mm-readonly-content" style="display:none; font-family: var(--font-mono); color: #ccc; font-size: 1.05rem; line-height: 1.6; overflow-y: auto; flex-grow: 1; white-space: pre-wrap; margin-bottom: 20px;"></div>
-                        
-                        <textarea id="mm-edit-content" class="cp-textarea" style="flex-grow: 1; margin-bottom: 25px; font-family: var(--font-mono); font-size: 1.05rem;"></textarea>
-                        
-                        <div style="display:flex; flex-direction: column; gap:15px;">
-                            <button id="mm-save-btn" class="cp-btn cyan chamfer" style="width: 100%; padding: 15px;" onclick="saveMindmapNode()">SAUVEGARDER LA MODIFICATION</button>
-                            <button id="mm-add-branch-btn" class="cp-btn orange chamfer" style="display:none; width: 100%; padding: 15px;" onclick="addMindmapBranch()">+ AJOUTER BRANCHE (ACTION)</button>
-                            <button class="cp-btn-outline danger chamfer" style="width: 100%; padding: 12px;" onclick="closeMindmapDetail()">FERMER LE PANNEAU</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- VIEW: AGENDA -->
-            <div id="view-agenda" class="panel">
-                <h2 class="section-title">Planificateur Opérationnel</h2>
-                
-                <div style="display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 1px solid var(--glass-border); padding-bottom: 15px;">
-                    <button class="cp-btn-outline active chamfer" id="btn-agenda-pending" onclick="setAgendaTab('pending')">EN ATTENTE</button>
-                    <button class="cp-btn-outline chamfer" id="btn-agenda-completed" onclick="setAgendaTab('completed')">ARCHIVES (ACCOMPLIES)</button>
-                </div>
-                
-                <div id="agenda-filters" class="filter-bar"></div>
-                <div class="agenda-grid">
-                    <div class="task-list" id="agenda-list"></div>
-                    <div>
-                        <div class="glass-panel chamfer-reverse" style="padding: 30px; position: sticky; top: 0;">
-                            <h3 style="color: var(--cp-cyan); margin-bottom: 25px; font-family: var(--font-title);" id="agenda-form-title">AJOUTER ACTION</h3>
-                            <div class="step-group"><label class="step-label" style="font-size:1rem;">Titre de l'action</label><input type="text" id="ag-title" class="cp-input"></div>
-                            <div class="step-group"><label class="step-label" style="font-size:1rem;">Date & Heure limite (Optionnel)</label><input type="datetime-local" id="ag-date" class="cp-input" style="font-family: var(--font-mono);"></div>
-                            <div class="step-group"><label class="step-label" style="font-size:1rem;">Tags (Optionnel)</label><input type="text" id="ag-tags" class="cp-input" placeholder="ex: #Aridago, #USTB"></div>
-                            <div class="step-group" style="margin-bottom: 30px;">
-                                <label class="step-label" style="font-size:1rem;">Source (Projet lié)</label>
-                                <select id="ag-source" class="cp-select"><option value="">-- Indépendant / Aucun --</option></select>
+                    <div id="contact-view-mode" class="dossier-container chamfer-reverse">
+                        <div class="dossier-header">
+                            <img id="v-soc-avatar" src="" onerror="this.style.display='none'; document.getElementById('v-soc-avatar-placeholder').style.display='flex';" onclick="if(this.src) openImageViewer(this.src)">
+                            <div id="v-soc-avatar-placeholder" class="dossier-header-placeholder" style="display:none;">Photo</div>
+                            <div class="dossier-title">
+                                <h2 id="v-soc-name">NOM PRENOM</h2>
+                                <div class="dossier-subtitle" id="v-soc-profile">Profil non défini</div>
                             </div>
-                            <button class="cp-btn chamfer" style="width: 100%;" id="ag-btn-submit" onclick="submitAgendaTask()">GÉNÉRER</button>
-                            <button class="cp-btn danger chamfer" style="width: 100%; margin-top: 15px; display: none;" id="ag-btn-cancel" onclick="resetAgendaForm()">ANNULER MODIFICATION</button>
+                        </div>
+
+                        <div class="dossier-grid">
+                            <div style="display: flex; flex-direction: column; gap: 20px;">
+                                <div class="dossier-section" data-title="[ IDENTIFICATION ]">
+                                    <div class="data-row"><span class="data-label">AGE:</span><span class="data-val" id="v-soc-age">--</span></div>
+                                    <div class="data-row"><span class="data-label">SEXE:</span><span class="data-val" id="v-soc-sex">--</span></div>
+                                    <div class="data-row"><span class="data-label">NAT.:</span><span class="data-val" id="v-soc-nationality">--</span></div>
+                                    <div class="data-row"><span class="data-label">TAILLE:</span><span class="data-val" id="v-soc-height">--</span></div>
+                                    <div class="data-row"><span class="data-label">NAISSANCE:</span><span class="data-val" id="v-soc-birthDate">--</span></div>
+                                </div>
+                                <div class="dossier-section" data-title="[ CHOSES A SAVOIR ]">
+                                    <div class="data-block"><span class="data-block-label">AIME:</span><div class="data-block-val" id="v-soc-likes">--</div></div>
+                                    <div class="data-block"><span class="data-block-label">N'AIME PAS:</span><div class="data-block-val" id="v-soc-dislikes">--</div></div>
+                                    <div class="data-block"><span class="data-block-label">VALEURS / OBJ.:</span><div class="data-block-val" id="v-soc-morals">--</div></div>
+                                    <div class="data-block"><span class="data-block-label">AUTRE:</span><div class="data-block-val" id="v-soc-other">--</div></div>
+                                </div>
+                            </div>
+                            <div style="display: flex; flex-direction: column; gap: 20px;">
+                                <div class="dossier-section" data-title="[ AUTRES INFOS ]">
+                                    <div class="data-row"><span class="data-label">LANGUE:</span><span class="data-val" id="v-soc-language">--</span></div>
+                                    <div class="data-row"><span class="data-label">CONTACT:</span><span class="data-val" id="v-soc-contact">--</span></div>
+                                    <div class="data-row"><span class="data-label">JOB/ETUDE:</span><span class="data-val" id="v-soc-job">--</span></div>
+                                    <div class="data-row"><span class="data-label">SITUATION:</span><span class="data-val" id="v-soc-relationship">--</span></div>
+                                </div>
+                                <div class="dossier-section" data-title="[ GALERIE ]">
+                                    <div class="soc-carousel" id="soc-carousel-container">
+                                        <button class="soc-car-btn soc-car-prev" onclick="prevGalleryImg()">&#10094;</button>
+                                        <img id="soc-carousel-img" src="" style="cursor: zoom-in;" onclick="openImageViewerFromCarousel()">
+                                        <button class="soc-car-btn soc-car-next" onclick="nextGalleryImg()">&#10095;</button>
+                                        <div class="soc-car-dots" id="soc-carousel-dots"></div>
+                                    </div>
+                                    <div id="soc-carousel-empty" style="color: #888; margin-top: 15px; font-style: italic;">> Aucune photo enregistrée dans le dossier.</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="contact-edit-mode" style="display: none;">
+                        <div class="social-layout">
+                            <div class="social-col-left">
+                                <div class="glass-panel chamfer-reverse" style="padding: 25px; border-color: var(--cp-cyan);">
+                                    <div class="social-profile-header-edit">
+                                        <div class="social-avatar-container">
+                                            <span class="social-avatar-placeholder" id="soc-avatar-placeholder-edit">Photo de<br>Profil</span>
+                                            <img id="soc-avatar-img" src="" alt="" style="display: none;">
+                                        </div>
+                                        <div class="social-basic-info">
+                                            <div class="step-group"><label class="step-label" style="font-size:1rem;">Nom:</label><input type="text" id="soc-lastName" class="cp-input"></div>
+                                            <div class="step-group"><label class="step-label" style="font-size:1rem;">Prénom:</label><input type="text" id="soc-firstName" class="cp-input"></div>
+                                            <div class="step-group"><label class="step-label" style="font-size:1rem;">Age:</label><input type="number" id="soc-age" class="cp-input"></div>
+                                            <div class="step-group"><label class="step-label" style="font-size:1rem;">Sex:</label><input type="text" id="soc-sex" class="cp-input"></div>
+                                            <div class="step-group" style="grid-column: span 2;"><label class="step-label" style="font-size:1rem;">Nationalité:</label><input type="text" id="soc-nationality" class="cp-input"></div>
+                                            
+                                            <div class="step-group" style="grid-column: span 2;">
+                                                <label class="step-label" style="font-size:0.9rem; color: var(--cp-cyan);">> UPLOAD IMAGE PROFIL (PC / Mobile):</label>
+                                                <input type="file" id="soc-avatar-upload" class="cp-input" accept="image/*" onchange="handleImgBBUpload(this, 'soc-avatar-url')">
+                                                <input type="hidden" id="soc-avatar-url">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="glass-panel chamfer-reverse" style="padding: 25px;">
+                                    <h3 style="color: white; font-family: var(--font-mono); margin-bottom: 20px;">Chose a savoir:</h3>
+                                    <div style="padding-left: 20px; border-left: 2px solid var(--cp-light-gray); display: flex; flex-direction: column; gap: 15px;">
+                                        <div class="step-group"><label class="step-label" style="font-size:1rem;">Ce qu'il/elle aime:</label><textarea id="soc-likes" class="cp-textarea" style="min-height: 60px;"></textarea></div>
+                                        <div class="step-group"><label class="step-label" style="font-size:1rem;">Ce qu'il/elle n'aime pas:</label><textarea id="soc-dislikes" class="cp-textarea" style="min-height: 60px;"></textarea></div>
+                                        <div class="step-group"><label class="step-label" style="font-size:1rem;">Valeur moraux et objectif de vie:</label><textarea id="soc-morals" class="cp-textarea" style="min-height: 80px;"></textarea></div>
+                                        <div class="step-group"><label class="step-label" style="font-size:1rem;">Autre:</label><textarea id="soc-other" class="cp-textarea" style="min-height: 80px;"></textarea></div>
+                                        <div class="step-group"><label class="step-label" style="font-size:1rem;">Profil social (Etudiant/Employer/PDG):</label><input type="text" id="soc-socialProfile" class="cp-input"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="social-col-right glass-panel chamfer-reverse" style="padding: 25px; border-color: var(--cp-yellow);">
+                                <h3 style="color: white; font-family: var(--font-mono); margin-bottom: 20px;">Autre info:</h3>
+                                <div style="display: flex; flex-direction: column; gap: 15px; margin-bottom: 30px;">
+                                    <div class="step-group"><label class="step-label" style="font-size:1rem; color: var(--cp-yellow);">Date de naissance</label><input type="text" id="soc-birthDate" class="cp-input" style="border-left-color: var(--cp-yellow);"></div>
+                                    <div class="step-group"><label class="step-label" style="font-size:1rem; color: var(--cp-yellow);">Langue de communication</label><input type="text" id="soc-language" class="cp-input" style="border-left-color: var(--cp-yellow);"></div>
+                                    <div class="step-group"><label class="step-label" style="font-size:1rem; color: var(--cp-yellow);">Moyen de contact</label><input type="text" id="soc-contact" class="cp-input" style="border-left-color: var(--cp-yellow);"></div>
+                                    <div class="step-group"><label class="step-label" style="font-size:1rem; color: var(--cp-yellow);">Taille</label><input type="text" id="soc-height" class="cp-input" style="border-left-color: var(--cp-yellow);"></div>
+                                    <div class="step-group"><label class="step-label" style="font-size:1rem; color: var(--cp-yellow);">Etudie ou travaille dans Quoi?</label><input type="text" id="soc-job" class="cp-input" style="border-left-color: var(--cp-yellow);"></div>
+                                    <div class="step-group"><label class="step-label" style="font-size:1rem; color: var(--cp-yellow);">Situation amoureuse</label><input type="text" id="soc-relationship" class="cp-input" style="border-left-color: var(--cp-yellow);"></div>
+                                </div>
+                                <h3 style="color: white; font-family: var(--font-mono);">Photos (Galerie):</h3>
+                                <div class="step-subtext" style="margin-bottom: 10px;">> UPLOAD - 3 photos max pour la galerie</div>
+                                
+                                <input type="file" class="cp-input" style="margin-bottom: 5px; font-size: 0.8rem;" accept="image/*" onchange="handleImgBBUpload(this, 'soc-photo1')">
+                                <input type="hidden" id="soc-photo1">
+                                
+                                <input type="file" class="cp-input" style="margin-bottom: 5px; font-size: 0.8rem;" accept="image/*" onchange="handleImgBBUpload(this, 'soc-photo2')">
+                                <input type="hidden" id="soc-photo2">
+                                
+                                <input type="file" class="cp-input" style="margin-bottom: 5px; font-size: 0.8rem;" accept="image/*" onchange="handleImgBBUpload(this, 'soc-photo3')">
+                                <input type="hidden" id="soc-photo3">
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
 
-            <!-- VIEW: FINANCE -->
-            <div id="view-finance" class="panel">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; flex-wrap: wrap; gap: 15px;">
-                    <h2 class="section-title" style="margin: 0;">Gestion Budgétaire</h2>
-                    <div class="glass-panel chamfer-reverse" style="display: flex; gap: 15px; align-items: center; padding: 10px 20px;">
-                        <label style="font-family: var(--font-mono); color: var(--cp-cyan); font-weight: bold;">DEVISE:</label>
-                        <select id="fin-currency" class="cp-select" style="padding: 5px 10px; width: auto; font-weight: bold;" onchange="changeCurrency()">
-                            <option value="EUR">Euro (€)</option>
-                            <option value="MGA">Ariary (Ar)</option>
-                            <option value="USD">Dollar ($)</option>
-                            <option value="CNY">Yuan (¥)</option>
-                        </select>
+                <!-- VIEW: MINDMAP -->
+                <div id="view-mindmap" class="panel">
+                    <h2 class="section-title">Réseau Neural / Mindmap</h2>
+                    
+                    <div class="mindmap-wrapper">
+                        <div id="mindmap-container" class="glass-panel">
+                            <canvas id="mindmap-canvas"></canvas>
+                            <div class="zoom-controls">
+                                <button class="zoom-btn chamfer" onclick="zoomMindmap(0.2)">+</button>
+                                <button class="zoom-btn chamfer" onclick="resetMindmapView()">[ ]</button>
+                                <button class="zoom-btn chamfer" onclick="zoomMindmap(-0.2)">-</button>
+                            </div>
+                            <div class="mm-overlay-text">
+                                > EXPLORATEUR ACTIF <br>> SCROLL/PINCER = ZOOM <br>> GLISSER = NAVIGUER
+                            </div>
+                        </div>
+                        
+                        <div id="mindmap-detail-panel" class="glass-panel">
+                            <h3 id="mm-detail-title" style="color: var(--cp-cyan); font-family: var(--font-title); font-size: 1.5rem; margin-bottom: 15px;">Titre</h3>
+                            <div id="mm-readonly-content" style="display:none; font-family: var(--font-mono); color: #ccc; font-size: 1.05rem; line-height: 1.6; overflow-y: auto; flex-grow: 1; white-space: pre-wrap; margin-bottom: 20px;"></div>
+                            
+                            <textarea id="mm-edit-content" class="cp-textarea" style="flex-grow: 1; margin-bottom: 25px; font-family: var(--font-mono); font-size: 1.05rem;"></textarea>
+                            
+                            <div style="display:flex; flex-direction: column; gap:15px;">
+                                <button id="mm-save-btn" class="cp-btn cyan chamfer" style="width: 100%; padding: 15px;" onclick="saveMindmapNode()">SAUVEGARDER LA MODIFICATION</button>
+                                <button id="mm-add-branch-btn" class="cp-btn orange chamfer" style="display:none; width: 100%; padding: 15px;" onclick="addMindmapBranch()">+ AJOUTER BRANCHE (ACTION)</button>
+                                <button class="cp-btn-outline danger chamfer" style="width: 100%; padding: 12px;" onclick="closeMindmapDetail()">FERMER LE PANNEAU</button>
+                            </div>
+                        </div>
                     </div>
-                </div>
-                
-                <div class="finance-stats">
-                    <div class="stat-card glass-panel chamfer-reverse"><div class="stat-title">Solde Total</div><div class="stat-value cyber-number" id="fin-solde">0</div></div>
-                    <div class="stat-card glass-panel chamfer-reverse"><div class="stat-title">Total Revenus</div><div class="stat-value cyber-number text-green" id="fin-revenus">0</div></div>
-                    <div class="stat-card glass-panel chamfer-reverse"><div class="stat-title">Total Dépenses</div><div class="stat-value cyber-number text-red" id="fin-depenses">0</div></div>
                 </div>
 
-                <div class="finance-grid">
-                    <div class="glass-panel chamfer-reverse" style="padding: 30px; position: sticky; top: 0;">
-                        <h3 style="color: var(--cp-cyan); margin-bottom: 25px; font-family: var(--font-title);" id="fin-form-title">NOUVELLE TRANSACTION</h3>
-                        <div class="step-group"><label class="step-label" style="font-size:1rem;">Type</label><select id="fin-type" class="cp-select"><option value="in">Revenu (+)</option><option value="out">Dépense (-)</option></select></div>
-                        <div class="step-group"><label class="step-label" style="font-size:1rem;">Libellé</label><input type="text" id="fin-label" class="cp-input" placeholder="Ex: Loyer, Salaire"></div>
-                        <div class="step-group" style="margin-bottom: 30px;"><label class="step-label" style="font-size:1rem;">Montant (Devise choisie)</label><input type="number" id="fin-amount" class="cp-input" step="0.01"></div>
-                        <button class="cp-btn chamfer" style="width: 100%;" id="fin-btn-submit" onclick="submitTransaction()">ENREGISTRER LE FLUX</button>
-                        <button class="cp-btn danger chamfer" style="width: 100%; margin-top: 15px; display: none;" id="fin-btn-cancel" onclick="resetFinanceForm()">ANNULER MODIFICATION</button>
+                <!-- VIEW: AGENDA -->
+                <div id="view-agenda" class="panel">
+                    <h2 class="section-title">Planificateur Opérationnel</h2>
+                    
+                    <div style="display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 1px solid var(--glass-border); padding-bottom: 15px;">
+                        <button class="cp-btn-outline active chamfer" id="btn-agenda-pending" onclick="setAgendaTab('pending')">EN ATTENTE</button>
+                        <button class="cp-btn-outline chamfer" id="btn-agenda-completed" onclick="setAgendaTab('completed')">ARCHIVES (ACCOMPLIES)</button>
                     </div>
-                    <div>
-                        <h3 style="color: #aaa; margin-bottom: 15px; font-family: var(--font-title);">HISTORIQUE DES FLUX</h3>
-                        <div id="fin-list" style="display: flex; flex-direction: column; gap: 12px; max-height: 480px; overflow-y: auto; padding-right: 5px;"></div>
+                    
+                    <div id="agenda-filters" class="filter-bar"></div>
+                    <div class="agenda-grid">
+                        <div class="task-list" id="agenda-list"></div>
+                        <div>
+                            <div class="glass-panel chamfer-reverse" style="padding: 30px; position: sticky; top: 0;">
+                                <h3 style="color: var(--cp-cyan); margin-bottom: 25px; font-family: var(--font-title);" id="agenda-form-title">AJOUTER ACTION</h3>
+                                <div class="step-group"><label class="step-label" style="font-size:1rem;">Titre de l'action</label><input type="text" id="ag-title" class="cp-input"></div>
+                                <div class="step-group"><label class="step-label" style="font-size:1rem;">Date & Heure limite (Optionnel)</label><input type="datetime-local" id="ag-date" class="cp-input" style="font-family: var(--font-mono);"></div>
+                                <div class="step-group"><label class="step-label" style="font-size:1rem;">Tags (Optionnel)</label><input type="text" id="ag-tags" class="cp-input" placeholder="ex: #Aridago, #USTB"></div>
+                                <div class="step-group" style="margin-bottom: 30px;">
+                                    <label class="step-label" style="font-size:1rem;">Source (Projet lié)</label>
+                                    <select id="ag-source" class="cp-select"><option value="">-- Indépendant / Aucun --</option></select>
+                                </div>
+                                <button class="cp-btn chamfer" style="width: 100%;" id="ag-btn-submit" onclick="submitAgendaTask()">GÉNÉRER</button>
+                                <button class="cp-btn danger chamfer" style="width: 100%; margin-top: 15px; display: none;" id="ag-btn-cancel" onclick="resetAgendaForm()">ANNULER MODIFICATION</button>
+                            </div>
+                        </div>
                     </div>
                 </div>
-            </div>
-        </main>
+
+                <!-- VIEW: FINANCE -->
+                <div id="view-finance" class="panel">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; flex-wrap: wrap; gap: 15px;">
+                        <h2 class="section-title" style="margin: 0;">Gestion Budgétaire</h2>
+                        <div class="glass-panel chamfer-reverse" style="display: flex; gap: 15px; align-items: center; padding: 10px 20px;">
+                            <label style="font-family: var(--font-mono); color: var(--cp-cyan); font-weight: bold;">DEVISE:</label>
+                            <select id="fin-currency" class="cp-select" style="padding: 5px 10px; width: auto; font-weight: bold;" onchange="changeCurrency()">
+                                <option value="EUR">Euro (€)</option>
+                                <option value="MGA">Ariary (Ar)</option>
+                                <option value="USD">Dollar ($)</option>
+                                <option value="CNY">Yuan (¥)</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="finance-stats">
+                        <div class="stat-card glass-panel chamfer-reverse"><div class="stat-title">Solde Total</div><div class="stat-value cyber-number" id="fin-solde">0</div></div>
+                        <div class="stat-card glass-panel chamfer-reverse"><div class="stat-title">Total Revenus</div><div class="stat-value cyber-number text-green" id="fin-revenus">0</div></div>
+                        <div class="stat-card glass-panel chamfer-reverse"><div class="stat-title">Total Dépenses</div><div class="stat-value cyber-number text-red" id="fin-depenses">0</div></div>
+                    </div>
+
+                    <div class="finance-grid">
+                        <div class="glass-panel chamfer-reverse" style="padding: 30px; position: sticky; top: 0;">
+                            <h3 style="color: var(--cp-cyan); margin-bottom: 25px; font-family: var(--font-title);" id="fin-form-title">NOUVELLE TRANSACTION</h3>
+                            <div class="step-group"><label class="step-label" style="font-size:1rem;">Type</label><select id="fin-type" class="cp-select"><option value="in">Revenu (+)</option><option value="out">Dépense (-)</option></select></div>
+                            <div class="step-group"><label class="step-label" style="font-size:1rem;">Libellé</label><input type="text" id="fin-label" class="cp-input" placeholder="Ex: Loyer, Salaire"></div>
+                            <div class="step-group" style="margin-bottom: 30px;"><label class="step-label" style="font-size:1rem;">Montant (Devise choisie)</label><input type="number" id="fin-amount" class="cp-input" step="0.01"></div>
+                            <button class="cp-btn chamfer" style="width: 100%;" id="fin-btn-submit" onclick="submitTransaction()">ENREGISTRER LE FLUX</button>
+                            <button class="cp-btn danger chamfer" style="width: 100%; margin-top: 15px; display: none;" id="fin-btn-cancel" onclick="resetFinanceForm()">ANNULER MODIFICATION</button>
+                        </div>
+                        <div>
+                            <h3 style="color: #aaa; margin-bottom: 15px; font-family: var(--font-title);">HISTORIQUE DES FLUX</h3>
+                            <div id="fin-list" style="display: flex; flex-direction: column; gap: 12px; max-height: 480px; overflow-y: auto; padding-right: 5px;"></div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div> <!-- FIN OS-CONTENT -->
 
         <!-- MODAL INITIALISATION PROJET -->
         <div class="modal" id="modal-new-protocol">
@@ -1044,8 +1113,68 @@
 
     <!-- SCRIPT PRINCIPAL DU SITE -->
     <script>
+        // ==========================================
+        // SYSTEM SECURITY (LOCK SCREEN)
+        // ==========================================
+        
+        // ------------------------------------------
+        // -> MODIFIE TON MOT DE PASSE ICI :
+        const SYSTEM_PIN = "156000"; 
+        // ------------------------------------------
+
+        let currentPinInput = "";
+
+        function pressPin(num) {
+            if(currentPinInput.length < 6) {
+                currentPinInput += num;
+                updatePinDisplay();
+                if(window.CyberSFX) CyberSFX.play();
+                
+                if(currentPinInput.length === 6) {
+                    setTimeout(verifyPin, 150); 
+                }
+            }
+        }
+
+        function clearPin() { currentPinInput = ""; updatePinDisplay(); if(window.CyberSFX) CyberSFX.play(); }
+        function delPin() { currentPinInput = currentPinInput.slice(0, -1); updatePinDisplay(); if(window.CyberSFX) CyberSFX.play(); }
+
+        function updatePinDisplay() {
+            const dots = document.querySelectorAll('.pin-dot');
+            dots.forEach((dot, index) => {
+                if(index < currentPinInput.length) dot.classList.add('filled');
+                else dot.classList.remove('filled');
+            });
+        }
+
+        function verifyPin() {
+            if(currentPinInput === SYSTEM_PIN) {
+                window.showHudAlert("AUTORISATION ACCORDÉE", "success");
+                sessionStorage.setItem('ariel_os_unlocked', 'true');
+                
+                document.getElementById('lock-screen').style.opacity = '0';
+                document.getElementById('os-content').classList.remove('locked-blur');
+                
+                setTimeout(() => { document.getElementById('lock-screen').style.display = 'none'; }, 600);
+            } else {
+                window.showHudAlert("CODE INCORRECT", "danger");
+                const ls = document.getElementById('lock-screen');
+                ls.classList.add('error-shake');
+                setTimeout(() => {
+                    ls.classList.remove('error-shake');
+                    clearPin();
+                }, 500);
+            }
+        }
+
+        // Raccourcis Clavier pour le Lock Screen
         document.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter' && e.target.tagName !== 'TEXTAREA') {
+            if(document.getElementById('lock-screen').style.display !== 'none') {
+                if(e.key >= '0' && e.key <= '9') pressPin(e.key);
+                else if(e.key === 'Backspace') delPin();
+                else if(e.key === 'Escape' || e.key === 'Delete') clearPin();
+            } else if (e.key === 'Enter' && e.target.tagName !== 'TEXTAREA') {
+                // Raccourcis normaux du site quand déverrouillé
                 if (document.getElementById('view-agenda').classList.contains('active') && (e.target.id === 'ag-title' || e.target.id === 'ag-date' || e.target.id === 'ag-tags' || e.target.id === 'ag-source')) {
                     submitAgendaTask();
                 } else if (document.getElementById('view-finance').classList.contains('active') && (e.target.id === 'fin-label' || e.target.id === 'fin-amount')) {
@@ -1070,7 +1199,6 @@
             const formData = new FormData();
             formData.append("image", file);
             
-            // Notification de transfert visuelle
             window.showHudAlert("TRANSFERT EN COURS...", "info"); 
             
             try {
@@ -1080,8 +1208,6 @@
                     const imageUrl = result.data.url;
                     document.getElementById(targetHiddenId).value = imageUrl;
                     if(targetHiddenId === 'soc-avatar-url') updateContactAvatarPreview();
-                    
-                    // Validation vert fluo
                     window.showHudAlert("IMAGE SAUVEGARDÉE", "success");
                 } else {
                     throw new Error("Erreur ImgBB");
@@ -1260,7 +1386,6 @@
             protocols.forEach((p, idx) => { if (p.order === undefined) p.order = (p.lastModified || Date.now()) + idx; });
             notes.forEach((n, idx) => { if (n.order === undefined) n.order = (n.lastModified || Date.now()) + idx; });
             renderAll(); 
-            startContinuousRain(); // Lancement de l'animation de fond omniprésente
         };
 
         window.parseDataCloud = function(data) {
@@ -1322,7 +1447,7 @@
             }
         });
 
-        // Animation de fond permanente activée au lancement
+        // Animation de fond permanente
         function startContinuousRain() {
             if(!rainCanvas) return;
             if(!rainActive) { initRain(); rainActive = true; rainCanvas.style.opacity = '0.3'; drawRain(); }
@@ -2027,7 +2152,18 @@
             document.getElementById('mindmap-detail-panel').classList.remove('open'); currentEditNode = null; 
         }
 
-        window.addEventListener('load', () => { window.loadData(); });
+        // VERIFICATION AU LANCEMENT DU SYSTEME
+        window.addEventListener('load', () => { 
+            startContinuousRain();
+            
+            // Si la session est déjà déverrouillée
+            if(sessionStorage.getItem('ariel_os_unlocked') === 'true') {
+                document.getElementById('lock-screen').style.display = 'none';
+                document.getElementById('os-content').classList.remove('locked-blur');
+            }
+            
+            window.loadData(); 
+        });
     </script>
 </body>
 </html>
