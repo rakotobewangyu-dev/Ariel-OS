@@ -76,7 +76,7 @@
         }
 
         /* ==============================================================
-           GESTION MOBILE : FORCE L'AFFICHAGE "BUREAU PC" À 100%
+           GESTION MOBILE : FORCE L'AFFICHAGE "BUREAU PC" PLEIN ÉCRAN
            ============================================================== */
         @media screen and (max-width: 1024px) {
             body {
@@ -85,32 +85,37 @@
             #app-wrapper {
                 position: absolute;
                 top: 50%; left: 50%;
-                /* On force la résolution PC sur mobile */
-                width: var(--pc-width) !important;
-                height: var(--pc-height) !important;
                 transform-origin: center center;
-                border: 1px solid rgba(0, 229, 255, 0.2);
-                border-radius: 8px;
+                /* Suppression des bordures pour fusionner avec les bords du téléphone */
+                border: none !important;
+                border-radius: 0 !important;
             }
         }
+        
         /* Mobile Tenu Verticalement (Portrait) */
         @media screen and (max-width: 1024px) and (orientation: portrait) {
             #app-wrapper {
-                /* Rotation à 90° et échelle précise pour s'emboîter dans l'écran */
-                transform: translate(-50%, -50%) rotate(90deg) scale(min(calc(100vh / var(--pc-width)), calc(100vw / var(--pc-height)))) !important;
+                /* On garde la hauteur PC, mais on adapte la largeur au ratio exact de l'écran */
+                height: var(--pc-height) !important;
+                width: calc(var(--pc-height) * (100vh / 100vw)) !important;
+                /* Rotation à 90° et échelle calibrée pour toucher précisément les bords */
+                transform: translate(-50%, -50%) rotate(90deg) scale(calc(100vw / var(--pc-height))) !important;
             }
         }
+        
         /* Mobile Tenu Horizontalement (Paysage) */
         @media screen and (max-width: 1024px) and (orientation: landscape) {
             #app-wrapper {
-                transform: translate(-50%, -50%) scale(min(calc(100vw / var(--pc-width)), calc(100vh / var(--pc-height)))) !important;
+                height: var(--pc-height) !important;
+                width: calc(var(--pc-height) * (100vw / 100vh)) !important;
+                transform: translate(-50%, -50%) scale(calc(100vh / var(--pc-height))) !important;
             }
         }
 
-        /* Data Rain Canvas */
+        /* Data Rain Canvas - Animé en continu */
         #data-rain-canvas {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
-            pointer-events: none; z-index: -1; opacity: 0; transition: opacity 0.5s;
+            pointer-events: none; z-index: -1; opacity: 0.15; transition: opacity 0.5s;
         }
 
         /* Utils & Animations */
@@ -1146,7 +1151,7 @@
             return `${days[d.getDay()]} ${pad(d.getDate())} ${months[d.getMonth()]} ${d.getFullYear()} [${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}]`;
         };
 
-        // Swipe Navigation : Modifiée mathématiquement pour suivre l'inversion d'axe (Rotation) sur mobile
+        // Swipe Navigation
         let touchStartX = 0; let touchStartY = 0;
         const tabOrder = ['view-nexus', 'view-protocols', 'view-database', 'view-social', 'view-mindmap', 'view-agenda', 'view-finance'];
         const appWrapper = document.getElementById('app-wrapper');
@@ -1232,6 +1237,7 @@
             protocols.forEach((p, idx) => { if (p.order === undefined) p.order = (p.lastModified || Date.now()) + idx; });
             notes.forEach((n, idx) => { if (n.order === undefined) n.order = (n.lastModified || Date.now()) + idx; });
             renderAll(); 
+            startContinuousRain(); // Lancement de l'animation de fond
         };
 
         window.parseDataCloud = function(data) {
@@ -1266,12 +1272,12 @@
         
         function initRain() {
             if(!rainCanvas) return;
-            // On calcule la taille sur le conteneur principal qui a la résolution PC virtuelle
             rainCanvas.width = document.getElementById('app-wrapper').offsetWidth; 
             rainCanvas.height = document.getElementById('app-wrapper').offsetHeight;
             const columns = rainCanvas.width / 16;
             rainDrops = []; for(let x = 0; x < columns; x++) rainDrops[x] = 1;
         }
+
         function drawRain() {
             if(!rainActive || !rainCtx) return;
             rainCtx.fillStyle = "rgba(0, 0, 0, 0.08)"; rainCtx.fillRect(0, 0, rainCanvas.width, rainCanvas.height);
@@ -1293,11 +1299,18 @@
             }
         });
 
+        // Animation de fond permanente activée au lancement
+        function startContinuousRain() {
+            if(!rainCanvas) return;
+            if(!rainActive) { initRain(); rainActive = true; rainCanvas.style.opacity = '0.15'; drawRain(); }
+        }
+
+        // Effet visuel plus intense lors du changement d'onglet ou de la sauvegarde
         function triggerDataRain() {
             if(!rainCanvas) return;
-            if(!rainActive) { initRain(); rainActive = true; rainCanvas.style.opacity = '0.35'; drawRain(); }
+            rainCanvas.style.opacity = '0.4';
             clearTimeout(rainTimer);
-            rainTimer = setTimeout(() => { rainCanvas.style.opacity = '0'; setTimeout(() => { rainActive = false; }, 500); }, 1200);
+            rainTimer = setTimeout(() => { rainCanvas.style.opacity = '0.15'; }, 800);
         }
 
         function extractTags(str) { return !str ? [] : str.split(',').map(s => s.trim().toUpperCase()).filter(s => s !== '').map(s => s.startsWith('#') ? s : '#' + s); }
@@ -1373,8 +1386,6 @@
             
             document.querySelectorAll('.panel').forEach(panel => { panel.classList.remove('active', 'slide-next', 'slide-prev'); });
 
-            // Suppression du code qui cachait les panneaux de gauche sur mobile. 
-            // On reste en comportement 100% PC !
             if(viewId === 'view-protocols') {
                 const rightPanel = document.getElementById('journal-detail-view');
                 if(rightPanel) rightPanel.style.display = currentProtocolId ? 'flex' : 'none';
@@ -1500,11 +1511,13 @@
             renderProtocols(); openProtocolDetail(newId); toggleProtocolEditMode(true); 
         }
 
+        // SUPPRESSION DIRECTE SANS POPUP CHROME
         function deleteCurrentProtocol() {
             if(!currentProtocolId) return;
-            if(confirm("Confirmer la suppression de ce projet ? (Les actions associées perdront leur source)")) {
-                protocols = protocols.filter(p => p.id !== currentProtocolId); stateChanged(); window.showHudAlert("PROJET SUPPRIMÉ", "danger"); closeProtocolDetail(); 
-            }
+            protocols = protocols.filter(p => p.id !== currentProtocolId); 
+            stateChanged(); 
+            window.showHudAlert("PROJET SUPPRIMÉ", "danger"); 
+            closeProtocolDetail(); 
         }
 
         function renderProtocolAgenda(sourceName) {
@@ -1604,11 +1617,14 @@
             stateChanged(); window.showHudAlert("NOTE SAUVEGARDÉE", "info"); openNoteDetail(currentEditNoteId); if(mindmapAnimId) buildMindmapData();
         }
 
+        // SUPPRESSION DIRECTE SANS POPUP CHROME
         function deleteCurrentNote() {
             if(!currentEditNoteId) return;
-            if(confirm("Confirmer la suppression de cette note ?")) { notes = notes.filter(n => n.id !== currentEditNoteId); stateChanged(); window.showHudAlert("NOTE SUPPRIMÉE", "danger"); closeNoteDetail(); }
+            notes = notes.filter(n => n.id !== currentEditNoteId); 
+            stateChanged(); 
+            window.showHudAlert("NOTE SUPPRIMÉE", "danger"); 
+            closeNoteDetail(); 
         }
-
 
         // ==========================================
         // SOCIAL
@@ -1690,9 +1706,13 @@
             window.showHudAlert("PROFIL SAUVEGARDÉ", "info"); stateChanged(); openContactDetail(currentContactId, false);
         }
 
+        // SUPPRESSION DIRECTE SANS POPUP CHROME
         function deleteContact() {
             if(!currentContactId) return;
-            if(confirm("Effacer ce contact de la base de données ?")) { socialContacts = socialContacts.filter(c => c.id !== currentContactId); stateChanged(); window.showHudAlert("CONTACT EFFACÉ", "danger"); closeContactDetail(); }
+            socialContacts = socialContacts.filter(c => c.id !== currentContactId); 
+            stateChanged(); 
+            window.showHudAlert("CONTACT EFFACÉ", "danger"); 
+            closeContactDetail(); 
         }
 
         function closeContactDetail() { currentContactId = null; document.querySelectorAll('.panel').forEach(el => el.classList.remove('active')); document.getElementById('view-social').classList.add('active'); renderSocialContacts(); }
@@ -1758,7 +1778,15 @@
             if(mindmapAnimId) buildMindmapData();
         }
         function restoreAgendaTask(id) { const t = completedTasksList.find(x => x.id === id); if(t) { completedTasksList = completedTasksList.filter(x => x.id !== id); agendaTasks.push(t); } stateChanged(); renderAgenda(); window.showToast("ACTION RESTAURÉE", "var(--cp-yellow)"); }
-        function deleteCompletedTask(id) { if(confirm("Supprimer DÉFINITIVEMENT cette action ? (L'XP associée sera perdue)")) { completedTasksList = completedTasksList.filter(x => x.id !== id); stateChanged(); renderAgenda(); window.showToast("ACTION ARCHIVÉE SUPPRIMÉE", "var(--cp-red)"); } }
+        
+        // SUPPRESSION DIRECTE SANS POPUP CHROME
+        function deleteCompletedTask(id) { 
+            completedTasksList = completedTasksList.filter(x => x.id !== id); 
+            stateChanged(); 
+            renderAgenda(); 
+            window.showToast("ACTION ARCHIVÉE SUPPRIMÉE", "var(--cp-red)"); 
+        }
+        
         function resetAgendaForm() { currentEditTaskId = null; document.getElementById('ag-title').value = ''; document.getElementById('ag-date').value = ''; document.getElementById('ag-tags').value = ''; document.getElementById('ag-source').value = ''; document.getElementById('agenda-form-title').innerText = "AJOUTER ACTION"; document.getElementById('ag-btn-submit').innerText = "GÉNÉRER"; document.getElementById('ag-btn-cancel').style.display = "none"; }
 
         // ==========================================
@@ -1794,7 +1822,13 @@
             document.getElementById('fin-type').value = t.type; document.getElementById('fin-label').value = t.label; document.getElementById('fin-amount').value = (t.baseAmount * exchangeRates[currentCurrency]).toFixed(2);
             document.getElementById('fin-form-title').innerText = "MODIFIER LA TRANSACTION"; document.getElementById('fin-btn-submit').innerText = "METTRE À JOUR"; document.getElementById('fin-btn-cancel').style.display = "block";
         }
-        function deleteTransaction(id) { transactions = transactions.filter(t => t.id !== id); stateChanged(); renderFinance(); window.showToast("FLUX SUPPRIMÉ", "var(--cp-red)"); }
+        // SUPPRESSION DIRECTE SANS POPUP CHROME
+        function deleteTransaction(id) { 
+            transactions = transactions.filter(t => t.id !== id); 
+            stateChanged(); 
+            renderFinance(); 
+            window.showToast("FLUX SUPPRIMÉ", "var(--cp-red)"); 
+        }
         function resetFinanceForm() {
             currentEditTransId = null; document.getElementById('fin-label').value = ''; document.getElementById('fin-amount').value = '';
             document.getElementById('fin-form-title').innerText = "NOUVELLE TRANSACTION"; document.getElementById('fin-btn-submit').innerText = "ENREGISTRER LE FLUX"; document.getElementById('fin-btn-cancel').style.display = "none";
